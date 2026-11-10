@@ -1,0 +1,4 @@
+record_id,record_kind,project,type,deadweight_t,length_m,beam_m,freeboard_m,confirmed_2026_pilot_count,empty_draft_m,loaded_draft_m,operating_speed_kmh,source_url,note
+TYPE_81462,technical_characteristic,81462,несамоходная нефтеналивная баржа,200,43.94,8.07,,,,,,https://lorp.ru/fleet/,Project characteristic only; no confirmed 2026 assignment to pilot route; deadweight is not permitted cargo load
+TYPE_81216,technical_characteristic,81216,несамоходная сухогрузная баржа,271.2,44.86,10.08,,,,,,https://lorp.ru/fleet/,Project characteristic only; no confirmed 2026 assignment to pilot route; deadweight is not permitted cargo load
+TYPE_MP1100,technical_characteristic,МП1100,несамоходная сухогрузная баржа,1150,69.10,14.20,0.25,,,,,https://lorp.ru/fleet/,Project characteristic only; freeboard is not draft; no confirmed 2026 assignment to pilot route

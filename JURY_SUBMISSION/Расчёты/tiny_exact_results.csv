@@ -1,0 +1,5 @@
+﻿scenario,exact_on_time_t,heuristic_on_time_t,exact_total_t,heuristic_total_t,exact_trips,heuristic_trips,gap_t,gap_percent
+two_units_three_cargo,0.003,0.003,0.003,0.003,3,3,0.0,0.0
+draft,0.003,0.003,0.003,0.003,3,3,0.0,0.0
+different_availability,0.003,0.003,0.003,0.003,3,3,0.0,0.0
+deadlines,0.003,0.003,0.003,0.003,3,3,0.0,0.0

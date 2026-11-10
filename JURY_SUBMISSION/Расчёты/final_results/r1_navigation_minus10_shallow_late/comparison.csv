@@ -1,0 +1,3 @@
+﻿scenario_id,strategy,delivered_on_time_t,delivered_total_t,undelivered_t,completed_trips,vessel_idle_days,fleet_utilization,average_delivery_days,violations
+r1_navigation_minus10_shallow_late,FCFS,2434.044,7434.138,27215.862,66,148.109514,0.760341,30.148118,0
+r1_navigation_minus10_shallow_late,OPTIMIZED,9209.032,9209.032,25440.968,64,150.065162,0.757176,14.123148,0

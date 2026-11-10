@@ -1,0 +1,4 @@
+﻿scenario_id,strategy,delivered_on_time_t,delivered_total_t,undelivered_t,completed_trips,vessel_idle_days,fleet_utilization,average_delivery_days,violations
+r2_excess_fleet,FCFS,9140.217,17431.767,17218.233,150,281.683634,0.792269,23.248028,0
+r2_excess_fleet,EARLIEST_DUE,9097.717,17208.81,17441.19,149,289.803356,0.786281,22.724648,0
+r2_excess_fleet,OPTIMIZED,12566.4,19046.743,15603.257,146,297.080255,0.780914,18.556116,0

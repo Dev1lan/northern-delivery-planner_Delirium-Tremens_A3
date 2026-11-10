@@ -1,0 +1,3 @@
+﻿segment_id,from_node,to_node,distance_km,navigation_start,navigation_end,guaranteed_depth_m,source_url,data_status,channel_width_m,turn_radius_m,guaranteed_after_dredging_m,note,pdf_page,pdf_row
+S1,Нижнеянск,Северный,198,2026-06-10,2026-09-30,1.6,https://www.albvvp.ru/upload/iblock/e1f/xecq5zy3xk0mbqrgn71j9g6uljy05cb6.pdf,NORMATIVE,60,200,1.7,1.7 m conditional after dredging from Sep 1; not measured daily depth,75;92,1400
+S2,Северный,Усть-Куйга,126,2026-06-10,2026-09-30,1.6,https://www.albvvp.ru/upload/iblock/e1f/xecq5zy3xk0mbqrgn71j9g6uljy05cb6.pdf,NORMATIVE,50,200,1.7,1.7 m conditional after dredging from Sep 1; not measured daily depth,75;92,1399

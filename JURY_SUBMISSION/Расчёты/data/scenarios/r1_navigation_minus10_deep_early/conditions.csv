@@ -1,0 +1,229 @@
+﻿date,segment_id,usable_depth_m,max_allowed_draft_m,is_closed,restriction_reason,source_url,data_status
+2026-06-10,S1,1.95,1.8,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-10,S2,1.95,1.8,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-11,S1,1.945,1.795,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-11,S2,1.945,1.795,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-12,S1,1.94,1.79,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-12,S2,1.94,1.79,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-13,S1,1.935,1.785,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-13,S2,1.935,1.785,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-14,S1,1.93,1.78,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-14,S2,1.93,1.78,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-15,S1,1.925,1.775,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-15,S2,1.925,1.775,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-16,S1,1.92,1.77,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-16,S2,1.92,1.77,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-17,S1,1.915,1.765,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-17,S2,1.915,1.765,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-18,S1,1.91,1.76,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-18,S2,1.91,1.76,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-19,S1,1.905,1.755,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-19,S2,1.905,1.755,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-20,S1,1.9,1.75,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-20,S2,1.9,1.75,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-21,S1,1.895,1.745,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-21,S2,1.895,1.745,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-22,S1,1.89,1.74,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-22,S2,1.89,1.74,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-23,S1,1.885,1.735,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-23,S2,1.885,1.735,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-24,S1,1.88,1.73,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-24,S2,1.88,1.73,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-25,S1,1.875,1.725,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-25,S2,1.875,1.725,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-26,S1,1.87,1.72,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-26,S2,1.87,1.72,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-27,S1,1.865,1.715,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-27,S2,1.865,1.715,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-28,S1,1.86,1.71,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-28,S2,1.86,1.71,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-29,S1,1.855,1.705,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-29,S2,1.855,1.705,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-30,S1,1.85,1.7,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-06-30,S2,1.85,1.7,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-01,S1,1.845,1.695,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-01,S2,1.845,1.695,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-02,S1,1.84,1.69,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-02,S2,1.84,1.69,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-03,S1,1.835,1.685,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-03,S2,1.835,1.685,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-04,S1,1.83,1.68,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-04,S2,1.83,1.68,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-05,S1,1.825,1.675,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-05,S2,1.825,1.675,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-06,S1,1.82,1.67,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-06,S2,1.82,1.67,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-07,S1,1.815,1.665,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-07,S2,1.815,1.665,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-08,S1,1.81,1.66,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-08,S2,1.81,1.66,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-09,S1,1.805,1.655,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-09,S2,1.805,1.655,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-10,S1,1.8,1.65,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-10,S2,1.8,1.65,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-11,S1,1.795,1.645,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-11,S2,1.795,1.645,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-12,S1,1.79,1.64,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-12,S2,1.79,1.64,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-13,S1,1.785,1.635,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-13,S2,1.785,1.635,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-14,S1,1.78,1.63,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-14,S2,1.78,1.63,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-15,S1,1.775,1.625,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-15,S2,1.775,1.625,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-16,S1,1.77,1.62,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-16,S2,1.77,1.62,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-17,S1,1.765,1.615,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-17,S2,1.765,1.615,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-18,S1,1.76,1.61,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-18,S2,1.76,1.61,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-19,S1,1.755,1.605,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-19,S2,1.755,1.605,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-20,S1,1.75,1.6,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-20,S2,1.75,1.6,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-21,S1,1.741935,1.591935,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-21,S2,1.741935,1.591935,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-22,S1,1.733871,1.583871,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-22,S2,1.733871,1.583871,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-23,S1,1.725806,1.575806,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-23,S2,1.725806,1.575806,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-24,S1,1.717742,1.567742,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-24,S2,1.717742,1.567742,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-25,S1,1.709677,1.559677,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-25,S2,1.709677,1.559677,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-26,S1,1.701613,1.551613,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-26,S2,1.701613,1.551613,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-27,S1,1.693548,1.543548,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-27,S2,1.693548,1.543548,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-28,S1,1.685484,1.535484,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-28,S2,1.685484,1.535484,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-29,S1,1.677419,1.527419,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-29,S2,1.677419,1.527419,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-30,S1,1.669355,1.519355,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-30,S2,1.669355,1.519355,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-31,S1,1.66129,1.51129,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-07-31,S2,1.66129,1.51129,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-01,S1,1.653226,1.503226,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-01,S2,1.653226,1.503226,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-02,S1,1.645161,1.495161,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-02,S2,1.645161,1.495161,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-03,S1,1.637097,1.487097,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-03,S2,1.637097,1.487097,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-04,S1,1.629032,1.479032,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-04,S2,1.629032,1.479032,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-05,S1,1.620968,1.470968,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-05,S2,1.620968,1.470968,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-06,S1,1.612903,1.462903,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-06,S2,1.612903,1.462903,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-07,S1,1.604839,1.454839,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-07,S2,1.604839,1.454839,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-08,S1,1.596774,1.446774,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-08,S2,1.596774,1.446774,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-09,S1,1.58871,1.43871,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-09,S2,1.58871,1.43871,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-10,S1,1.580645,1.430645,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-10,S2,1.580645,1.430645,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-11,S1,1.572581,1.422581,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-11,S2,1.572581,1.422581,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-12,S1,1.564516,1.414516,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-12,S2,1.564516,1.414516,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-13,S1,1.556452,1.406452,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-13,S2,1.556452,1.406452,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-14,S1,1.548387,1.398387,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-14,S2,1.548387,1.398387,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-15,S1,1.540323,1.390323,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-15,S2,1.540323,1.390323,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-16,S1,1.532258,1.382258,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-16,S2,1.532258,1.382258,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-17,S1,1.524194,1.374194,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-17,S2,1.524194,1.374194,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-18,S1,1.516129,1.366129,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-18,S2,1.516129,1.366129,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-19,S1,1.508065,1.358065,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-19,S2,1.508065,1.358065,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-20,S1,1.5,1.35,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-20,S2,1.5,1.35,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-21,S1,1.493548,1.343548,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-21,S2,1.493548,1.343548,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-22,S1,1.487097,1.337097,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-22,S2,1.487097,1.337097,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-23,S1,1.480645,1.330645,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-23,S2,1.480645,1.330645,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-24,S1,1.474194,1.324194,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-24,S2,1.474194,1.324194,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-25,S1,1.467742,1.317742,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-25,S2,1.467742,1.317742,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-26,S1,1.46129,1.31129,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-26,S2,1.46129,1.31129,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-27,S1,1.454839,1.304839,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-27,S2,1.454839,1.304839,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-28,S1,1.448387,1.298387,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-28,S2,1.448387,1.298387,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-29,S1,1.441935,1.291935,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-29,S2,1.441935,1.291935,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-30,S1,1.435484,1.285484,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-30,S2,1.435484,1.285484,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-31,S1,1.429032,1.279032,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-08-31,S2,1.429032,1.279032,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-01,S1,1.422581,1.272581,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-01,S2,1.422581,1.272581,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-02,S1,1.416129,1.266129,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-02,S2,1.416129,1.266129,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-03,S1,1.409677,1.259677,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-03,S2,1.409677,1.259677,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-04,S1,1.403226,1.253226,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-04,S2,1.403226,1.253226,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-05,S1,1.396774,1.246774,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-05,S2,1.396774,1.246774,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-06,S1,1.390323,1.240323,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-06,S2,1.390323,1.240323,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-07,S1,1.383871,1.233871,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-07,S2,1.383871,1.233871,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-08,S1,1.377419,1.227419,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-08,S2,1.377419,1.227419,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-09,S1,1.370968,1.220968,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-09,S2,1.370968,1.220968,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-10,S1,1.364516,1.214516,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-10,S2,1.364516,1.214516,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-11,S1,1.358065,1.208065,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-11,S2,1.358065,1.208065,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-12,S1,1.351613,1.201613,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-12,S2,1.351613,1.201613,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-13,S1,1.345161,1.195161,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-13,S2,1.345161,1.195161,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-14,S1,1.33871,1.18871,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-14,S2,1.33871,1.18871,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-15,S1,1.332258,1.182258,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-15,S2,1.332258,1.182258,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-16,S1,1.325806,1.175806,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-16,S2,1.325806,1.175806,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-17,S1,1.319355,1.169355,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-17,S2,1.319355,1.169355,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-18,S1,1.312903,1.162903,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-18,S2,1.312903,1.162903,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-19,S1,1.306452,1.156452,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-19,S2,1.306452,1.156452,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-20,S1,1.3,1.15,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-20,S2,1.3,1.15,0,Scenario depth; not measured hydrology,,ASSUMED
+2026-09-21,S1,1.28,1.13,1,Scenario closure,,ASSUMED
+2026-09-21,S2,1.28,1.13,1,Scenario closure,,ASSUMED
+2026-09-22,S1,1.26,1.11,1,Scenario closure,,ASSUMED
+2026-09-22,S2,1.26,1.11,1,Scenario closure,,ASSUMED
+2026-09-23,S1,1.24,1.09,1,Scenario closure,,ASSUMED
+2026-09-23,S2,1.24,1.09,1,Scenario closure,,ASSUMED
+2026-09-24,S1,1.22,1.07,1,Scenario closure,,ASSUMED
+2026-09-24,S2,1.22,1.07,1,Scenario closure,,ASSUMED
+2026-09-25,S1,1.2,1.05,1,Scenario closure,,ASSUMED
+2026-09-25,S2,1.2,1.05,1,Scenario closure,,ASSUMED
+2026-09-26,S1,1.18,1.03,1,Scenario closure,,ASSUMED
+2026-09-26,S2,1.18,1.03,1,Scenario closure,,ASSUMED
+2026-09-27,S1,1.16,1.01,1,Scenario closure,,ASSUMED
+2026-09-27,S2,1.16,1.01,1,Scenario closure,,ASSUMED
+2026-09-28,S1,1.14,0.99,1,Scenario closure,,ASSUMED
+2026-09-28,S2,1.14,0.99,1,Scenario closure,,ASSUMED
+2026-09-29,S1,1.12,0.97,1,Scenario closure,,ASSUMED
+2026-09-29,S2,1.12,0.97,1,Scenario closure,,ASSUMED
+2026-09-30,S1,1.1,0.95,1,Scenario closure,,ASSUMED
+2026-09-30,S2,1.1,0.95,1,Scenario closure,,ASSUMED
+2026-10-01,S1,1.0999999999999999,0.95,1,Scenario closure,,ASSUMED
+2026-10-01,S2,1.0999999999999999,0.95,1,Scenario closure,,ASSUMED

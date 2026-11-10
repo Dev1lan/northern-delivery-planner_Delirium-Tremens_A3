@@ -1,0 +1,546 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "demo",
+  "strategy": "FCFS",
+  "metrics": {
+    "delivered_on_time_t": 1156.0,
+    "delivered_total_t": 1156.0,
+    "undelivered_t": 0.0,
+    "completed_trips": 11,
+    "violations": 0,
+    "vessel_idle_days": 600.385787,
+    "fleet_utilization": 0.114475,
+    "average_delivery_days": 3.259578,
+    "delivered_by_type_t": {
+      "coal": 677.0,
+      "crude_oil": 346.0,
+      "food": 90.0,
+      "food_extended": 43.0
+    },
+    "on_time_by_type_t": {
+      "coal": 677.0,
+      "crude_oil": 346.0,
+      "food": 90.0,
+      "food_extended": 43.0
+    }
+  },
+  "trips": [
+    {
+      "trip_id": "TR00001",
+      "unit_id": "U_DRY_1",
+      "barge_id": "B_DRY_1",
+      "tug_id": "T1",
+      "cargo_id": "C00003",
+      "cargo_type": "coal",
+      "origin": "Нижнеянск",
+      "destination": "Усть-Куйга",
+      "volume_t": 180.0,
+      "loading_start": "2026-07-08T00:00:00",
+      "departure": "2026-07-08T09:12:00",
+      "arrival": "2026-07-10T06:12:00",
+      "unloading_end": "2026-07-10T15:24:00",
+      "released_at": "2026-07-11T18:24:00",
+      "loaded_draft_m": 1.2,
+      "data_status": "SYNTHETIC",
+      "source_url": "",
+      "due_date": "2026-07-30T00:00:00",
+      "on_time": true,
+      "events": [
+        {
+          "direction": "upstream",
+          "segment_id": "S1",
+          "start": "2026-07-08T09:12:00",
+          "end": "2026-07-09T12:42:00"
+        },
+        {
+          "direction": "upstream",
+          "segment_id": "S2",
+          "start": "2026-07-09T12:42:00",
+          "end": "2026-07-10T06:12:00"
+        },
+        {
+          "direction": "downstream",
+          "segment_id": "S2",
+          "start": "2026-07-10T15:24:00",
+          "end": "2026-07-11T01:54:00"
+        },
+        {
+          "direction": "downstream",
+          "segment_id": "S1",
+          "start": "2026-07-11T01:54:00",
+          "end": "2026-07-11T18:24:00"
+        }
+      ]
+    },
+    {
+      "trip_id": "TR00002",
+      "unit_id": "U_DRY_2",
+      "barge_id": "B_DRY_2",
+      "tug_id": "T2",
+      "cargo_id": "C00003",
+      "cargo_type": "coal",
+      "origin": "Нижнеянск",
+      "destination": "Усть-Куйга",
+      "volume_t": 23.0,
+      "loading_start": "2026-07-08T00:00:00",
+      "departure": "2026-07-08T02:55:12",
+      "arrival": "2026-07-10T08:55:12",
+      "unloading_end": "2026-07-10T11:50:24",
+      "released_at": "2026-07-11T09:26:24",
+      "loaded_draft_m": 0.502222,
+      "data_status": "SYNTHETIC",
+      "source_url": "",
+      "due_date": "2026-07-30T00:00:00",
+      "on_time": true,
+      "events": [
+        {
+          "direction": "upstream",
+          "segment_id": "S1",
+          "start": "2026-07-08T02:55:12",
+          "end": "2026-07-09T11:55:12"
+        },
+        {
+          "direction": "upstream",
+          "segment_id": "S2",
+          "start": "2026-07-09T11:55:12",
+          "end": "2026-07-10T08:55:12"
+        },
+        {
+          "direction": "downstream",
+          "segment_id": "S2",
+          "start": "2026-07-10T11:50:24",
+          "end": "2026-07-10T20:14:24"
+        },
+        {
+          "direction": "downstream",
+          "segment_id": "S1",
+          "start": "2026-07-10T20:14:24",
+          "end": "2026-07-11T09:26:24"
+        }
+      ]
+    },
+    {
+      "trip_id": "TR00003",
+      "unit_id": "U_OIL_1",
+      "barge_id": "B_OIL_1",
+      "tug_id": "T3",
+      "cargo_id": "C00145",
+      "cargo_type": "crude_oil",
+      "origin": "Нижнеянск",
+      "destination": "Усть-Куйга",
+      "volume_t": 150.0,
+      "loading_start": "2026-07-08T00:00:00",
+      "departure": "2026-07-08T06:17:08",
+      "arrival": "2026-07-10T03:17:08",
+      "unloading_end": "2026-07-10T09:34:17",
+      "released_at": "2026-07-11T12:34:17",
+      "loaded_draft_m": 1.2,
+      "data_status": "SYNTHETIC",
+      "source_url": "",
+      "due_date": "2026-07-31T00:00:00",
+      "on_time": true,
+      "events": [
+        {
+          "direction": "upstream",
+          "segment_id": "S1",
+          "start": "2026-07-08T06:17:08",
+          "end": "2026-07-09T09:47:08"
+        },
+        {
+          "direction": "upstream",
+          "segment_id": "S2",
+          "start": "2026-07-09T09:47:08",
+          "end": "2026-07-10T03:17:08"
+        },
+        {
+          "direction": "downstream",
+          "segment_id": "S2",
+          "start": "2026-07-10T09:34:17",
+          "end": "2026-07-10T20:04:17"
+        },
+        {
+          "direction": "downstream",
+          "segment_id": "S1",
+          "start": "2026-07-10T20:04:17",
+          "end": "2026-07-11T12:34:17"
+        }
+      ]
+    },
+    {
+      "trip_id": "TR00004",
+      "unit_id": "U_OIL_1",
+      "barge_id": "B_OIL_1",
+      "tug_id": "T3",
+      "cargo_id": "C00145",
+      "cargo_type": "crude_oil",
+      "origin": "Нижнеянск",
+      "destination": "Усть-Куйга",
+      "volume_t": 150.0,
+      "loading_start": "2026-07-11T12:34:17",
+      "departure": "2026-07-11T18:51:25",
+      "arrival": "2026-07-13T15:51:25",
+      "unloading_end": "2026-07-13T22:08:34",
+      "released_at": "2026-07-15T01:08:34",
+      "loaded_draft_m": 1.2,
+      "data_status": "SYNTHETIC",
+      "source_url": "",
+      "due_date": "2026-07-31T00:00:00",
+      "on_time": true,
+      "events": [
+        {
+          "direction": "upstream",
+          "segment_id": "S1",
+          "start": "2026-07-11T18:51:25",
+          "end": "2026-07-12T22:21:25"
+        },
+        {
+          "direction": "upstream",
+          "segment_id": "S2",
+          "start": "2026-07-12T22:21:25",
+          "end": "2026-07-13T15:51:25"
+        },
+        {
+          "direction": "downstream",
+          "segment_id": "S2",
+          "start": "2026-07-13T22:08:34",
+          "end": "2026-07-14T08:38:34"
+        },
+        {
+          "direction": "downstream",
+          "segment_id": "S1",
+          "start": "2026-07-14T08:38:34",
+          "end": "2026-07-15T01:08:34"
+        }
+      ]
+    },
+    {
+      "trip_id": "TR00005",
+      "unit_id": "U_OIL_1",
+      "barge_id": "B_OIL_1",
+      "tug_id": "T3",
+      "cargo_id": "C00145",
+      "cargo_type": "crude_oil",
+      "origin": "Нижнеянск",
+      "destination": "Усть-Куйга",
+      "volume_t": 46.0,
+      "loading_start": "2026-07-15T01:08:34",
+      "departure": "2026-07-15T04:27:25",
+      "arrival": "2026-07-17T01:27:25",
+      "unloading_end": "2026-07-17T04:46:16",
+      "released_at": "2026-07-18T07:46:16",
+      "loaded_draft_m": 0.645333,
+      "data_status": "SYNTHETIC",
+      "source_url": "",
+      "due_date": "2026-07-31T00:00:00",
+      "on_time": true,
+      "events": [
+        {
+          "direction": "upstream",
+          "segment_id": "S1",
+          "start": "2026-07-15T04:27:25",
+          "end": "2026-07-16T07:57:25"
+        },
+        {
+          "direction": "upstream",
+          "segment_id": "S2",
+          "start": "2026-07-16T07:57:25",
+          "end": "2026-07-17T01:27:25"
+        },
+        {
+          "direction": "downstream",
+          "segment_id": "S2",
+          "start": "2026-07-17T04:46:16",
+          "end": "2026-07-17T15:16:16"
+        },
+        {
+          "direction": "downstream",
+          "segment_id": "S1",
+          "start": "2026-07-17T15:16:16",
+          "end": "2026-07-18T07:46:16"
+        }
+      ]
+    },
+    {
+      "trip_id": "TR00006",
+      "unit_id": "U_DRY_1",
+      "barge_id": "B_DRY_1",
+      "tug_id": "T1",
+      "cargo_id": "C00164",
+      "cargo_type": "food_extended",
+      "origin": "Нижнеянск",
+      "destination": "Усть-Куйга",
+      "volume_t": 43.0,
+      "loading_start": "2026-07-15T00:00:00",
+      "departure": "2026-07-15T03:43:12",
+      "arrival": "2026-07-17T00:43:12",
+      "unloading_end": "2026-07-17T04:26:24",
+      "released_at": "2026-07-18T07:26:24",
+      "loaded_draft_m": 0.591111,
+      "data_status": "SYNTHETIC",
+      "source_url": "",
+      "due_date": "2026-08-13T00:00:00",
+      "on_time": true,
+      "events": [
+        {
+          "direction": "upstream",
+          "segment_id": "S1",
+          "start": "2026-07-15T03:43:12",
+          "end": "2026-07-16T07:13:12"
+        },
+        {
+          "direction": "upstream",
+          "segment_id": "S2",
+          "start": "2026-07-16T07:13:12",
+          "end": "2026-07-17T00:43:12"
+        },
+        {
+          "direction": "downstream",
+          "segment_id": "S2",
+          "start": "2026-07-17T04:26:24",
+          "end": "2026-07-17T14:56:24"
+        },
+        {
+          "direction": "downstream",
+          "segment_id": "S1",
+          "start": "2026-07-17T14:56:24",
+          "end": "2026-07-18T07:26:24"
+        }
+      ]
+    },
+    {
+      "trip_id": "TR00007",
+      "unit_id": "U_DRY_1",
+      "barge_id": "B_DRY_1",
+      "tug_id": "T1",
+      "cargo_id": "C00001",
+      "cargo_type": "coal",
+      "origin": "Нижнеянск",
+      "destination": "Усть-Куйга",
+      "volume_t": 178.548,
+      "loading_start": "2026-08-19T00:00:00",
+      "departure": "2026-08-19T09:08:30",
+      "arrival": "2026-08-21T06:08:30",
+      "unloading_end": "2026-08-21T15:17:01",
+      "released_at": "2026-08-22T18:17:01",
+      "loaded_draft_m": 1.193547,
+      "data_status": "SYNTHETIC",
+      "source_url": "",
+      "due_date": "2026-09-18T00:00:00",
+      "on_time": true,
+      "events": [
+        {
+          "direction": "upstream",
+          "segment_id": "S1",
+          "start": "2026-08-19T09:08:30",
+          "end": "2026-08-20T12:38:30"
+        },
+        {
+          "direction": "upstream",
+          "segment_id": "S2",
+          "start": "2026-08-20T12:38:30",
+          "end": "2026-08-21T06:08:30"
+        },
+        {
+          "direction": "downstream",
+          "segment_id": "S2",
+          "start": "2026-08-21T15:17:01",
+          "end": "2026-08-22T01:47:01"
+        },
+        {
+          "direction": "downstream",
+          "segment_id": "S1",
+          "start": "2026-08-22T01:47:01",
+          "end": "2026-08-22T18:17:01"
+        }
+      ]
+    },
+    {
+      "trip_id": "TR00008",
+      "unit_id": "U_DRY_2",
+      "barge_id": "B_DRY_2",
+      "tug_id": "T2",
+      "cargo_id": "C00001",
+      "cargo_type": "coal",
+      "origin": "Нижнеянск",
+      "destination": "Усть-Куйга",
+      "volume_t": 14.452,
+      "loading_start": "2026-08-19T00:00:00",
+      "departure": "2026-08-19T02:34:41",
+      "arrival": "2026-08-21T08:34:41",
+      "unloading_end": "2026-08-21T11:09:22",
+      "released_at": "2026-08-22T08:45:22",
+      "loaded_draft_m": 0.464231,
+      "data_status": "SYNTHETIC",
+      "source_url": "",
+      "due_date": "2026-09-18T00:00:00",
+      "on_time": true,
+      "events": [
+        {
+          "direction": "upstream",
+          "segment_id": "S1",
+          "start": "2026-08-19T02:34:41",
+          "end": "2026-08-20T11:34:41"
+        },
+        {
+          "direction": "upstream",
+          "segment_id": "S2",
+          "start": "2026-08-20T11:34:41",
+          "end": "2026-08-21T08:34:41"
+        },
+        {
+          "direction": "downstream",
+          "segment_id": "S2",
+          "start": "2026-08-21T11:09:22",
+          "end": "2026-08-21T19:33:22"
+        },
+        {
+          "direction": "downstream",
+          "segment_id": "S1",
+          "start": "2026-08-21T19:33:22",
+          "end": "2026-08-22T08:45:22"
+        }
+      ]
+    },
+    {
+      "trip_id": "TR00009",
+      "unit_id": "U_DRY_1",
+      "barge_id": "B_DRY_1",
+      "tug_id": "T1",
+      "cargo_id": "C00002",
+      "cargo_type": "coal",
+      "origin": "Нижнеянск",
+      "destination": "Усть-Куйга",
+      "volume_t": 166.935,
+      "loading_start": "2026-08-27T00:00:00",
+      "departure": "2026-08-27T08:40:38",
+      "arrival": "2026-08-29T05:40:38",
+      "unloading_end": "2026-08-29T14:21:17",
+      "released_at": "2026-08-30T17:21:17",
+      "loaded_draft_m": 1.141933,
+      "data_status": "SYNTHETIC",
+      "source_url": "",
+      "due_date": "2026-09-19T00:00:00",
+      "on_time": true,
+      "events": [
+        {
+          "direction": "upstream",
+          "segment_id": "S1",
+          "start": "2026-08-27T08:40:38",
+          "end": "2026-08-28T12:10:38"
+        },
+        {
+          "direction": "upstream",
+          "segment_id": "S2",
+          "start": "2026-08-28T12:10:38",
+          "end": "2026-08-29T05:40:38"
+        },
+        {
+          "direction": "downstream",
+          "segment_id": "S2",
+          "start": "2026-08-29T14:21:17",
+          "end": "2026-08-30T00:51:17"
+        },
+        {
+          "direction": "downstream",
+          "segment_id": "S1",
+          "start": "2026-08-30T00:51:17",
+          "end": "2026-08-30T17:21:17"
+        }
+      ]
+    },
+    {
+      "trip_id": "TR00010",
+      "unit_id": "U_DRY_2",
+      "barge_id": "B_DRY_2",
+      "tug_id": "T2",
+      "cargo_id": "C00002",
+      "cargo_type": "coal",
+      "origin": "Нижнеянск",
+      "destination": "Усть-Куйга",
+      "volume_t": 114.065,
+      "loading_start": "2026-08-27T00:00:00",
+      "departure": "2026-08-27T06:33:45",
+      "arrival": "2026-08-29T12:33:45",
+      "unloading_end": "2026-08-29T19:07:30",
+      "released_at": "2026-08-30T16:43:30",
+      "loaded_draft_m": 0.906956,
+      "data_status": "SYNTHETIC",
+      "source_url": "",
+      "due_date": "2026-09-19T00:00:00",
+      "on_time": true,
+      "events": [
+        {
+          "direction": "upstream",
+          "segment_id": "S1",
+          "start": "2026-08-27T06:33:45",
+          "end": "2026-08-28T15:33:45"
+        },
+        {
+          "direction": "upstream",
+          "segment_id": "S2",
+          "start": "2026-08-28T15:33:45",
+          "end": "2026-08-29T12:33:45"
+        },
+        {
+          "direction": "downstream",
+          "segment_id": "S2",
+          "start": "2026-08-29T19:07:30",
+          "end": "2026-08-30T03:31:30"
+        },
+        {
+          "direction": "downstream",
+          "segment_id": "S1",
+          "start": "2026-08-30T03:31:30",
+          "end": "2026-08-30T16:43:30"
+        }
+      ]
+    },
+    {
+      "trip_id": "TR00011",
+      "unit_id": "U_DRY_1",
+      "barge_id": "B_DRY_1",
+      "tug_id": "T1",
+      "cargo_id": "C00163",
+      "cargo_type": "food",
+      "origin": "Нижнеянск",
+      "destination": "Усть-Куйга",
+      "volume_t": 90.0,
+      "loading_start": "2026-09-05T00:00:00",
+      "departure": "2026-09-05T05:36:00",
+      "arrival": "2026-09-07T02:36:00",
+      "unloading_end": "2026-09-07T08:12:00",
+      "released_at": "2026-09-08T11:12:00",
+      "loaded_draft_m": 0.8,
+      "data_status": "SYNTHETIC",
+      "source_url": "",
+      "due_date": "2026-09-17T00:00:00",
+      "on_time": true,
+      "events": [
+        {
+          "direction": "upstream",
+          "segment_id": "S1",
+          "start": "2026-09-05T05:36:00",
+          "end": "2026-09-06T09:06:00"
+        },
+        {
+          "direction": "upstream",
+          "segment_id": "S2",
+          "start": "2026-09-06T09:06:00",
+          "end": "2026-09-07T02:36:00"
+        },
+        {
+          "direction": "downstream",
+          "segment_id": "S2",
+          "start": "2026-09-07T08:12:00",
+          "end": "2026-09-07T18:42:00"
+        },
+        {
+          "direction": "downstream",
+          "segment_id": "S1",
+          "start": "2026-09-07T18:42:00",
+          "end": "2026-09-08T11:12:00"
+        }
+      ]
+    }
+  ]
+}

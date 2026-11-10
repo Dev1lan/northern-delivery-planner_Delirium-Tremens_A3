@@ -1,0 +1,26 @@
+[
+  {
+    "scenario_id": "r2_navigation_minus10_deep_central",
+    "strategy": "FCFS",
+    "delivered_on_time_t": 3483.834,
+    "delivered_total_t": 9340.834,
+    "undelivered_t": 25309.166,
+    "completed_trips": 75,
+    "vessel_idle_days": 79.531481,
+    "fleet_utilization": 0.871308,
+    "average_delivery_days": 28.9355,
+    "violations": 0
+  },
+  {
+    "scenario_id": "r2_navigation_minus10_deep_central",
+    "strategy": "OPTIMIZED",
+    "delivered_on_time_t": 10984.808,
+    "delivered_total_t": 11552.808,
+    "undelivered_t": 23097.192,
+    "completed_trips": 73,
+    "vessel_idle_days": 77.881551,
+    "fleet_utilization": 0.873978,
+    "average_delivery_days": 15.03525,
+    "violations": 0
+  }
+]

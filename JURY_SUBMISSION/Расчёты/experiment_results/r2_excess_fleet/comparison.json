@@ -1,0 +1,38 @@
+[
+  {
+    "scenario_id": "r2_excess_fleet",
+    "strategy": "FCFS",
+    "delivered_on_time_t": 9140.217,
+    "delivered_total_t": 17431.767,
+    "undelivered_t": 17218.233,
+    "completed_trips": 150,
+    "vessel_idle_days": 281.683634,
+    "fleet_utilization": 0.792269,
+    "average_delivery_days": 23.248028,
+    "violations": 0
+  },
+  {
+    "scenario_id": "r2_excess_fleet",
+    "strategy": "EARLIEST_DUE",
+    "delivered_on_time_t": 9097.717,
+    "delivered_total_t": 17208.81,
+    "undelivered_t": 17441.19,
+    "completed_trips": 149,
+    "vessel_idle_days": 289.803356,
+    "fleet_utilization": 0.786281,
+    "average_delivery_days": 22.724648,
+    "violations": 0
+  },
+  {
+    "scenario_id": "r2_excess_fleet",
+    "strategy": "OPTIMIZED",
+    "delivered_on_time_t": 12566.4,
+    "delivered_total_t": 19046.743,
+    "undelivered_t": 15603.257,
+    "completed_trips": 146,
+    "vessel_idle_days": 297.080255,
+    "fleet_utilization": 0.780914,
+    "average_delivery_days": 18.556116,
+    "violations": 0
+  }
+]

@@ -1,0 +1,22 @@
+{
+  "version": "2.1.0",
+  "purpose": "lexicographic on-time, total, then fewer trips",
+  "source_hash_algorithm": "SHA-256",
+  "source_sha256": {
+    "optimizer.py": "c5ae059a825a87762696b77f2b20bfcaf7230e505f90c3ad3c8ca56833c52b78",
+    "generate.py": "de46bdcac970be175e6199799fd21596347d44b92c1316ff463e7b985a47ce70",
+    "validate.py": "15fe23932dcbd800dd503194e9f0d93d43475b68d46d974634e53934971c811c",
+    "scenario_config.json": "359ae718f9a05bf50fd2d22f12152535118758da3200a343cc480e6829a3ee79",
+    "test_optimizer.py": "439b4c3c20d7131766b9209a6f9af8db286ae186218059f731d99e0ceeabac70",
+    "test_regression.py": "e5e74da4e736f5859da71bc893411ed2cc285be2ffb2c2ab7e576b986e994c25",
+    "test_tiny_exact.py": "bbbf537e14cb824bd364b76540ff0f00c92df1e99620bb55a66c34eec67bcffa",
+    "tiny_exact.py": "8ff6736694a07f53cc34a35b700563cceb717ce5250578e8fc5982f5a78228ad",
+    "run_final_experiments.py": "a57b3dbd8ea4d30c4a2b20b00a060c8daaa259cfd387d2dd4dd086423f2b4ca8",
+    "run_extended_experiments.py": "8171dbf3169c679f41bd60740b817eb020552adc3bd4982b3b44f24260012c32",
+    "verify_final_reproducibility.py": "b427d7ab8ef76688cd49a8919e9b31199f1b6f0a7f69822e83832f808adfdca8",
+    "write_optimization_report.py": "ccad3b17a53e9a088295b845033f3ad849a60dada68a4d0c00b2b36b84b358a2"
+  },
+  "scenario_input_manifest": "final_results/input_hashes.json",
+  "version_control": "file snapshot; project is not a Git repository",
+  "snapshot_directory": "release_2.1.0"
+}

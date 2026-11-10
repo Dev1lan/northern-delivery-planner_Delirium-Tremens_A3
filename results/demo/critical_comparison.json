@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0.0",
+  "scenario_id": "demo",
+  "critical_types": [
+    "food",
+    "food_extended"
+  ],
+  "comparisons": [
+    {
+      "cargo_type": "food",
+      "status": "compared",
+      "fcfs_delivered_total_t": 90.0,
+      "optimized_delivered_total_t": 90.0,
+      "delta_delivered_total_t": 0.0,
+      "fcfs_delivered_on_time_t": 90.0,
+      "optimized_delivered_on_time_t": 90.0,
+      "delta_delivered_on_time_t": 0.0
+    },
+    {
+      "cargo_type": "food_extended",
+      "status": "compared",
+      "fcfs_delivered_total_t": 43.0,
+      "optimized_delivered_total_t": 43.0,
+      "delta_delivered_total_t": 0.0,
+      "fcfs_delivered_on_time_t": 43.0,
+      "optimized_delivered_on_time_t": 43.0,
+      "delta_delivered_on_time_t": 0.0
+    }
+  ],
+  "warnings": []
+}

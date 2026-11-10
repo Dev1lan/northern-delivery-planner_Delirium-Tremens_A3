@@ -1,0 +1,47 @@
+{
+  "seed": 20261110,
+  "replicates": 3,
+  "time_basis": "Europe/Moscow; naive ISO timestamps",
+  "area_id": "YANA_ALL",
+  "as_of_date": "2026-09-29",
+  "checkpoints": {"planned": 148860, "shipped": 122520, "crossed_bar": 113470, "delivered": 89030},
+  "aggregate_source_url": "https://www.albvvp.ru/press-center/news/novosti-organizatsii/itogi-arkticheskoy-navigatsii-2026-goda-zakrytie-sudokhodnoy-obstanovki-na-rekakh-yana-i-indigirka/",
+  "nested_chain_assumption": true,
+  "pilot_area_id": "PILOT_NIZHNEYANSK_UST_KUYGA",
+  "origin": "Нижнеянск",
+  "destination": "Усть-Куйга",
+  "start": "2026-06-10",
+  "end": "2026-09-30",
+  "route_source_url": "https://www.albvvp.ru/upload/iblock/e1f/xecq5zy3xk0mbqrgn71j9g6uljy05cb6.pdf",
+  "segments": [
+    {"segment_id":"S1","from_node":"Нижнеянск","to_node":"Северный","distance_km":198,"width_m":60,"turn_radius_m":200,"guaranteed_depth_m":1.6,"guaranteed_after_dredging_m":1.7,"norm_pdf_row":1400},
+    {"segment_id":"S2","from_node":"Северный","to_node":"Усть-Куйга","distance_km":126,"width_m":50,"turn_radius_m":200,"guaranteed_depth_m":1.6,"guaranteed_after_dredging_m":1.7,"norm_pdf_row":1399}
+  ],
+  "plans": [
+    {"plan_id":"P_COAL","cargo_type":"coal","volume_t":30000,"beneficiary_district":"Верхоянский","appendix":3,"source_url":"https://base.garant.ru/414273300/3e22e51c74db8e0b182fad67b502e640/"},
+    {"plan_id":"P_OIL","cargo_type":"crude_oil","volume_t":4500,"beneficiary_district":"Эвено-Бытантайский","appendix":4,"source_url":"https://base.garant.ru/414273300/172a6d689833ce3e42dc0a8a7b3cddf9/"},
+    {"plan_id":"P_FOOD","cargo_type":"food","volume_t":90,"beneficiary_district":"Усть-Янский","appendix":7,"source_url":"https://base.garant.ru/414273300/1a3794674ba91fb6f13d1885dca9f9e1/"},
+    {"plan_id":"P_EXTRA","cargo_type":"food_extended","volume_t":60,"beneficiary_district":"Усть-Янский","appendix":7,"source_url":"https://base.garant.ru/414273300/1a3794674ba91fb6f13d1885dca9f9e1/"}
+  ],
+  "plan_verification": "INDEXED_ONLY_NOT_PRIMARY_VERIFIED; copied from prior indexed text; origin unknown",
+  "reference_projects": [
+    {"project":"81462","vessel_type":"tank_barge","deadweight_t":200,"length_m":43.94,"beam_m":8.07},
+    {"project":"81216","vessel_type":"dry_barge","deadweight_t":271.2,"length_m":44.86,"beam_m":10.08},
+    {"project":"МП1100","vessel_type":"dry_barge","deadweight_t":1150,"length_m":69.1,"beam_m":14.2}
+  ],
+  "units": [
+    {"unit_id":"U_DRY_1","barge_id":"B_DRY_1","tug_id":"T1","project":"81216","capacity_t":180,"cargo_type_allowed":["coal","food","food_extended"],"draft_empty_m":0.4,"draft_full_m":1.2,"tug_draft_m":0.65,"speed_upstream_kmh":7.2,"speed_downstream_kmh":12,"handling_tph":25},
+    {"unit_id":"U_DRY_2","barge_id":"B_DRY_2","tug_id":"T2","project":"81216","capacity_t":180,"cargo_type_allowed":["coal","food","food_extended"],"draft_empty_m":0.4,"draft_full_m":1.2,"tug_draft_m":0.65,"speed_upstream_kmh":6,"speed_downstream_kmh":15,"handling_tph":25},
+    {"unit_id":"U_OIL_1","barge_id":"B_OIL_1","tug_id":"T3","project":"81462","capacity_t":150,"cargo_type_allowed":["crude_oil"],"draft_empty_m":0.4,"draft_full_m":1.2,"tug_draft_m":0.65,"speed_upstream_kmh":7.2,"speed_downstream_kmh":12,"handling_tph":35}
+  ],
+  "underkeel_m": 0.15,
+  "handling_fixed_hours": 2,
+  "batch_max_t": 400,
+  "ready_day_fraction_range": [0.1,0.92],
+  "due_days_after_ready": [12,30],
+  "depth_profile": [["2026-06-10",1.8],["2026-07-20",1.6],["2026-08-20",1.35],["2026-09-20",1.15],["2026-09-30",0.95]],
+  "depth_variants": {"central":0,"shallow":-0.15,"deep":0.15},
+  "timing_variants": {"central":0,"early":-10,"late":10},
+  "scenarios": {"baseline":{},"fleet_minus20":{"capacity_scale":0.8},"demand_plus30":{"demand_scale":1.3},"navigation_minus10":{"close_early_days":10}},
+  "notes": "All operational fleet parameters, origin assignment, cargo dates, due dates, priority, dredging completion, daily depths and staffing are toy assumptions, not estimates of real 2026 operations. Project names do not confirm suitability or deployment. No class/river permissions certified."
+}

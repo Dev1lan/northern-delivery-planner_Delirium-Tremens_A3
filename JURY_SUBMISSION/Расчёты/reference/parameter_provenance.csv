@@ -1,0 +1,12 @@
+﻿dataset,fields,status,note
+actuals,tonnage_t;as_of_date;area_id,OBSERVED,planned is NORMATIVE; official aggregate; not pilot
+routes,distance_km;width_m;turn_radius_m;navigation_start;navigation_end;guaranteed_depth_m,NORMATIVE,local PDF pages 75 and 92
+vessel_projects,project;deadweight_t;length_m;beam_m,HISTORICAL,catalogue characteristic; no assignment to 2026 pilot
+vessel_projects,draft_empty_m;draft_full_m;confirmed_2026_count,UNKNOWN,blank
+cargo_plans,volume_t;destination;beneficiary_district,NORMATIVE,INDEXED_ONLY_NOT_PRIMARY_VERIFIED; provisional
+cargo_plans,origin,UNKNOWN,blank; sender not established
+cargo,volume_t;ready_date;due_date;priority,SYNTHETIC,batches split provisional plan; dates/priority generated
+cargo,origin,ASSUMED,scenario boundary; all inbound before origin excluded
+vessels;units,capacity_t;draft_empty_m;draft_full_m;tug_draft_m;speed_upstream_kmh;speed_downstream_kmh;available_from;available_to;compatibility_status;handling_tph,ASSUMED,toy values; not inferred from catalogue
+conditions,usable_depth_m;max_allowed_draft_m;is_closed,ASSUMED,synthetic daily profile; not official clearance
+trips,all event fields,SYNTHETIC,calculated from scenario; no AIS or real voyage evidence

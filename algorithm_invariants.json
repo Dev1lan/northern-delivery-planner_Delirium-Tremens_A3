@@ -1,0 +1,13 @@
+{
+  "algorithm_version": "2.1.0",
+  "python_ast_basis": "CPython 3.12",
+  "original_optimizer_sha256": "c5ae059a825a87762696b77f2b20bfcaf7230e505f90c3ad3c8ca56833c52b78",
+  "functions_ast_sha256": {
+    "_candidate": "d3b857090df8bea456052c7ba9585c9c293fbae901300319c9585e5cd7456ff7",
+    "_best_load": "dd1f0be0edfb04afd890ee3d8f7f0e7263705a2f78b8142a8e80181ce3a2db07",
+    "_objective": "5302c0788b94d2d334347c80aaaa9bc4e7b3c1589c08c0450983a0fd7d986a1e",
+    "_audit": "06eaebd3b0ac35d3b32e8b0291c11ad69c8769cab67176a136cc570215ccc45d",
+    "_improve": "2f038a8543b21c6ee3ba16b66237061ea67113da42a97bc840a0f93ca434041d",
+    "simulate": "aeb845531b494aca66aa4cc6fc1add5cccd5c7993dd943366894c77d209cae1e"
+  }
+}

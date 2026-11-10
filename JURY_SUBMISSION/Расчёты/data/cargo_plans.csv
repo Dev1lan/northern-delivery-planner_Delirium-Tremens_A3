@@ -1,0 +1,5 @@
+﻿plan_id,cargo_type,volume_t,beneficiary_district,appendix,source_url,origin,destination,data_status,verification
+P_COAL,coal,30000,Верхоянский,3,https://base.garant.ru/414273300/3e22e51c74db8e0b182fad67b502e640/,,Усть-Куйга,NORMATIVE,INDEXED_ONLY_NOT_PRIMARY_VERIFIED; copied from prior indexed text; origin unknown
+P_OIL,crude_oil,4500,Эвено-Бытантайский,4,https://base.garant.ru/414273300/172a6d689833ce3e42dc0a8a7b3cddf9/,,Усть-Куйга,NORMATIVE,INDEXED_ONLY_NOT_PRIMARY_VERIFIED; copied from prior indexed text; origin unknown
+P_FOOD,food,90,Усть-Янский,7,https://base.garant.ru/414273300/1a3794674ba91fb6f13d1885dca9f9e1/,,Усть-Куйга,NORMATIVE,INDEXED_ONLY_NOT_PRIMARY_VERIFIED; copied from prior indexed text; origin unknown
+P_EXTRA,food_extended,60,Усть-Янский,7,https://base.garant.ru/414273300/1a3794674ba91fb6f13d1885dca9f9e1/,,Усть-Куйга,NORMATIVE,INDEXED_ONLY_NOT_PRIMARY_VERIFIED; copied from prior indexed text; origin unknown

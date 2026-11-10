@@ -1,0 +1,4 @@
+﻿project,vessel_type,deadweight_t,length_m,beam_m,source_url,data_status,draft_empty_m,draft_full_m,confirmed_2026_count,note
+81462,tank_barge,200,43.94,8.07,https://lorp.ru/fleet/,HISTORICAL,,,,Catalogue characteristic; no 2026 pilot assignment
+81216,dry_barge,271.2,44.86,10.08,https://lorp.ru/fleet/,HISTORICAL,,,,Catalogue characteristic; no 2026 pilot assignment
+МП1100,dry_barge,1150,69.1,14.2,https://lorp.ru/fleet/,HISTORICAL,,,,Catalogue characteristic; no 2026 pilot assignment

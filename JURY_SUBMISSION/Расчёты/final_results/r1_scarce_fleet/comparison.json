@@ -1,0 +1,26 @@
+[
+  {
+    "scenario_id": "r1_scarce_fleet",
+    "strategy": "FCFS",
+    "delivered_on_time_t": 972.0,
+    "delivered_total_t": 3539.0,
+    "undelivered_t": 31111.0,
+    "completed_trips": 28,
+    "vessel_idle_days": 25.073356,
+    "fleet_utilization": 0.889056,
+    "average_delivery_days": 44.117668,
+    "violations": 0
+  },
+  {
+    "scenario_id": "r1_scarce_fleet",
+    "strategy": "OPTIMIZED",
+    "delivered_on_time_t": 4495.228,
+    "delivered_total_t": 4495.228,
+    "undelivered_t": 30154.772,
+    "completed_trips": 27,
+    "vessel_idle_days": 25.031921,
+    "fleet_utilization": 0.889239,
+    "average_delivery_days": 18.509958,
+    "violations": 0
+  }
+]

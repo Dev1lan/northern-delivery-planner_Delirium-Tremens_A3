@@ -1,0 +1,4 @@
+﻿scenario_id,strategy,delivered_on_time_t,delivered_total_t,undelivered_t,completed_trips,vessel_idle_days,fleet_utilization,average_delivery_days,violations,candidate_limit,elapsed_seconds
+r1_baseline,OPTIMIZED,3358.0,10540.265,24109.735,82,86.631829,0.872224,35.020558,0,5,0.24
+r1_baseline,OPTIMIZED,6372.0,11647.184,23002.816,80,92.548218,0.863498,29.254707,0,20,0.497
+r1_baseline,OPTIMIZED,11755.645,12222.459,22427.541,80,88.713148,0.869155,17.268697,0,unlimited,2.782
