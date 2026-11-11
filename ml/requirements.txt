@@ -1,0 +1,7 @@
+numpy>=1.26
+pandas>=2.0
+scikit-learn>=1.3
+joblib>=1.3
+jsonschema>=4.25
+# основной бэкенд MLP по ТЗ; без torch используется sklearn MLP той же архитектуры
+torch>=2.1

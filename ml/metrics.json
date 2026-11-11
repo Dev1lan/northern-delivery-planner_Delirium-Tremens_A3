@@ -1,0 +1,173 @@
+{
+  "disclaimer": "Синтетические сценарии; метки и тоннаж — матмодель Case A3 (алгоритм 2.1.0, эвристика, не глобальный оптимум). Не реальные диспетчерские решения и не факты о Яне. Модель не готова к эксплуатации.",
+  "data": {
+    "file": "dataset_synthetic.csv",
+    "n_scenarios": 520,
+    "n_families": 260,
+    "split": "70/15/15 по family_id",
+    "n_train": 364,
+    "n_val": 78,
+    "n_test": 78,
+    "label_distribution_train": {
+      "OPTIMIZED": 363,
+      "FCFS": 1
+    }
+  },
+  "features": [
+    "cargo_total_t",
+    "cargo_count",
+    "vessel_count",
+    "total_capacity_t",
+    "navigation_days",
+    "route_length_km",
+    "min_allowed_draft_m",
+    "avg_trip_days",
+    "urgent_cargo_share",
+    "fleet_availability_ratio",
+    "demand_to_throughput",
+    "mean_allowed_draft_m",
+    "draft_limited_load_frac",
+    "mean_due_window_days",
+    "mean_ready_fraction"
+  ],
+  "backend": "sklearn",
+  "mlp": {
+    "hidden": 64,
+    "layers": 2,
+    "activation": "ReLU",
+    "loss": "CrossEntropy",
+    "optimizer": "Adam",
+    "best_val_loss": 0.0001,
+    "epochs": 139
+  },
+  "on_time_share_mlp": {
+    "layers": 2,
+    "activation": "ReLU",
+    "solver": "L-BFGS",
+    "hidden": 32,
+    "alpha": 1.0,
+    "val_mae": 0.0695
+  },
+  "test": {
+    "dummy_most_frequent": {
+      "n": 78,
+      "accuracy": 1.0,
+      "accuracy_tie_aware": 1.0,
+      "tonnage_vs_best_ratio": 1.0,
+      "regret_t_mean": 0.0,
+      "regret_t_max": 0.0,
+      "regret_pct_of_demand_mean": 0.0,
+      "share_regret_over_1pct_demand": 0.0
+    },
+    "random_forest": {
+      "n": 78,
+      "accuracy": 1.0,
+      "accuracy_tie_aware": 1.0,
+      "tonnage_vs_best_ratio": 1.0,
+      "regret_t_mean": 0.0,
+      "regret_t_max": 0.0,
+      "regret_pct_of_demand_mean": 0.0,
+      "share_regret_over_1pct_demand": 0.0
+    },
+    "mlp": {
+      "n": 78,
+      "accuracy": 1.0,
+      "accuracy_tie_aware": 1.0,
+      "tonnage_vs_best_ratio": 1.0,
+      "regret_t_mean": 0.0,
+      "regret_t_max": 0.0,
+      "regret_pct_of_demand_mean": 0.0,
+      "share_regret_over_1pct_demand": 0.0
+    },
+    "label_distribution": {
+      "OPTIMIZED": 78
+    },
+    "share_ties_on_tonnage": 0.0,
+    "on_time_share_forecast": {
+      "mlp_mae": {
+        "FCFS": 0.0517,
+        "EARLIEST_DUE": 0.0534,
+        "OPTIMIZED": 0.0448
+      },
+      "random_forest_mae": {
+        "FCFS": 0.0576,
+        "EARLIEST_DUE": 0.0605,
+        "OPTIMIZED": 0.0509
+      },
+      "train_mean_mae": {
+        "FCFS": 0.122,
+        "EARLIEST_DUE": 0.1264,
+        "OPTIMIZED": 0.179
+      }
+    },
+    "ood_flag_rate": 0.0769,
+    "top_ood_reasons": {
+      "mean_due_window_days": 3,
+      "комбинация": 2,
+      "min_allowed_draft_m": 2
+    },
+    "violations_total": 0
+  },
+  "archive_check": {
+    "note": "архивные сценарии проекта (data/scenarios + demo); в обучении не участвовали",
+    "dummy_most_frequent": {
+      "n": 109,
+      "accuracy": 0.9908,
+      "accuracy_tie_aware": 1.0,
+      "tonnage_vs_best_ratio": 1.0,
+      "regret_t_mean": 0.0,
+      "regret_t_max": 0.0,
+      "regret_pct_of_demand_mean": 0.0,
+      "share_regret_over_1pct_demand": 0.0
+    },
+    "random_forest": {
+      "n": 109,
+      "accuracy": 0.9908,
+      "accuracy_tie_aware": 1.0,
+      "tonnage_vs_best_ratio": 1.0,
+      "regret_t_mean": 0.0,
+      "regret_t_max": 0.0,
+      "regret_pct_of_demand_mean": 0.0,
+      "share_regret_over_1pct_demand": 0.0
+    },
+    "mlp": {
+      "n": 109,
+      "accuracy": 0.9908,
+      "accuracy_tie_aware": 1.0,
+      "tonnage_vs_best_ratio": 1.0,
+      "regret_t_mean": 0.0,
+      "regret_t_max": 0.0,
+      "regret_pct_of_demand_mean": 0.0,
+      "share_regret_over_1pct_demand": 0.0
+    },
+    "label_distribution": {
+      "OPTIMIZED": 108,
+      "FCFS": 1
+    },
+    "share_ties_on_tonnage": 0.0092,
+    "on_time_share_forecast": {
+      "mlp_mae": {
+        "FCFS": 0.0295,
+        "EARLIEST_DUE": 0.0312,
+        "OPTIMIZED": 0.0313
+      },
+      "random_forest_mae": {
+        "FCFS": 0.0461,
+        "EARLIEST_DUE": 0.0493,
+        "OPTIMIZED": 0.029
+      },
+      "train_mean_mae": {
+        "FCFS": 0.1809,
+        "EARLIEST_DUE": 0.1878,
+        "OPTIMIZED": 0.2139
+      }
+    },
+    "ood_flag_rate": 0.0092,
+    "top_ood_reasons": {
+      "cargo_count": 1,
+      "комбинация": 1
+    },
+    "violations_total": 0
+  },
+  "train_seconds": 3.8
+}

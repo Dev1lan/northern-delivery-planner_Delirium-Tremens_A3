@@ -1,0 +1,58 @@
+{
+  "provenance": "synthetic",
+  "seed": 20261110,
+  "families": 260,
+  "variants": 2,
+  "generator": "generate.make_cargo / make_conditions матмодели; параметры варьирует a3_bridge.RANGES (сценарные допущения)",
+  "label_source": "optimizer.simulate, алгоритм 2.1.0; метка по (вовремя, всего, −рейсы)",
+  "ranges": {
+    "demand_scale": [
+      0.03,
+      1.5
+    ],
+    "capacity_scale": [
+      0.6,
+      1.2
+    ],
+    "close_early_days": [
+      0,
+      25
+    ],
+    "depth_offset": [
+      -0.25,
+      0.25
+    ],
+    "timing": [
+      -15,
+      15
+    ],
+    "due_lo": [
+      5,
+      20
+    ],
+    "due_span": [
+      5,
+      25
+    ],
+    "speed_scale": [
+      0.8,
+      1.25
+    ],
+    "handling_scale": [
+      0.7,
+      1.5
+    ],
+    "extra_dry": [
+      -1,
+      2
+    ],
+    "extra_oil": [
+      0,
+      1
+    ],
+    "oil_share_scale": [
+      0.5,
+      2.0
+    ]
+  }
+}
