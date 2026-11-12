@@ -1,0 +1,34 @@
+[
+  {
+    "kind": "add_berth",
+    "port": "Нижнеянск",
+    "berth": {
+      "berth_id": "NY-2",
+      "operations": [
+        "LOADING",
+        "UNLOADING"
+      ],
+      "handling_tph": {
+        "coal": 80,
+        "food": 100
+      },
+      "initial_occupancy": [],
+      "source": "Synthetic berth",
+      "data_status": "SYNTHETIC"
+    }
+  },
+  {
+    "kind": "handling_tph",
+    "port": "Нижнеянск",
+    "berth_id": "NY-1",
+    "value": {
+      "coal": 150,
+      "food": 150
+    }
+  },
+  {
+    "kind": "close_berth",
+    "port": "Нижнеянск",
+    "berth_id": "NY-1"
+  }
+]

@@ -1,0 +1,77 @@
+{
+  "tariff_version": 2,
+  "currency": "DEMO",
+  "source_status": "SYNTHETIC",
+  "fuel_basis": "km",
+  "tier": "LOW",
+  "rates": {
+    "loaded_fuel": {
+      "value": 10.5,
+      "unit": "km",
+      "source": "Illustrative sensitivity rates; no market data",
+      "source_status": "SYNTHETIC"
+    },
+    "empty_fuel": {
+      "value": 8.25,
+      "unit": "km",
+      "source": "Illustrative sensitivity rates; no market data",
+      "source_status": "SYNTHETIC"
+    },
+    "tug_operation": {
+      "value": 75.0,
+      "unit": "hour",
+      "source": "Illustrative sensitivity rates; no market data",
+      "source_status": "SYNTHETIC"
+    },
+    "barge_operation": {
+      "value": 22.5,
+      "unit": "hour",
+      "source": "Illustrative sensitivity rates; no market data",
+      "source_status": "SYNTHETIC"
+    },
+    "loading": {
+      "value": 2.25,
+      "unit": "tonne",
+      "source": "Illustrative sensitivity rates; no market data",
+      "source_status": "SYNTHETIC"
+    },
+    "unloading": {
+      "value": 2.25,
+      "unit": "tonne",
+      "source": "Illustrative sensitivity rates; no market data",
+      "source_status": "SYNTHETIC"
+    },
+    "port_call": {
+      "value": 9.0,
+      "unit": "call",
+      "source": "Illustrative sensitivity rates; no market data",
+      "source_status": "SYNTHETIC"
+    },
+    "waiting": {
+      "value": 15.0,
+      "unit": "hour",
+      "source": "Illustrative sensitivity rates; no market data",
+      "source_status": "SYNTHETIC"
+    },
+    "repositioning": {
+      "value": 1.5,
+      "unit": "km",
+      "source": "Illustrative sensitivity rates; no market data",
+      "source_status": "SYNTHETIC"
+    }
+  },
+  "alternative_delivery": {
+    "coal": {
+      "value": 15.0,
+      "unit": "tonne",
+      "source": "Illustrative sensitivity rates; no market data",
+      "source_status": "SYNTHETIC"
+    },
+    "food": {
+      "value": 26.25,
+      "unit": "tonne",
+      "source": "Illustrative sensitivity rates; no market data",
+      "source_status": "SYNTHETIC"
+    }
+  }
+}

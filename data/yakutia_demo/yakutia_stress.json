@@ -1,0 +1,385 @@
+{
+  "scenario_id": "yakutia_stress_synthetic",
+  "data_status": "SYNTHETIC",
+  "start": "2026-07-01T00:00:00",
+  "end": "2026-07-02T00:00:00",
+  "ports": [
+    "Усть-Куйга",
+    "Нижнеянск",
+    "Тикси",
+    "Чокурдах"
+  ],
+  "underkeel_m": 0.15,
+  "fixed_handling_seconds": 0,
+  "edges": [
+    {
+      "edge_id": "AB",
+      "origin_port": "Усть-Куйга",
+      "destination_port": "Нижнеянск",
+      "distance_km": 10,
+      "direction": "upstream",
+      "condition": {
+        "usable_depth_m": 2,
+        "max_allowed_draft_m": 1.8
+      },
+      "data_status": "SYNTHETIC",
+      "source": "Illustrative model; not chart distances"
+    },
+    {
+      "edge_id": "BC",
+      "origin_port": "Нижнеянск",
+      "destination_port": "Тикси",
+      "distance_km": 12,
+      "direction": "upstream",
+      "condition": {
+        "usable_depth_m": 2,
+        "max_allowed_draft_m": 1.8
+      },
+      "data_status": "SYNTHETIC",
+      "source": "Illustrative model; not chart distances",
+      "water_type": "SEA",
+      "navigation_area": "demo_coast",
+      "allowed_vessel_classes": [
+        "DEMO_COASTAL"
+      ],
+      "allowed_pairs": [
+        {
+          "tug_id": "T_LOCAL",
+          "barge_id": "B_LOCAL"
+        },
+        {
+          "tug_id": "T_LARGE",
+          "barge_id": "B_LARGE"
+        }
+      ],
+      "navigation_windows": [
+        {
+          "start": "2026-07-01T00:30:00",
+          "end": "2026-07-01T12:00:00"
+        }
+      ]
+    },
+    {
+      "edge_id": "CB",
+      "origin_port": "Тикси",
+      "destination_port": "Нижнеянск",
+      "distance_km": 12,
+      "direction": "downstream",
+      "condition": {
+        "usable_depth_m": 2,
+        "max_allowed_draft_m": 1.8
+      },
+      "data_status": "SYNTHETIC",
+      "source": "Illustrative model; not chart distances",
+      "water_type": "SEA",
+      "navigation_area": "demo_coast",
+      "allowed_vessel_classes": [
+        "DEMO_COASTAL"
+      ],
+      "allowed_pairs": [
+        {
+          "tug_id": "T_LOCAL",
+          "barge_id": "B_LOCAL"
+        },
+        {
+          "tug_id": "T_LARGE",
+          "barge_id": "B_LARGE"
+        }
+      ],
+      "navigation_windows": [
+        {
+          "start": "2026-07-01T00:30:00",
+          "end": "2026-07-01T12:00:00"
+        }
+      ]
+    },
+    {
+      "edge_id": "BA",
+      "origin_port": "Нижнеянск",
+      "destination_port": "Усть-Куйга",
+      "distance_km": 10,
+      "direction": "downstream",
+      "condition": {
+        "usable_depth_m": 2,
+        "max_allowed_draft_m": 1.8
+      },
+      "data_status": "SYNTHETIC",
+      "source": "Illustrative model; not chart distances"
+    },
+    {
+      "edge_id": "BD",
+      "origin_port": "Нижнеянск",
+      "destination_port": "Чокурдах",
+      "distance_km": 45,
+      "direction": "upstream",
+      "condition": {
+        "usable_depth_m": 2,
+        "max_allowed_draft_m": 1.8
+      },
+      "data_status": "SYNTHETIC",
+      "source": "Illustrative model; not chart distances",
+      "water_type": "SEA",
+      "navigation_area": "demo_coast",
+      "allowed_vessel_classes": [
+        "DEMO_COASTAL"
+      ],
+      "allowed_pairs": [
+        {
+          "tug_id": "T_LOCAL",
+          "barge_id": "B_LOCAL"
+        },
+        {
+          "tug_id": "T_LARGE",
+          "barge_id": "B_LARGE"
+        }
+      ],
+      "navigation_windows": [
+        {
+          "start": "2026-07-01T00:30:00",
+          "end": "2026-07-01T12:00:00"
+        }
+      ]
+    },
+    {
+      "edge_id": "DB",
+      "origin_port": "Чокурдах",
+      "destination_port": "Нижнеянск",
+      "distance_km": 45,
+      "direction": "upstream",
+      "condition": {
+        "usable_depth_m": 2,
+        "max_allowed_draft_m": 1.8
+      },
+      "data_status": "SYNTHETIC",
+      "source": "Illustrative model; not chart distances",
+      "water_type": "SEA",
+      "navigation_area": "demo_coast",
+      "allowed_vessel_classes": [
+        "DEMO_COASTAL"
+      ],
+      "allowed_pairs": [
+        {
+          "tug_id": "T_LOCAL",
+          "barge_id": "B_LOCAL"
+        },
+        {
+          "tug_id": "T_LARGE",
+          "barge_id": "B_LARGE"
+        }
+      ],
+      "navigation_windows": [
+        {
+          "start": "2026-07-01T00:30:00",
+          "end": "2026-07-01T12:00:00"
+        }
+      ]
+    }
+  ],
+  "tugs": [
+    {
+      "vessel_id": "T_LOCAL",
+      "current_port": "Усть-Куйга",
+      "available_at": "2026-07-01T00:00:00",
+      "available_to": "2026-07-02T00:00:00",
+      "draft_empty_m": 0.35,
+      "speed_upstream_kmh": 10,
+      "speed_downstream_kmh": 12,
+      "data_status": "SYNTHETIC",
+      "source": "Demonstration vessel",
+      "vessel_class": "DEMO_COASTAL",
+      "navigation_permits": [
+        {
+          "area": "demo_coast",
+          "status": "SCENARIO_ASSUMPTION",
+          "source": "Synthetic marine approval fixture"
+        }
+      ]
+    },
+    {
+      "vessel_id": "T_LARGE",
+      "current_port": "Тикси",
+      "available_at": "2026-07-01T00:00:00",
+      "available_to": "2026-07-02T00:00:00",
+      "draft_empty_m": 0.35,
+      "speed_upstream_kmh": 10,
+      "speed_downstream_kmh": 12,
+      "data_status": "SYNTHETIC",
+      "source": "Demonstration vessel",
+      "vessel_class": "DEMO_COASTAL",
+      "navigation_permits": [
+        {
+          "area": "demo_coast",
+          "status": "SCENARIO_ASSUMPTION",
+          "source": "Synthetic marine approval fixture"
+        }
+      ]
+    }
+  ],
+  "barges": [
+    {
+      "vessel_id": "B_LOCAL",
+      "current_port": "Усть-Куйга",
+      "available_at": "2026-07-01T00:00:00",
+      "available_to": "2026-07-02T00:00:00",
+      "capacity_t": 25,
+      "draft_empty_m": 0.3,
+      "draft_full_m": 1.1,
+      "handling_tph": 100,
+      "cargo_types_allowed": [
+        "coal",
+        "food"
+      ],
+      "data_status": "SYNTHETIC",
+      "source": "Demonstration vessel",
+      "vessel_class": "DEMO_COASTAL",
+      "navigation_permits": [
+        {
+          "area": "demo_coast",
+          "status": "SCENARIO_ASSUMPTION",
+          "source": "Synthetic marine approval fixture"
+        }
+      ]
+    },
+    {
+      "vessel_id": "B_LARGE",
+      "current_port": "Тикси",
+      "available_at": "2026-07-01T00:00:00",
+      "available_to": "2026-07-02T00:00:00",
+      "capacity_t": 100,
+      "draft_empty_m": 0.3,
+      "draft_full_m": 1.1,
+      "handling_tph": 100,
+      "cargo_types_allowed": [
+        "coal",
+        "food"
+      ],
+      "data_status": "SYNTHETIC",
+      "source": "Demonstration vessel",
+      "vessel_class": "DEMO_COASTAL",
+      "navigation_permits": [
+        {
+          "area": "demo_coast",
+          "status": "SCENARIO_ASSUMPTION",
+          "source": "Synthetic marine approval fixture"
+        }
+      ]
+    }
+  ],
+  "compatible_pairs": [
+    {
+      "tug_id": "T_LOCAL",
+      "barge_id": "B_LOCAL"
+    },
+    {
+      "tug_id": "T_LARGE",
+      "barge_id": "B_LARGE"
+    }
+  ],
+  "social_requirements": [
+    {
+      "requirement_id": "FOOD",
+      "cargo_types": [
+        "food"
+      ],
+      "required_t": 55,
+      "deadline": "2026-07-01T08:30:00",
+      "basis": "delivered_by_deadline",
+      "source_status": "SCENARIO_ASSUMPTION"
+    }
+  ],
+  "cargo": [
+    {
+      "cargo_id": "AB",
+      "cargo_type": "coal",
+      "origin_port": "Усть-Куйга",
+      "destination_port": "Нижнеянск",
+      "volume_t": 100,
+      "ready_at": "2026-07-01T00:00:00",
+      "due_at": "2026-07-01T05:15:00",
+      "priority": 0,
+      "critical_category": null,
+      "data_status": "SYNTHETIC",
+      "source": "Synthetic demand for comparison"
+    },
+    {
+      "cargo_id": "BC",
+      "cargo_type": "food",
+      "origin_port": "Нижнеянск",
+      "destination_port": "Тикси",
+      "volume_t": 80,
+      "ready_at": "2026-07-01T00:00:00",
+      "due_at": "2026-07-01T09:00:00",
+      "priority": 0,
+      "critical_category": "food",
+      "data_status": "SYNTHETIC",
+      "source": "Synthetic demand for comparison"
+    },
+    {
+      "cargo_id": "BD",
+      "cargo_type": "coal",
+      "origin_port": "Нижнеянск",
+      "destination_port": "Чокурдах",
+      "volume_t": 120,
+      "ready_at": "2026-07-01T04:00:00",
+      "due_at": "2026-07-01T09:45:00",
+      "priority": 0,
+      "critical_category": null,
+      "data_status": "SYNTHETIC",
+      "source": "Synthetic demand for comparison"
+    }
+  ],
+  "source": "Illustrative topology inspired by TZ_final_network.md; scenario distances, dates, fleet, ports and tariffs are synthetic",
+  "port_display": {
+    "Усть-Куйга": {
+      "x": 0.22,
+      "y": 0.78,
+      "basin": "Яна",
+      "data_status": "SYNTHETIC"
+    },
+    "Нижнеянск": {
+      "x": 0.36,
+      "y": 0.42,
+      "basin": "Яна",
+      "data_status": "SYNTHETIC"
+    },
+    "Тикси": {
+      "x": 0.12,
+      "y": 0.2,
+      "basin": "Лена",
+      "data_status": "SYNTHETIC"
+    },
+    "Чокурдах": {
+      "x": 0.82,
+      "y": 0.48,
+      "basin": "Индигирка",
+      "data_status": "SYNTHETIC"
+    }
+  },
+  "port_operations": {
+    "Нижнеянск": {
+      "berths": [
+        {
+          "berth_id": "NY-1",
+          "operations": [
+            "LOADING",
+            "UNLOADING"
+          ],
+          "handling_tph": {
+            "coal": 80,
+            "food": 100
+          },
+          "initial_occupancy": [
+            {
+              "start": "2026-07-01T00:00:00",
+              "end": "2026-07-01T04:30:00"
+            }
+          ],
+          "source": "Synthetic berth",
+          "data_status": "SYNTHETIC"
+        }
+      ],
+      "source": "Synthetic port profile",
+      "data_status": "SYNTHETIC"
+    }
+  }
+}
