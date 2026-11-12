@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Якутия · Планирование водных перевозок</title>
+<link rel="stylesheet" href="/style.css">
+<main>
+  <header>
+    <h1>Водные перевозки Якутии</h1>
+    <p>Стресс-сценарий Delirium Tremens A3. Граф, допуски и тарифы синтетические. Карта схематическая.</p>
+  </header>
+  <div class="controls">
+    <label>Вариант <select id="variant"></select></label>
+    <button id="recalculate">Рассчитать заново</button>
+    <button id="play">Показать решение</button>
+    <span id="status" role="status"></span>
+  </div>
+  <div class="grid">
+    <section aria-labelledby="map-heading">
+      <h2 id="map-heading">Сеть и флот</h2>
+      <canvas id="map" width="720" height="300" aria-label="Схема сети и положения судов"></canvas>
+      <p class="legend"><span>Река</span><span>Море</span><span>Перегон</span><span>Рейс с грузом</span></p>
+      <label class="timeline">Время <input type="range" id="time" min="0" step="60" value="0"> <output id="moment"></output></label>
+      <ul id="fleet"></ul>
+    </section>
+    <section>
+      <h2>Порты и причалы</h2>
+      <ul id="ports"></ul>
+      <div id="port-card"></div>
+      <h2>Диагностика</h2>
+      <ul id="diagnosis"></ul>
+    </section>
+  </div>
+  <section>
+    <h2>Сравнение вариантов</h2>
+    <div class="scroll"><table>
+      <thead><tr><th>Вариант</th><th>В срок, т</th><th>Всего, т</th><th>Критичных в срок, т</th><th>Дефицит минимума, т</th><th>Очередь, ч</th><th>Стоимость, DEMO</th><th>Аудит</th></tr></thead>
+      <tbody id="comparison"></tbody>
+    </table></div>
+  </section>
+  <div class="grid">
+    <section>
+      <h2>Проверенные изменения</h2>
+      <ul id="improvements"></ul>
+      <label>Что, если? <select id="change"></select></label>
+      <button id="check-change">Пересчитать вариант</button>
+      <p id="change-result" aria-live="polite"></p>
+    </section>
+    <section><h2>Рейсы выбранного варианта</h2><ul id="voyages"></ul><p id="explanation" aria-live="polite"></p></section>
+  </div>
+  <details><summary>Входные данные и воспроизводимость</summary><p id="reproduction"></p><a href="/api/demo">JSON расчёта</a></details>
+</main>
+<script type="module" src="/app.js"></script>
+</html>

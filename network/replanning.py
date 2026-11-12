@@ -1,12 +1,14 @@
 """Replan the unstarted work while retaining the executed and committed itinerary."""
 
 from collections import defaultdict
+from network.access import admission_error
 from copy import deepcopy
 
 from network.adapter import audit_result, decode_voyages, run_scenario
 from network.metrics import event_rows
-from network.models import handling_time, loaded_draft, parse_scenario, sailing_time, timestamp
+from network.models import loaded_draft, parse_scenario, sailing_time, timestamp
 from network.routing import passage_open
+from network.ports import service_duration
 from network.scheduler import REPOSITION, RETURN_EMPTY
 from network.validator import replay, requirement_report
 from result_adapter import fingerprint
@@ -39,8 +41,8 @@ def replan(previous, revised_raw, as_of, *, resource_updates=None, delivered_t=N
     reserved = defaultdict(int)
     for move in locked:
         old, new = original.cargo[move.cargo_id], revised.cargo.get(move.cargo_id)
-        if new is None or (old.type, old.origin, old.destination, old.ready, old.due) != (
-                new.type, new.origin, new.destination, new.ready, new.due):
+        if new is None or (old.type, old.origin, old.destination, old.ready, old.due, old.expires_at) != (
+                new.type, new.origin, new.destination, new.ready, new.due, new.expires_at):
             raise ValueError(f'Locked cargo identity or dates changed: {move.cargo_id}')
         reserved[move.cargo_id] += move.kg
         if move.unloading_end <= instant:
@@ -93,6 +95,7 @@ def replan(previous, revised_raw, as_of, *, resource_updates=None, delivered_t=N
             if key not in active and ready > instant:
                 observed[key].update(state='UNAVAILABLE', available_at=ready.isoformat())
 
+    berth_locks = defaultdict(list)
     for move in locked:
         if move.end <= instant:
             continue
@@ -102,10 +105,26 @@ def replan(previous, revised_raw, as_of, *, resource_updates=None, delivered_t=N
             return intervention('ONGOING_RESOURCE_UNAVAILABLE', move.cargo_id)
         if move.kg > barge.capacity_kg or revised.cargo[move.cargo_id].type not in barge.cargo_types:
             return intervention('ONGOING_LOAD_INCOMPATIBLE', move.cargo_id)
-        handling = handling_time(revised, barge, move.kg)
-        if ((move.departure > instant and move.departure - move.load_start != handling)
-                or move.unloading_end - move.loaded[-1].arrive != handling):
-            return intervention('ONGOING_HANDLING_CHANGED', move.cargo_id)
+        cargo = revised.cargo[move.cargo_id]
+        for port, berth_id, kind, a, b in (
+                (cargo.origin, move.loading_berth, 'LOADING', move.load_start, move.departure),
+                (cargo.destination, move.unloading_berth, 'UNLOADING', move.unload_start, move.unloading_end)):
+            if b <= instant:
+                continue
+            berth = next((x for x in revised.berths.get(port, ()) if x.id == berth_id), None)
+            if (port in revised.berths) != (berth is not None) or (berth_id is not None and berth is None):
+                return intervention('ONGOING_BERTH_UNAVAILABLE', str(berth_id))
+            duration = service_duration(revised, berth, kind, barge, cargo.type, move.kg,
+                                        loaded_draft(tug, barge, move.kg))
+            if duration != b - a:
+                return intervention('ONGOING_HANDLING_CHANGED', move.cargo_id)
+            if berth is not None:
+                active_start = max(a, instant)
+                occupied = (*berth.occupied, *berth_locks[berth_id])
+                if (not any(x <= active_start < b <= y for x, y in berth.windows)
+                        or any(active_start < y and x < b for x, y in occupied)):
+                    return intervention('ONGOING_BERTH_UNAVAILABLE', berth_id)
+                berth_locks[berth_id].append((active_start, b))
         for legs, kg in ((move.empty, 0), (move.loaded, move.kg)):
             draft = loaded_draft(tug, barge, kg)
             for leg in legs:
@@ -115,11 +134,16 @@ def replan(previous, revised_raw, as_of, *, resource_updates=None, delivered_t=N
                 new_edge = revised.edges.get(leg.edge_id)
                 if (new_edge is None or (old_edge.origin, old_edge.destination) != (new_edge.origin, new_edge.destination)
                         or sailing_time(new_edge, tug) != leg.arrive - leg.depart
+                        or admission_error(revised, new_edge, tug, barge)
                         or not passage_open(revised, new_edge, max(instant, leg.depart), leg.arrive, draft)):
                     return intervention('ONGOING_PASSAGE_UNSAFE', leg.edge_id)
 
     suffix = deepcopy(revised_raw)
     suffix['start'] = instant.isoformat()
+    for port in suffix.get('port_operations', {}).values():
+        for berth in port['berths']:
+            booked = [{'start': a.isoformat(), 'end': b.isoformat()} for a, b in berth_locks[berth['berth_id']]]
+            berth['initial_occupancy'] = [*berth.get('initial_occupancy', []), *booked]
     # Existing resources follow the execution log; revised availability can delay them.
     available_ids = set()
     for key in ('tugs', 'barges'):
@@ -139,7 +163,8 @@ def replan(previous, revised_raw, as_of, *, resource_updates=None, delivered_t=N
     for row in suffix['cargo']:
         row['volume_t'] = (revised.cargo[row['cargo_id']].kg - reserved[row['cargo_id']]) / 1000
     locked_rows = [{'cargo_type': revised.cargo[v.cargo_id].type, 'volume_t': v.kg / 1000,
-                    'unloading_end': v.unloading_end.isoformat()} for v in locked]
+                    'unloading_end': v.unloading_end.isoformat()} for v in locked
+                   if revised.cargo[v.cargo_id].usable_at(v.unloading_end)]
     credited, _ = delivered_kg(revised.requirements, locked_rows)
     suffix['social_requirements'] = [{**r.as_dict(), 'required_t': max(0, r.required_kg - credited[r]) / 1000}
                                      for r in revised.requirements]

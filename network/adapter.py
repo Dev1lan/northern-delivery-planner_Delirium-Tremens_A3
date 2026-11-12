@@ -9,9 +9,10 @@ import sys
 
 from network import VERSION
 from network.financial import evaluate_schedule
-from network.metrics import event_rows, summarize
+from network.metrics import cargo_condition, event_rows, summarize
 from network.models import Leg, Limits, Voyage, parse_scenario, timestamp
-from network.scheduler import REPOSITION, RETURN_EMPTY, STRATEGIES, Scheduler
+from network.ports import port_report
+from network.scheduler import COST, REPOSITION, RETURN_EMPTY, STRATEGIES, Scheduler
 from network.validator import audit, replay, requirement_report
 from result_adapter import fingerprint
 from social_requirements import kilograms
@@ -22,10 +23,15 @@ def encode_voyage(move):
         return [{'edge_id': leg.edge_id, 'depart': leg.depart.isoformat(), 'arrive': leg.arrive.isoformat()}
                 for leg in items]
 
-    return {'tug_id': move.tug_id, 'barge_id': move.barge_id, 'cargo_id': move.cargo_id,
+    row = {'tug_id': move.tug_id, 'barge_id': move.barge_id, 'cargo_id': move.cargo_id,
             'volume_t': move.kg / 1000, 'empty': legs(move.empty), 'load_start': move.load_start.isoformat(),
             'departure': move.departure.isoformat(), 'loaded': legs(move.loaded),
             'unloading_end': move.unloading_end.isoformat(), 'return_empty': legs(move.return_empty)}
+    if move.loading_berth is not None:
+        row.update(loading_berth=move.loading_berth, port_ready_at=move.port_ready_at.isoformat())
+    if move.unloading_berth is not None:
+        row.update(unloading_berth=move.unloading_berth, unloading_start=move.unload_start.isoformat())
+    return row
 
 
 def decode_voyages(rows):
@@ -36,7 +42,11 @@ def decode_voyages(rows):
     return tuple(Voyage(row['tug_id'], row['barge_id'], row['cargo_id'], kilograms(row['volume_t']),
                         legs(row['empty']), timestamp(row['load_start'], 'load_start'),
                         timestamp(row['departure'], 'departure'), legs(row['loaded']),
-                        timestamp(row['unloading_end'], 'unloading_end'), legs(row['return_empty'])) for row in rows)
+                        timestamp(row['unloading_end'], 'unloading_end'), legs(row['return_empty']),
+                        row.get('loading_berth'), row.get('unloading_berth'),
+                        timestamp(row['port_ready_at'], 'port_ready_at') if 'port_ready_at' in row else None,
+                        timestamp(row['unloading_start'], 'unloading_start') if 'unloading_start' in row else None)
+                 for row in rows)
 
 
 def _events(scenario, moves):
@@ -54,19 +64,26 @@ def _resources(scenario, locations):
 
 def build_result(raw, scenario, plan, limits, tariffs=None):
     moves = tuple(sorted(plan.moves, key=lambda move: (move.start, move.tug_id, move.barge_id, move.cargo_id)))
-    policy = {'allow_reposition': plan.strategy == REPOSITION, 'allow_return': plan.strategy == RETURN_EMPTY}
+    policy = {'allow_reposition': plan.strategy in (REPOSITION, COST), 'allow_return': plan.strategy == RETURN_EMPTY}
     state = replay(scenario, moves, **policy)
     report = {'schedule_audit': {'status': 'PASSED', 'violations': []}, **requirement_report(scenario, moves)}
     metrics, financial_inputs, cargo_status = summarize(scenario, moves, report)
     final_resources = _resources(scenario, state.locations)
     result = {'schema_version': VERSION, 'algorithm_version': VERSION, 'scenario_id': scenario.id,
-              'data_status': 'SYNTHETIC', 'strategy': plan.strategy, 'scenario': deepcopy(raw),
+              'data_status': scenario.data_status, 'strategy': plan.strategy, 'scenario': deepcopy(raw),
               'input_fingerprint': fingerprint(raw), 'parameters': asdict(limits),
               'termination_reason': plan.termination_reason, 'expanded_states': plan.expanded_states,
               **report, 'metrics': metrics, 'financial_inputs': financial_inputs, 'cargo_status': cargo_status,
               'voyages': [encode_voyage(move) for move in moves], 'final_resources': final_resources,
               'events': _events(scenario, moves),
               'reposition_comparison': None, 'financial_evaluation': None}
+    if scenario.berths:
+        result['port_operations'] = port_report(scenario, result['events'])
+    if any(c.expires_at is not None for c in scenario.cargo.values()):
+        result['cargo_condition'] = cargo_condition(scenario, moves)
+    if plan.cost_service_floor is not None:
+        timely, total = plan.cost_service_floor
+        result['cost_service_floor'] = {'on_time_t': timely / 1000, 'total_t': total / 1000}
     if plan.counterfactual is not None:
         replay(scenario, plan.counterfactual, allow_reposition=False)
         baseline_report = requirement_report(scenario, plan.counterfactual)
@@ -98,19 +115,24 @@ def build_result(raw, scenario, plan, limits, tariffs=None):
 def run_scenario(raw, strategy=REPOSITION, *, limits=None, tariffs=None):
     limits = limits or Limits()
     scenario = parse_scenario(raw)
-    return build_result(raw, scenario, Scheduler(scenario, limits).plan(strategy), limits, tariffs)
+    model = None
+    if strategy == COST and tariffs is not None and tariffs.get('tariff_version') == 2:
+        from network.costs import CostModel
+        model = CostModel(scenario, tariffs)
+    return build_result(raw, scenario, Scheduler(scenario, limits, model).plan(strategy), limits, tariffs)
 
 
-def audit_result(result):
+def audit_result(result, *, require_cost=True):
     """Recheck embedded inputs and voyages from a stored result without planning."""
     if result['schema_version'] != VERSION or fingerprint(result['scenario']) != result['input_fingerprint']:
         raise ValueError('Invalid network version or input fingerprint')
     scenario = parse_scenario(result['scenario'])
     strategy = result['strategy']
-    if scenario.id != result['scenario_id'] or strategy not in (*STRATEGIES, RETURN_EMPTY):
+    if (scenario.id != result['scenario_id'] or result['data_status'] != scenario.data_status
+            or strategy not in (*STRATEGIES, RETURN_EMPTY, COST)):
         raise ValueError('Invalid scenario or strategy')
     moves = decode_voyages(result['voyages'])
-    policy = {'allow_reposition': strategy == REPOSITION, 'allow_return': strategy == RETURN_EMPTY}
+    policy = {'allow_reposition': strategy in (REPOSITION, COST), 'allow_return': strategy == RETURN_EMPTY}
     report = audit(scenario, moves, **policy)
     if report['schedule_audit']['status'] == 'FAILED':
         return report
@@ -118,6 +140,23 @@ def audit_result(result):
     metrics, finance, cargo_status = summarize(scenario, moves, report)
     expected = {**report, 'events': _events(scenario, moves), 'metrics': metrics, 'financial_inputs': finance,
                 'cargo_status': cargo_status, 'final_resources': _resources(scenario, state.locations)}
+    if scenario.berths:
+        expected['port_operations'] = port_report(scenario, expected['events'])
+    if any(c.expires_at is not None for c in scenario.cargo.values()):
+        expected['cargo_condition'] = cargo_condition(scenario, moves)
+    priced = result.get('financial_evaluation')
+    if priced and ('tariff_parameters' in priced or strategy == COST):
+        from network.costs import CostModel
+        try:
+            expected['financial_evaluation'] = CostModel(scenario, priced['tariff_parameters']).breakdown(moves)
+        except (ValueError, KeyError, TypeError) as exc:
+            report['schedule_audit'] = {'status': 'FAILED', 'violations': [
+                {'voyage': None, 'code': 'INVALID_TARIFF_PARAMETERS', 'detail': str(exc)}]}
+            return report
+    elif strategy == COST and require_cost:
+        report['schedule_audit'] = {'status': 'FAILED', 'violations': [
+            {'voyage': None, 'code': 'MISSING_TARIFF_PARAMETERS', 'detail': 'NETWORK_COST needs version 2 tariffs'}]}
+        return report
     mismatches = [name for name, value in expected.items() if result.get(name) != value]
     if mismatches:
         code = 'EVENT_LOG_MISMATCH' if 'events' in mismatches else 'DERIVED_FIELDS_MISMATCH'
@@ -129,7 +168,7 @@ def audit_result(result):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('scenario', type=Path, help='Synthetic scenario JSON')
-    parser.add_argument('--strategy', choices=(*STRATEGIES, RETURN_EMPTY), default=REPOSITION)
+    parser.add_argument('--strategy', choices=(*STRATEGIES, RETURN_EMPTY, COST), default=REPOSITION)
     parser.add_argument('--limits', type=Path, help='JSON object overriding search limits')
     parser.add_argument('--tariffs', type=Path)
     parser.add_argument('--output', type=Path)

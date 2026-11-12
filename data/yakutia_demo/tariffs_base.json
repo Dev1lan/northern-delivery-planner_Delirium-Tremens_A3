@@ -1,0 +1,77 @@
+{
+  "tariff_version": 2,
+  "currency": "DEMO",
+  "source_status": "SYNTHETIC",
+  "fuel_basis": "km",
+  "tier": "BASE",
+  "rates": {
+    "loaded_fuel": {
+      "value": 14,
+      "unit": "km",
+      "source": "Illustrative sensitivity rates; no market data",
+      "source_status": "SYNTHETIC"
+    },
+    "empty_fuel": {
+      "value": 11,
+      "unit": "km",
+      "source": "Illustrative sensitivity rates; no market data",
+      "source_status": "SYNTHETIC"
+    },
+    "tug_operation": {
+      "value": 100,
+      "unit": "hour",
+      "source": "Illustrative sensitivity rates; no market data",
+      "source_status": "SYNTHETIC"
+    },
+    "barge_operation": {
+      "value": 30,
+      "unit": "hour",
+      "source": "Illustrative sensitivity rates; no market data",
+      "source_status": "SYNTHETIC"
+    },
+    "loading": {
+      "value": 3,
+      "unit": "tonne",
+      "source": "Illustrative sensitivity rates; no market data",
+      "source_status": "SYNTHETIC"
+    },
+    "unloading": {
+      "value": 3,
+      "unit": "tonne",
+      "source": "Illustrative sensitivity rates; no market data",
+      "source_status": "SYNTHETIC"
+    },
+    "port_call": {
+      "value": 12,
+      "unit": "call",
+      "source": "Illustrative sensitivity rates; no market data",
+      "source_status": "SYNTHETIC"
+    },
+    "waiting": {
+      "value": 20,
+      "unit": "hour",
+      "source": "Illustrative sensitivity rates; no market data",
+      "source_status": "SYNTHETIC"
+    },
+    "repositioning": {
+      "value": 2,
+      "unit": "km",
+      "source": "Illustrative sensitivity rates; no market data",
+      "source_status": "SYNTHETIC"
+    }
+  },
+  "alternative_delivery": {
+    "coal": {
+      "value": 20,
+      "unit": "tonne",
+      "source": "Illustrative sensitivity rates; no market data",
+      "source_status": "SYNTHETIC"
+    },
+    "food": {
+      "value": 35,
+      "unit": "tonne",
+      "source": "Illustrative sensitivity rates; no market data",
+      "source_status": "SYNTHETIC"
+    }
+  }
+}

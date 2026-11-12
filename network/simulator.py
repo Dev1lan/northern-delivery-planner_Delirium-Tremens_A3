@@ -2,21 +2,25 @@
 
 from network.models import Voyage, handling_time, loaded_draft
 from network.routing import paths
+from network.ports import slots
 
 
 def voyages(scenario, tug, barge, cargo, capacity, origin, ready, limits, *,
-            allow_reposition=False, require_return=False, requirement=None, deficit_kg=0):
+            allow_reposition=False, require_return=False, requirement=None, deficit_kg=0, bookings=None):
+    bookings = bookings or {}
     cutoff = min(scenario.end, tug.available_to, barge.available_to)
-    if ready >= cutoff or cargo.ready >= cutoff or not capacity:
+    delivery_cutoff = min(cutoff, cargo.expires_at) if cargo.expires_at is not None else cutoff
+    if ready >= delivery_cutoff or cargo.ready >= delivery_cutoff or not capacity:
         return ()
     if origin != cargo.origin and not allow_reposition:
         return ()
     empty_draft = loaded_draft(tug, barge, 0)
-    empty_cutoff = min(cutoff, cargo.due) if origin != cargo.origin else cutoff
-    approaches = paths(scenario, tug, origin, cargo.origin, ready, empty_cutoff, empty_draft, limits)
+    empty_cutoff = min(delivery_cutoff, cargo.due) if origin != cargo.origin else delivery_cutoff
+    approaches = paths(scenario, tug, barge, origin, cargo.origin, ready, empty_cutoff, empty_draft,
+                       limits, reposition=True)
     results = {}
     for empty in approaches:
-        load_start = max(cargo.ready, empty[-1].arrive if empty else ready)
+        at_pickup = max(cargo.ready, empty[-1].arrive if empty else ready)
         cached = {}
 
         def at_mass(kg, deadline):
@@ -24,22 +28,27 @@ def voyages(scenario, tug, barge, cargo, capacity, origin, ready, limits, *,
             if key in cached:
                 return cached[key]
             handling = handling_time(scenario, barge, kg)
-            departure = load_start + handling
             draft = loaded_draft(tug, barge, kg)
             options = []
-            for loaded in paths(scenario, tug, cargo.origin, cargo.destination, departure,
-                                deadline - handling, draft, limits):
-                unloaded = loaded[-1].arrive + handling
-                back = paths(scenario, tug, cargo.destination, cargo.origin, unloaded, cutoff,
-                             empty_draft, limits) if require_return else ((),)
-                for return_legs in back:
-                    options.append(Voyage(tug.id, barge.id, cargo.id, kg, empty, load_start, departure,
-                                          loaded, unloaded, return_legs))
+            earliest_unload = deadline if cargo.destination in scenario.berths else deadline - handling
+            for loader, load_start, departure in slots(scenario, cargo.origin, 'LOADING', barge, cargo.type,
+                                                       kg, draft, at_pickup, earliest_unload, bookings):
+                for loaded in paths(scenario, tug, barge, cargo.origin, cargo.destination, departure,
+                                    earliest_unload, draft, limits):
+                    for unloader, unload_start, unloaded in slots(
+                            scenario, cargo.destination, 'UNLOADING', barge, cargo.type,
+                            kg, draft, loaded[-1].arrive, deadline, bookings):
+                        back = paths(scenario, tug, barge, cargo.destination, cargo.origin, unloaded, cutoff,
+                                     empty_draft, limits) if require_return else ((),)
+                        for return_legs in back:
+                            options.append(Voyage(tug.id, barge.id, cargo.id, kg, empty, load_start, departure,
+                                                  loaded, unloaded, return_legs, loader, unloader,
+                                                  at_pickup if loader else None, unload_start if unloader else None))
             cached[key] = tuple(options)
             return cached[key]
 
         def best_mass(kg, deadline):
-            if kg < 1 or deadline <= load_start:
+            if kg < 1 or deadline <= at_pickup:
                 return ()
             first = at_mass(kg, deadline)
             if first:
@@ -55,11 +64,11 @@ def voyages(scenario, tug, barge, cargo, capacity, origin, ready, limits, *,
                     hi = mid - 1
             return at_mass(lo, deadline) if lo else ()
 
-        local_cutoff = min(cutoff, cargo.due) if empty else cutoff
+        local_cutoff = min(delivery_cutoff, cargo.due) if empty else delivery_cutoff
         options = best_mass(capacity, local_cutoff)
         for option in options:
             results[option] = None
-        if not empty and cargo.due < cutoff and not any(v.unloading_end <= cargo.due for v in options):
+        if not empty and cargo.due < delivery_cutoff and not any(v.unloading_end <= cargo.due for v in options):
             for option in best_mass(capacity, cargo.due):
                 results[option] = None
         if requirement is not None and deficit_kg:

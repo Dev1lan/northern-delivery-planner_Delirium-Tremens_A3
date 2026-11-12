@@ -25,6 +25,8 @@
 !/data/demo/**
 !/data/network_demo/
 !/data/network_demo/**
+!/data/yakutia_demo/
+!/data/yakutia_demo/**
 !/results/
 /results/*
 !/results/demo/

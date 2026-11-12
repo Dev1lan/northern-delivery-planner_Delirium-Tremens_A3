@@ -4,10 +4,15 @@ from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 
 def evaluate_schedule(schedule, financial_parameters):
-    from network.adapter import audit_result
+    from network.adapter import audit_result, decode_voyages
 
-    if audit_result(schedule)['schedule_audit']['status'] != 'PASSED':
+    if audit_result(schedule, require_cost=False)['schedule_audit']['status'] != 'PASSED':
         raise ValueError('Only audited schedules can be priced')
+    if financial_parameters.get('tariff_version') == 2:
+        from network.costs import CostModel
+        from network.models import parse_scenario
+        model = CostModel(parse_scenario(schedule['scenario']), financial_parameters)
+        return model.breakdown(decode_voyages(schedule['voyages']))
     currency = financial_parameters.get('currency')
     source = financial_parameters.get('source_status')
     rates = financial_parameters.get('rates')

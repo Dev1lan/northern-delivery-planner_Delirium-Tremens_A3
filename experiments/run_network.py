@@ -15,7 +15,7 @@ from network import VERSION
 from network.adapter import audit_result, run_scenario
 from network.models import Limits, parse_scenario
 from network.replanning import replan
-from network.scheduler import REPOSITION, RETURN_EMPTY, SOCIAL, STRATEGIES
+from network.scheduler import COST, REPOSITION, RETURN_EMPTY, SOCIAL, STRATEGIES
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -26,7 +26,7 @@ SCHEMA = ROOT / 'result.v3.schema.json'
 def run(paths, output, *, strategies=(*STRATEGIES, RETURN_EMPTY), limits=None,
         tariffs=None, revision=None, replan_demo=False):
     limits = limits or Limits()
-    if not strategies or len(set(strategies)) != len(strategies) or set(strategies) - {*STRATEGIES, RETURN_EMPTY}:
+    if not strategies or len(set(strategies)) != len(strategies) or set(strategies) - {*STRATEGIES, RETURN_EMPTY, COST}:
         raise ValueError('Select distinct supported strategies')
     scenarios = {}
     for path in paths:
@@ -57,7 +57,9 @@ def run(paths, output, *, strategies=(*STRATEGIES, RETURN_EMPTY), limits=None,
         sources.append(demo_update)
         write_json(output / 'replan_input.json', read_json(demo_update))
     write_json(output / 'manifest.json', {'algorithm_version': VERSION, 'revision': revision,
-               'python': platform.python_version(), 'platform': platform.platform(), 'data_status': 'SYNTHETIC',
+               'python': platform.python_version(), 'platform': platform.platform(),
+               'data_status': (next(iter(statuses)) if len(statuses := {s['data_status'] for s in scenarios.values()}) == 1
+                               else 'MIXED'),
                'strategies': list(strategies), 'parameters': asdict(limits),
                'source_sha256': {p.relative_to(ROOT).as_posix(): sha256(p) for p in sources},
                'input_sha256': {p.name: sha256(p) for p in sorted(inputs.glob('*.json'))},
@@ -118,17 +120,19 @@ def run(paths, output, *, strategies=(*STRATEGIES, RETURN_EMPTY), limits=None,
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--scenario', type=Path, action='append', help='Repeat for several inputs. Default: network demo suite')
-    parser.add_argument('--strategy', choices=(*STRATEGIES, RETURN_EMPTY), action='append')
+    parser.add_argument('--strategy', choices=(*STRATEGIES, RETURN_EMPTY, COST), action='append')
     parser.add_argument('--limits', type=Path)
     parser.add_argument('--tariffs', type=Path)
     parser.add_argument('--revision')
     parser.add_argument('--replan-demo', action='store_true')
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args(argv)
+    tariffs = read_json(args.tariffs) if args.tariffs else None
+    defaults = (*STRATEGIES, RETURN_EMPTY, COST) if tariffs and tariffs.get('tariff_version') == 2 else (*STRATEGIES, RETURN_EMPTY)
     result = run(args.scenario or sorted(DEMO.glob('*.json')), args.output,
-                 strategies=tuple(args.strategy or (*STRATEGIES, RETURN_EMPTY)),
+                 strategies=tuple(args.strategy or defaults),
                  limits=Limits(**read_json(args.limits)) if args.limits else None,
-                 tariffs=read_json(args.tariffs) if args.tariffs else None,
+                 tariffs=tariffs,
                  revision=args.revision, replan_demo=args.replan_demo)
     print(json.dumps(result, indent=2))
 

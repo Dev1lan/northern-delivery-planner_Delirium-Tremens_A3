@@ -13,13 +13,15 @@ def event_rows(scenario, move, index):
     cargo = scenario.cargo[move.cargo_id]
     rows = []
 
-    def event(state, origin, destination, start, end, edge=None, kg=0):
+    def event(state, origin, destination, start, end, edge=None, kg=0, berth=None):
         if start < end:
             rows.append({'voyage_id': index, 'tug_id': move.tug_id, 'barge_id': move.barge_id,
                          'cargo_id': cargo.id if kg else None, 'state': state, 'origin_port': origin,
                          'destination_port': destination, 'start': start.isoformat(), 'end': end.isoformat(),
                          'edge_id': edge.id if edge else None, 'km': edge.km if edge else 0,
                          'volume_t': kg / 1000})
+            if berth is not None:
+                rows[-1]['berth_id'] = berth
 
     def transit(legs, ready, kg):
         for leg in legs:
@@ -31,10 +33,17 @@ def event_rows(scenario, move, index):
         return ready
 
     at_pickup = transit(move.empty, move.start, 0)
-    event('WAITING', cargo.origin, cargo.origin, at_pickup, move.load_start)
-    event('LOADING', cargo.origin, cargo.origin, move.load_start, move.departure, kg=move.kg)
+    if move.loading_berth is None:
+        event('WAITING', cargo.origin, cargo.origin, at_pickup, move.load_start)
+    else:
+        event('WAITING', cargo.origin, cargo.origin, at_pickup, move.port_ready_at)
+        event('PORT_QUEUE', cargo.origin, cargo.origin, move.port_ready_at, move.load_start)
+    event('LOADING', cargo.origin, cargo.origin, move.load_start, move.departure,
+          kg=move.kg, berth=move.loading_berth)
     arrival = transit(move.loaded, move.departure, move.kg)
-    event('UNLOADING', cargo.destination, cargo.destination, arrival, move.unloading_end, kg=move.kg)
+    event('PORT_QUEUE', cargo.destination, cargo.destination, arrival, move.unload_start, kg=move.kg)
+    event('UNLOADING', cargo.destination, cargo.destination, move.unload_start, move.unloading_end,
+          kg=move.kg, berth=move.unloading_berth)
     transit(move.return_empty, move.unloading_end, 0)
     return rows
 
@@ -51,9 +60,11 @@ def summarize(scenario, moves, report):
     details = []
     for index, move in enumerate(moves, 1):
         cargo = scenario.cargo[move.cargo_id]
-        by_cargo[cargo.id] += move.kg
-        by_type[cargo.type] += move.kg
-        if move.unloading_end <= cargo.due:
+        usable = cargo.usable_at(move.unloading_end)
+        if usable:
+            by_cargo[cargo.id] += move.kg
+            by_type[cargo.type] += move.kg
+        if usable and move.unloading_end <= cargo.due:
             timely[cargo.type] += move.kg
         late = max(0, seconds(cargo.due, move.unloading_end))
         loaded = distance(scenario, move.loaded)
@@ -64,7 +75,7 @@ def summarize(scenario, moves, report):
         late_tonne_hours += late / 3600 * (move.kg / 1000)
         transit = sum(seconds(leg.depart, leg.arrive) for leg in (*move.empty, *move.loaded, *move.return_empty))
         loading = seconds(move.load_start, move.departure)
-        unloading = seconds(move.loaded[-1].arrive, move.unloading_end)
+        unloading = seconds(move.unload_start, move.unloading_end)
         duration = seconds(move.start, move.end)
         waiting = duration - transit - loading - unloading
         transit_seconds += transit
@@ -76,7 +87,7 @@ def summarize(scenario, moves, report):
         details.append({'voyage_id': index, 'tug_id': move.tug_id, 'barge_id': move.barge_id,
                         'cargo_id': cargo.id, 'cargo_type': cargo.type, 'origin_port': cargo.origin,
                         'destination_port': cargo.destination, 'volume_t': move.kg / 1000,
-                        'on_time': not late, 'late_seconds': late, 'loaded_km': loaded, 'empty_km': empty,
+                        'on_time': usable and not late, 'late_seconds': late, 'loaded_km': loaded, 'empty_km': empty,
                         'tonne_km': loaded * (move.kg / 1000), 'transit_seconds': transit,
                         'loading_seconds': loading, 'unloading_seconds': unloading, 'waiting_seconds': waiting})
     resources = []
@@ -105,3 +116,16 @@ def summarize(scenario, moves, report):
     cargo_status = [{'cargo_id': c.id, 'cargo_type': c.type, 'delivered_t': by_cargo[c.id] / 1000,
                      'remaining_t': (c.kg - by_cargo[c.id]) / 1000} for c in scenario.cargo.values()]
     return metrics, finance, cargo_status
+
+
+def cargo_condition(scenario, moves):
+    physical, expired = defaultdict(int), defaultdict(int)
+    for move in moves:
+        cargo = scenario.cargo[move.cargo_id]
+        physical[cargo.id] += move.kg
+        if not cargo.usable_at(move.unloading_end):
+            expired[cargo.id] += move.kg
+    return [{'cargo_id': cargo.id, 'physically_delivered_t': physical[cargo.id] / 1000,
+             'usable_delivered_t': (physical[cargo.id] - expired[cargo.id]) / 1000,
+             'expired_t': expired[cargo.id] / 1000}
+            for cargo in scenario.cargo.values()]
