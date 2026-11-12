@@ -5,7 +5,7 @@ from network.adapter import audit_result, build_result, decode_voyages, run_scen
 from network.models import Limits, parse_scenario
 from network.scheduler import Plan, REPOSITION
 
-from test_network_analysis import read
+from tests.test_network_analysis import read
 
 
 class ExpiryTests(unittest.TestCase):
@@ -40,3 +40,4 @@ class ExpiryTests(unittest.TestCase):
         self.assertEqual(audit_result(result)['schedule_audit']['status'], 'PASSED')
         condition['usable_delivered_t'] = condition['physically_delivered_t']
         self.assertEqual(audit_result(result)['schedule_audit']['status'], 'FAILED')
+
