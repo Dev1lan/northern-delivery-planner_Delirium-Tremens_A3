@@ -35,6 +35,8 @@ python -m experiments.yakutia_resilience --output results/yakutia_resilience_run
 
 ## Интерфейс и контракт
 
+[Полный API-контракт для фронтенда](API_CONTRACT.md).
+
 - `GET /api/demo` возвращает тот же набор входов, сравнений и результатов, который использует сайт. `POST /api/plan` повторяет расчёт.
 - `GET /api/state?variant=C&moment=2026-07-01T00:00:00` возвращает суда, состояния причалов и очереди. `GET /api/port-load` принимает `variant`, `port`, `start`, `end`.
 - `GET /api/compare?from=C&to=D` возвращает разницу метрик. `GET /api/improvements` возвращает проверенные альтернативы с результатами аудита.
