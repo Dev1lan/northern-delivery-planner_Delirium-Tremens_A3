@@ -23,6 +23,8 @@
 /data/*
 !/data/demo/
 !/data/demo/**
+!/data/network_demo/
+!/data/network_demo/**
 !/results/
 /results/*
 !/results/demo/

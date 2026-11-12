@@ -1,0 +1,148 @@
+"""Version 3 JSON interface for the independent network planner."""
+
+import argparse
+from copy import deepcopy
+from dataclasses import asdict
+import json
+from pathlib import Path
+import sys
+
+from network import VERSION
+from network.financial import evaluate_schedule
+from network.metrics import event_rows, summarize
+from network.models import Leg, Limits, Voyage, parse_scenario, timestamp
+from network.scheduler import REPOSITION, RETURN_EMPTY, STRATEGIES, Scheduler
+from network.validator import audit, replay, requirement_report
+from result_adapter import fingerprint
+from social_requirements import kilograms
+
+
+def encode_voyage(move):
+    def legs(items):
+        return [{'edge_id': leg.edge_id, 'depart': leg.depart.isoformat(), 'arrive': leg.arrive.isoformat()}
+                for leg in items]
+
+    return {'tug_id': move.tug_id, 'barge_id': move.barge_id, 'cargo_id': move.cargo_id,
+            'volume_t': move.kg / 1000, 'empty': legs(move.empty), 'load_start': move.load_start.isoformat(),
+            'departure': move.departure.isoformat(), 'loaded': legs(move.loaded),
+            'unloading_end': move.unloading_end.isoformat(), 'return_empty': legs(move.return_empty)}
+
+
+def decode_voyages(rows):
+    def legs(items):
+        return tuple(Leg(row['edge_id'], timestamp(row['depart'], 'depart'), timestamp(row['arrive'], 'arrive'))
+                     for row in items)
+
+    return tuple(Voyage(row['tug_id'], row['barge_id'], row['cargo_id'], kilograms(row['volume_t']),
+                        legs(row['empty']), timestamp(row['load_start'], 'load_start'),
+                        timestamp(row['departure'], 'departure'), legs(row['loaded']),
+                        timestamp(row['unloading_end'], 'unloading_end'), legs(row['return_empty'])) for row in rows)
+
+
+def _events(scenario, moves):
+    return sorted((event for index, move in enumerate(moves, 1) for event in event_rows(scenario, move, index)),
+                  key=lambda row: (row['start'], row['voyage_id']))
+
+
+def _resources(scenario, locations):
+    vessels = {**scenario.tugs, **scenario.barges}
+    return [{'vessel_id': vessel, 'current_port': location.port, 'available_at': location.available_at.isoformat(),
+             'available_to': vessels[vessel].available_to.isoformat(),
+             'status': 'IDLE' if location.available_at < min(scenario.end, vessels[vessel].available_to)
+             else 'UNAVAILABLE'} for vessel, location in sorted(locations.items())]
+
+
+def build_result(raw, scenario, plan, limits, tariffs=None):
+    moves = tuple(sorted(plan.moves, key=lambda move: (move.start, move.tug_id, move.barge_id, move.cargo_id)))
+    policy = {'allow_reposition': plan.strategy == REPOSITION, 'allow_return': plan.strategy == RETURN_EMPTY}
+    state = replay(scenario, moves, **policy)
+    report = {'schedule_audit': {'status': 'PASSED', 'violations': []}, **requirement_report(scenario, moves)}
+    metrics, financial_inputs, cargo_status = summarize(scenario, moves, report)
+    final_resources = _resources(scenario, state.locations)
+    result = {'schema_version': VERSION, 'algorithm_version': VERSION, 'scenario_id': scenario.id,
+              'data_status': 'SYNTHETIC', 'strategy': plan.strategy, 'scenario': deepcopy(raw),
+              'input_fingerprint': fingerprint(raw), 'parameters': asdict(limits),
+              'termination_reason': plan.termination_reason, 'expanded_states': plan.expanded_states,
+              **report, 'metrics': metrics, 'financial_inputs': financial_inputs, 'cargo_status': cargo_status,
+              'voyages': [encode_voyage(move) for move in moves], 'final_resources': final_resources,
+              'events': _events(scenario, moves),
+              'reposition_comparison': None, 'financial_evaluation': None}
+    if plan.counterfactual is not None:
+        replay(scenario, plan.counterfactual, allow_reposition=False)
+        baseline_report = requirement_report(scenario, plan.counterfactual)
+        baseline, _, _ = summarize(scenario, plan.counterfactual, baseline_report)
+        delta_on_time = round(metrics['delivered_on_time_t'] - baseline['delivered_on_time_t'], 3)
+        delta_total = round(metrics['delivered_total_t'] - baseline['delivered_total_t'], 3)
+        delta_deficit = round(metrics['social_deficit_t'] - baseline['social_deficit_t'], 3)
+        minima_before = sum(not r['satisfied'] for r in baseline_report['requirements'])
+        minima_after = sum(not r['satisfied'] for r in report['requirements'])
+        reason = 'NO_IMPROVING_REPOSITION_FOUND'
+        if plan.reposition_selected:
+            if (minima_after, delta_deficit) < (minima_before, 0):
+                reason = 'IMPROVES_SOCIAL_MINIMUMS'
+            elif delta_on_time > 0:
+                reason = 'IMPROVES_ON_TIME_TONNES'
+            else:
+                reason = 'IMPROVES_TOTAL_TONNES'
+        result['reposition_comparison'] = {'baseline_strategy': 'NETWORK_SOCIAL',
+                                           'selected_repositioning': plan.reposition_selected,
+                                           'decision_reason': reason,
+                                           'baseline_metrics': baseline,
+                                           'delta_on_time_t': delta_on_time, 'delta_total_t': delta_total,
+                                           'delta_social_deficit_t': delta_deficit}
+    if tariffs is not None:
+        result['financial_evaluation'] = evaluate_schedule(result, tariffs)
+    return result
+
+
+def run_scenario(raw, strategy=REPOSITION, *, limits=None, tariffs=None):
+    limits = limits or Limits()
+    scenario = parse_scenario(raw)
+    return build_result(raw, scenario, Scheduler(scenario, limits).plan(strategy), limits, tariffs)
+
+
+def audit_result(result):
+    """Recheck embedded inputs and voyages from a stored result without planning."""
+    if result['schema_version'] != VERSION or fingerprint(result['scenario']) != result['input_fingerprint']:
+        raise ValueError('Invalid network version or input fingerprint')
+    scenario = parse_scenario(result['scenario'])
+    strategy = result['strategy']
+    if scenario.id != result['scenario_id'] or strategy not in (*STRATEGIES, RETURN_EMPTY):
+        raise ValueError('Invalid scenario or strategy')
+    moves = decode_voyages(result['voyages'])
+    policy = {'allow_reposition': strategy == REPOSITION, 'allow_return': strategy == RETURN_EMPTY}
+    report = audit(scenario, moves, **policy)
+    if report['schedule_audit']['status'] == 'FAILED':
+        return report
+    state = replay(scenario, moves, **policy)
+    metrics, finance, cargo_status = summarize(scenario, moves, report)
+    expected = {**report, 'events': _events(scenario, moves), 'metrics': metrics, 'financial_inputs': finance,
+                'cargo_status': cargo_status, 'final_resources': _resources(scenario, state.locations)}
+    mismatches = [name for name, value in expected.items() if result.get(name) != value]
+    if mismatches:
+        code = 'EVENT_LOG_MISMATCH' if 'events' in mismatches else 'DERIVED_FIELDS_MISMATCH'
+        report['schedule_audit'] = {'status': 'FAILED', 'violations': [
+            {'voyage': None, 'code': code, 'detail': ', '.join(mismatches)}]}
+    return report
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('scenario', type=Path, help='Synthetic scenario JSON')
+    parser.add_argument('--strategy', choices=(*STRATEGIES, RETURN_EMPTY), default=REPOSITION)
+    parser.add_argument('--limits', type=Path, help='JSON object overriding search limits')
+    parser.add_argument('--tariffs', type=Path)
+    parser.add_argument('--output', type=Path)
+    args = parser.parse_args(argv)
+
+    def read(path):
+        return json.loads(path.read_text(encoding='utf-8-sig'))
+
+    result = run_scenario(read(args.scenario), args.strategy, limits=Limits(**read(args.limits)) if args.limits else None,
+                          tariffs=read(args.tariffs) if args.tariffs else None)
+    payload = json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False) + '\n'
+    if args.output:
+        with args.output.open('x', encoding='utf-8') as stream:
+            stream.write(payload)
+    else:
+        sys.stdout.buffer.write(payload.encode('utf-8'))

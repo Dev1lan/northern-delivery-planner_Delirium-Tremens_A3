@@ -1,0 +1,7 @@
+{
+  "source_status": "SCENARIO_ASSUMPTION",
+  "compatible_template_unit_id": "U_DRY_1",
+  "new_barge_id": "B_DRY_MODEL_EXTRA",
+  "new_tug_id": "T_MODEL_EXTRA",
+  "remove_unit_id": "U_DRY_1"
+}
