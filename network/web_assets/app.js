@@ -9,6 +9,8 @@ const states = {IDLE: 'свободно', UNAVAILABLE: 'недоступно', E
   LOADED_TRANSIT: 'везёт груз', WAITING: 'ожидание', PORT_QUEUE: 'очередь', LOADING: 'погрузка',
   UNLOADING: 'выгрузка', OPEN: 'свободен', OCCUPIED: 'занят', CLOSED: 'закрыт'};
 const reason = {NO_DIRECTED_PATH: 'в графе нет пути', NO_COMPATIBLE_PAIR: 'нет совместимой пары',
+  NO_ADMITTED_PATH: 'нет маршрута с допущенным составом',
+  NO_PATH_WITH_NAVIGATION_WINDOWS: 'нет маршрута с подходящими окнами навигации',
   READY_AFTER_SEASON: 'заявка готова после закрытия сезона', LATE_UNLOADING: 'выгрузка после срока',
   EXPIRED_BEFORE_DISPATCH: 'срок годности истекает до отправления',
   EXPIRED_BY_UNLOADING: 'срок годности истёк к разгрузке',

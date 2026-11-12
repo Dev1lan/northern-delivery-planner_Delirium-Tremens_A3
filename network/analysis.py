@@ -3,8 +3,9 @@
 from copy import deepcopy
 from decimal import Decimal
 
+from network.access import admission_error
 from network.adapter import audit_result, run_scenario
-from network.models import parse_scenario, timestamp
+from network.models import parse_scenario, sailing_time, timestamp
 from network.ports import port_report
 from network.scheduler import REPOSITION
 from result_adapter import fingerprint
@@ -69,7 +70,7 @@ def port_load(result, port, start, end):
     return port_report(scenario, result['events'], timestamp(start, 'start'), timestamp(end, 'end')).get(port)
 
 
-def _reachable(scenario, start, end):
+def _reachable(scenario, start, end, allows=None):
     visited = {start}
     queue = [start]
     while queue:
@@ -77,7 +78,7 @@ def _reachable(scenario, start, end):
         if port == end:
             return True
         for edge in scenario.outgoing[port]:
-            if edge.destination not in visited:
+            if edge.destination not in visited and (allows is None or allows(edge)):
                 visited.add(edge.destination)
                 queue.append(edge.destination)
     return False
@@ -99,10 +100,29 @@ def diagnose(result):
             continue
         cargo = scenario.cargo[key]
         evidence = []
-        if not _reachable(scenario, cargo.origin, cargo.destination):
+        connected = _reachable(scenario, cargo.origin, cargo.destination)
+        pairs = [(scenario.tugs[t], scenario.barges[b]) for t, b in scenario.pairs
+                 if cargo.type in scenario.barges[b].cargo_types]
+        if not connected:
             evidence.append({'kind': 'PROVEN', 'code': 'NO_DIRECTED_PATH'})
-        if not any(cargo.type in scenario.barges[b].cargo_types for _, b in scenario.pairs):
+        if not pairs:
             evidence.append({'kind': 'PROVEN', 'code': 'NO_COMPATIBLE_PAIR'})
+        if connected and pairs:
+            def path_exists(tug, barge, *, check_windows):
+                def allows(edge):
+                    if admission_error(scenario, edge, tug, barge):
+                        return False
+                    if not check_windows:
+                        return True
+                    cutoff = min(scenario.end, tug.available_to, barge.available_to)
+                    return any(max(a, scenario.start, cargo.ready) + sailing_time(edge, tug) <= min(b, cutoff)
+                               for a, b in edge.windows)
+                return _reachable(scenario, cargo.origin, cargo.destination, allows)
+
+            if not any(path_exists(t, b, check_windows=False) for t, b in pairs):
+                evidence.append({'kind': 'PROVEN', 'code': 'NO_ADMITTED_PATH'})
+            elif not any(path_exists(t, b, check_windows=True) for t, b in pairs):
+                evidence.append({'kind': 'PROVEN', 'code': 'NO_PATH_WITH_NAVIGATION_WINDOWS'})
         if cargo.ready >= scenario.end:
             evidence.append({'kind': 'PROVEN', 'code': 'READY_AFTER_SEASON'})
         if cargo.expires_at is not None and cargo.ready >= cargo.expires_at:

@@ -59,3 +59,12 @@ class AnalysisTests(unittest.TestCase):
         different = change_scenario(self.raw, {'kind': 'marine_reposition', 'enabled': False})
         with self.assertRaisesRegex(ValueError, 'Baseline input differs'):
             find_improvements(different, self.result, [])
+
+    def test_diagnosis_distinguishes_admission_from_missing_edge(self):
+        raw = deepcopy(self.raw)
+        for vessel in [*raw['tugs'], *raw['barges']]:
+            vessel.pop('navigation_permits', None)
+        report = diagnose(run_scenario(raw))
+        evidence = next(row['evidence'] for row in report['cargo'] if row['cargo_id'] == 'BC')
+        self.assertIn({'kind': 'PROVEN', 'code': 'NO_ADMITTED_PATH'}, evidence)
+        self.assertNotIn('NO_DIRECTED_PATH', {item['code'] for item in evidence})

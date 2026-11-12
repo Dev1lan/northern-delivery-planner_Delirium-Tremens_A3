@@ -40,4 +40,3 @@ class ExpiryTests(unittest.TestCase):
         self.assertEqual(audit_result(result)['schedule_audit']['status'], 'PASSED')
         condition['usable_delivered_t'] = condition['physically_delivered_t']
         self.assertEqual(audit_result(result)['schedule_audit']['status'], 'FAILED')
-
