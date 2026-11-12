@@ -39,7 +39,13 @@
     </table></div>
   </section>
   <div class="grid">
-    <section><h2>Проверенные изменения</h2><ul id="improvements"></ul></section>
+    <section>
+      <h2>Проверенные изменения</h2>
+      <ul id="improvements"></ul>
+      <label>Что, если? <select id="change"></select></label>
+      <button id="check-change">Пересчитать вариант</button>
+      <p id="change-result" aria-live="polite"></p>
+    </section>
     <section><h2>Рейсы выбранного варианта</h2><ul id="voyages"></ul><p id="explanation" aria-live="polite"></p></section>
   </div>
   <details><summary>Входные данные и воспроизводимость</summary><p id="reproduction"></p><a href="/api/demo">JSON расчёта</a></details>

@@ -8,7 +8,8 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
 from experiments.run_yakutia import bundle_results, calculate, read
-from network.analysis import checked, compare_results, explain_voyage, port_at, port_load, positions_at
+from network.analysis import checked, compare_results, explain_voyage, find_improvements, port_at, port_load, positions_at
+from network.models import Limits
 
 ASSETS = Path(__file__).with_name('web_assets')
 STATIC = {'/': ('index.html', 'text/html'), '/app.js': ('app.js', 'text/javascript'),
@@ -29,6 +30,25 @@ class Handler(BaseHTTPRequestHandler):
                   'application/json', status)
 
     def do_POST(self):
+        if self.path == '/api/what-if':
+            try:
+                size = int(self.headers.get('Content-Length', '0'))
+                if not 0 < size <= 65536:
+                    raise ValueError('Provide one change as JSON, up to 64 KiB')
+                payload = json.loads(self.rfile.read(size))
+                bundle = self.server.bundle
+                base = bundle['plans']['C']
+                option = bundle['source_inputs']['options'][payload['preset']] if 'preset' in payload else payload['change']
+                if not isinstance(option, dict):
+                    raise ValueError('Provide one change object')
+                response = find_improvements(base['scenario'], base, [option],
+                                             limits=Limits(**base['parameters']),
+                                             tariffs=bundle['source_inputs']['tariffs']['base'])
+            except (ValueError, KeyError, IndexError, TypeError, AttributeError, StopIteration) as exc:
+                self.json({'error': str(exc) or 'Invalid scenario change'}, HTTPStatus.BAD_REQUEST)
+                return
+            self.json(response)
+            return
         if self.path != '/api/plan':
             self.json({'error': 'Unknown endpoint'}, HTTPStatus.NOT_FOUND)
             return

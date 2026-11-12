@@ -22,9 +22,10 @@ const list = (id, values) => {
   const items = values.map((value) => Object.assign(document.createElement('li'), {textContent: value}));
   get(id).replaceChildren(...items);
 };
-async function api(path, params = {}, method = 'GET') {
+async function api(path, params = {}, method = 'GET', body) {
   const query = new URLSearchParams(params).toString();
-  const response = await fetch(query ? path + '?' + query : path, {method});
+  const response = await fetch(query ? path + '?' + query : path, {method,
+    headers: body ? {'Content-Type': 'application/json'} : {}, body: body ? JSON.stringify(body) : undefined});
   const payload = await response.json();
   if (!response.ok) throw Error(payload.error || response.statusText);
   return payload;
@@ -218,6 +219,9 @@ function showBundle(value) {
       + ' · ' + (item.delta.delivered_on_time_t > 0 ? '+' : '') + num(item.delta.delivered_on_time_t)
       + ' т в срок · ' + num(item.delta.cost) + ' DEMO';
   }));
+  get('change').replaceChildren(...value.source_inputs.options.map((option, index) =>
+    new Option(changes[option.kind] + ' · ' + option.port, index)));
+  get('change-result').textContent = '';
   get('reproduction').textContent = 'Версия ядра ' + value.manifest.algorithm_version
     + ' · SHA-256 входа ' + value.manifest.scenario_hash
     + ' · Команда: python -m experiments.run_yakutia --output results/повтор';
@@ -230,6 +234,22 @@ function stop() {
 }
 variant.onchange = () => { stop(); renderVariant(); };
 time.oninput = () => { stop(); updateState().catch(showError); };
+get('check-change').onclick = async () => {
+  if (!bundle) return;
+  const button = get('check-change'), output = get('change-result');
+  button.disabled = true;
+  output.textContent = 'Идёт пересчёт варианта C…';
+  try {
+    const response = await api('/api/what-if', {}, 'POST', {preset: Number(get('change').value)});
+    const item = response.alternatives[0], delta = item.delta;
+    const sign = (value) => (Number(value) > 0 ? '+' : '') + num(value);
+    output.textContent = 'Относительно C · ' + sign(delta.delivered_on_time_t) + ' т в срок · '
+      + sign(delta.undelivered_t) + ' т недовоза · '
+      + sign(delta.port_waiting_seconds / 3600) + ' ч ожидания · '
+      + (delta.cost === null ? 'стоимость несопоставима' : sign(delta.cost) + ' DEMO') + ' · аудит пройден';
+  } catch (error) { output.textContent = error.message; }
+  finally { button.disabled = false; }
+};
 get('recalculate').onclick = async () => {
   stop();
   get('recalculate').disabled = true;
