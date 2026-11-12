@@ -10,6 +10,7 @@ import platform
 from time import perf_counter
 
 from network import VERSION
+from network.access import RULES_VERSION
 from network.adapter import run_scenario
 from network.analysis import change_scenario, checked, compare_results, diagnose, find_improvements
 from network.models import Limits
@@ -51,7 +52,7 @@ def calculate(*, limits=None):
                           for strategy in (REPOSITION, COST)}
                    for tier, rate in tariffs.items()}
     return {
-        'manifest': {'algorithm_version': VERSION, 'admission_rules': 'explicit-marine-admission-v1',
+        'manifest': {'algorithm_version': VERSION, 'admission_rules': RULES_VERSION,
                      'data_status': raw['data_status'], 'python': platform.python_version(),
                      'parameters': asdict(limits), 'scenario_hash': fingerprint(raw),
                      'options_hash': fingerprint(options),

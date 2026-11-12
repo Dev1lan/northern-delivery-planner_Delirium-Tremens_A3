@@ -4,6 +4,8 @@ from dataclasses import dataclass
 
 from scenario_validation import ident
 
+RULES_VERSION = 'explicit-marine-admission-v1'
+
 
 @dataclass(frozen=True)
 class VesselAccess:
@@ -51,8 +53,6 @@ def admission_error(scenario, edge, tug, barge):
             if not access.vessel_class or not edge.area:
                 return 'MISSING_MARINE_CLASS_OR_AREA'
             allowed_status = 'SCENARIO_ASSUMPTION' if scenario.data_status == 'SYNTHETIC' else 'CONFIRMED'
-            if allowed_status == 'CONFIRMED' and access.data_status == 'SYNTHETIC':
-                return 'MISSING_MARINE_PERMIT'
             if allowed_status == 'CONFIRMED' and access.data_status == 'SYNTHETIC':
                 return 'MISSING_MARINE_PERMIT'
             if not any(area == edge.area and evidence == allowed_status

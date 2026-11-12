@@ -122,7 +122,7 @@ def run_scenario(raw, strategy=REPOSITION, *, limits=None, tariffs=None):
     return build_result(raw, scenario, Scheduler(scenario, limits, model).plan(strategy), limits, tariffs)
 
 
-def audit_result(result):
+def audit_result(result, *, require_cost=True):
     """Recheck embedded inputs and voyages from a stored result without planning."""
     if result['schema_version'] != VERSION or fingerprint(result['scenario']) != result['input_fingerprint']:
         raise ValueError('Invalid network version or input fingerprint')
@@ -144,6 +144,19 @@ def audit_result(result):
         expected['port_operations'] = port_report(scenario, expected['events'])
     if any(c.expires_at is not None for c in scenario.cargo.values()):
         expected['cargo_condition'] = cargo_condition(scenario, moves)
+    priced = result.get('financial_evaluation')
+    if priced and ('tariff_parameters' in priced or strategy == COST):
+        from network.costs import CostModel
+        try:
+            expected['financial_evaluation'] = CostModel(scenario, priced['tariff_parameters']).breakdown(moves)
+        except (ValueError, KeyError, TypeError) as exc:
+            report['schedule_audit'] = {'status': 'FAILED', 'violations': [
+                {'voyage': None, 'code': 'INVALID_TARIFF_PARAMETERS', 'detail': str(exc)}]}
+            return report
+    elif strategy == COST and require_cost:
+        report['schedule_audit'] = {'status': 'FAILED', 'violations': [
+            {'voyage': None, 'code': 'MISSING_TARIFF_PARAMETERS', 'detail': 'NETWORK_COST needs version 2 tariffs'}]}
+        return report
     mismatches = [name for name, value in expected.items() if result.get(name) != value]
     if mismatches:
         code = 'EVENT_LOG_MISMATCH' if 'events' in mismatches else 'DERIVED_FIELDS_MISMATCH'

@@ -186,9 +186,12 @@ function renderVariant() {
         if (key !== variant.value) return;
         get('explanation').textContent = [
           v.departure_port + ' → ' + v.pickup + ' → ' + v.destination,
-          v.on_time ? 'выгрузка в срок' : 'выгрузка после срока',
+          'выгрузка ' + localDate(v.unloading_end) + ', срок ' + localDate(v.due_at),
+          'путь с грузом: ' + v.loaded.map((leg) => leg.edge_id).join(', '),
           v.empty.length ? 'перегон по ' + v.empty.map((leg) => leg.edge_id).join(', ') : 'перегон не потребовался',
           v.cost ? num(v.cost.total_cost) + ' DEMO за рейс' : '',
+          'аудит маршрута, состава и причалов пройден',
+          'отдельное сравнение составов для рейса не выполнялось',
         ].filter(Boolean).join(' · ');
       } catch (error) { showError(error); }
     };
@@ -244,7 +247,11 @@ get('check-change').onclick = async () => {
     const item = response.alternatives[0], delta = item.delta;
     const sign = (value) => (Number(value) > 0 ? '+' : '') + num(value);
     output.textContent = 'Относительно C · ' + sign(delta.delivered_on_time_t) + ' т в срок · '
+      + sign(delta.critical_on_time_t) + ' т критичных в срок · '
       + sign(delta.undelivered_t) + ' т недовоза · '
+      + sign(delta.completed_voyages) + ' рейсов · '
+      + sign(delta.empty_km) + ' км порожняком · '
+      + sign(delta.satisfied_requirements) + ' выполненных минимумов · '
       + sign(delta.port_waiting_seconds / 3600) + ' ч ожидания · '
       + (delta.cost === null ? 'стоимость несопоставима' : sign(delta.cost) + ' DEMO') + ' · аудит пройден';
   } catch (error) { output.textContent = error.message; }

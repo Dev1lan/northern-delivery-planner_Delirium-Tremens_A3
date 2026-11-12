@@ -127,10 +127,14 @@ def explain_voyage(result, voyage_id):
     move = result['voyages'][index]
     metrics = result['financial_inputs']['voyages'][index]
     events = [e for e in result['events'] if e['voyage_id'] == index + 1]
+    scenario = parse_scenario(result['scenario'])
+    cargo = scenario.cargo[move['cargo_id']]
     return {'voyage_id': index + 1, 'tug_id': move['tug_id'], 'barge_id': move['barge_id'],
             'departure_port': events[0]['origin_port'], 'pickup': metrics['origin_port'],
             'destination': metrics['destination_port'], 'loaded': move['loaded'], 'empty': move['empty'],
-            'unloading_end': move['unloading_end'], 'on_time': metrics['on_time'],
+            'unloading_end': move['unloading_end'], 'due_at': cargo.due.isoformat(), 'on_time': metrics['on_time'],
+            'checked_constraints': ['resource_availability', 'cargo_compatibility', 'draft_and_navigation_windows',
+                                    'marine_admission_if_applicable', 'berth_reservations_if_modelled'],
             'audit': 'PASSED', 'cost': next((r for r in (result['financial_evaluation'] or {}).get('cost_by_voyage', [])
                                            if r['voyage_id'] == index + 1), None),
             'plan_level_comparison': result.get('reposition_comparison'),
@@ -189,10 +193,15 @@ def compare_results(base, alternative):
     delta['port_waiting_seconds'] = sum(p['waiting_seconds'] for p in alternative.get('port_operations', {}).values()) - sum(
         p['waiting_seconds'] for p in base.get('port_operations', {}).values())
     a, b = base['financial_evaluation'], alternative['financial_evaluation']
+    delta['satisfied_requirements'] = sum(r['satisfied'] for r in alternative['requirements']) - sum(
+        r['satisfied'] for r in base['requirements'])
     delta['cost'] = None
+    delta['cost_per_t_on_time'] = None
     if (a and b and a.get('price_status') == b.get('price_status') == 'PRICED'
             and a['currency'] == b['currency'] and a.get('tariff_parameters') == b.get('tariff_parameters')):
         delta['cost'] = str(Decimal(b['total_cost']) - Decimal(a['total_cost']))
+        if a.get('cost_per_t_on_time') is not None and b.get('cost_per_t_on_time') is not None:
+            delta['cost_per_t_on_time'] = str(Decimal(b['cost_per_t_on_time']) - Decimal(a['cost_per_t_on_time']))
     return delta
 
 

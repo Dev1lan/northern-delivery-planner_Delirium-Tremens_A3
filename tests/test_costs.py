@@ -4,7 +4,7 @@ import unittest
 from jsonschema import Draft202012Validator
 
 from experiments.run_network import SCHEMA
-from network.adapter import run_scenario
+from network.adapter import audit_result, run_scenario
 from network.costs import UNITS
 from network.scheduler import COST, FCFS, REPOSITION
 from tests.test_ports import queued_scenario
@@ -50,3 +50,11 @@ class CostsTests(unittest.TestCase):
         prices['tug_operation_includes_fuel'] = True
         with self.assertRaisesRegex(ValueError, 'Fuel would be counted twice'):
             run_scenario(raw, FCFS, tariffs=prices)
+
+    def test_audit_recomputes_exported_financial_evaluation(self):
+        result = run_scenario(queued_scenario(), COST, tariffs=tariffs({'waiting': 7}))
+        self.assertEqual(audit_result(result)['schedule_audit']['status'], 'PASSED')
+        result['financial_evaluation']['total_cost'] = '0.01'
+        report = audit_result(result)['schedule_audit']
+        self.assertEqual(report['status'], 'FAILED')
+        self.assertIn('financial_evaluation', report['violations'][0]['detail'])
