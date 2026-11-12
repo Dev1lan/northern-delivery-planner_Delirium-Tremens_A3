@@ -152,8 +152,28 @@ select.btn option{background:var(--surface);color:var(--text)}
 .maphead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:6px}
 .maphead h2{margin:0}
 .maphead{align-items:center}
-.datebox{display:flex;gap:10px;align-items:center}
-#pickdate{min-width:0;padding:4px 8px;cursor:pointer;color-scheme:inherit}
+.datebox{position:relative}
+.datebtn{display:inline-flex;gap:8px;align-items:center;padding:6px 12px;font-size:14px}
+.datebtn[aria-expanded="true"]{border-color:var(--accent)}
+.cal{position:absolute;right:0;top:calc(100% + 6px);z-index:30;width:328px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:0 10px 32px rgba(0,0,0,.3)}
+.cal[hidden]{display:none}
+.calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.calhead b{font-size:16px;font-weight:650;text-transform:capitalize}
+.calhead button{font:inherit;font-size:20px;line-height:1;width:36px;height:36px;border:0;border-radius:50%;background:transparent;color:var(--text);cursor:pointer}
+.calhead button:hover:not(:disabled){background:var(--grid)}
+.calhead button:disabled{opacity:.25;cursor:default}
+.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.calgrid span{text-align:center;font-size:12px;color:var(--muted);padding:4px 0 6px}
+.calgrid span.we{color:var(--critical)}
+.calgrid button{font:inherit;font-size:15px;font-variant-numeric:tabular-nums;height:40px;border:0;border-radius:10px;background:transparent;color:var(--text);cursor:pointer;position:relative}
+.calgrid button.we{color:var(--critical)}
+.calgrid button:hover:not(:disabled){background:var(--grid)}
+.calgrid button:disabled{color:var(--muted);opacity:.35;cursor:default}
+.calgrid button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:650}
+.calfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--grid);font-size:12px;color:var(--text2)}
+.calfoot .chips{display:flex;gap:6px}
+.calfoot button{font:inherit;font-size:12px;border:1px solid var(--border);border-radius:14px;background:transparent;color:var(--text);padding:4px 10px;cursor:pointer}
+.calfoot button:hover{border-color:var(--text2)}
 .maphead .date{font-weight:650;font-variant-numeric:tabular-nums}
 .timebar{display:flex;gap:6px;align-items:center;margin-bottom:8px}
 .timebar .btn{min-width:0;padding:6px 10px}
@@ -204,6 +224,7 @@ a{color:var(--accent)}
       <button class="btn" id="toggleupload" aria-expanded="false" aria-controls="uploadpanel">Свой сценарий</button>
       <div class="tspacer"></div>
       <details class="dl" id="dlbox" hidden><summary class="btn">Скачать</summary><div id="downloads"></div></details>
+      <a class="btn" id="netlink" href="/" hidden title="Сеть рек: сетевое ядро 3.0.0">← Сеть Якутии</a>
     </div>
     <div class="card uploadpanel" id="uploadpanel" hidden>
       <label class="drop" id="drop">
@@ -248,7 +269,7 @@ a{color:var(--accent)}
 
   <div class="grid fit" id="grid">
     <div class="card mapcard">
-      <div class="maphead"><h2>Маршрут</h2><span class="datebox"><span class="date" id="date"></span><input type="date" id="pickdate" class="btn" aria-label="Перейти к дате"></span></div>
+      <div class="maphead"><h2>Маршрут</h2><span class="datebox"><button class="btn datebtn" id="datebtn" aria-haspopup="dialog" aria-expanded="false" title="Выбрать дату"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" style="width:16px;flex:none"><rect x="1.5" y="3" width="13" height="11.5" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M1.5 6.5h13M5 1.5v3M11 1.5v3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><span class="date" id="date"></span></button><div class="cal" id="cal" role="dialog" aria-label="Выбор даты" hidden></div></span></div>
       <div class="timebar">
         <button class="btn" id="play" aria-label="Пуск">▶</button>
         <button class="btn sq" id="dayprev" aria-label="На день назад">‹</button>
@@ -754,14 +775,36 @@ function drawMl(){
 
 // ---------- time & controls ----------
 const slider=$("time"); slider.max=Math.round((T1-T0)/HOUR);
-const pick=$("pickdate"), isoDay=t=>new Date(t).toISOString().slice(0,10);
-pick.min=isoDay(T0); pick.max=isoDay(T1-DAY);
-// выбор точной даты: показываем состояние на полдень этого дня (в 00:00 большинство рейсов ещё не начато)
-pick.addEventListener("change",()=>{if(!pick.value)return;const t=ms(pick.value);if(isNaN(t))return;
-  if(playing){playing=false;$("play").textContent="▶";} setTime(t+12*HOUR);});
+// ---------- календарь: выбор точного дня ----------
+const cal=$("cal"), datebtn=$("datebtn"), dayOf=t=>Math.floor(t/DAY)*DAY, DMIN=dayOf(T0), DMAX=dayOf(T1-DAY);
+let calMonth=null;                                          // [год, месяц] показанного месяца
+function drawCal(){
+  const [y,m]=calMonth, first=Date.UTC(y,m,1), n=new Date(Date.UTC(y,m+1,0)).getUTCDate(), lead=(new Date(first).getUTCDay()+6)%7;
+  const sel=dayOf(Math.min(now,T1-1)), prevOk=first>DMIN, nextOk=Date.UTC(y,m+1,1)<=DMAX;
+  let h=`<div class="calhead"><button data-nav="-1" aria-label="Предыдущий месяц"${prevOk?"":" disabled"}>‹</button><b>${new Date(first).toLocaleDateString("ru-RU",{month:"long",year:"numeric",timeZone:"UTC"}).replace(" г.","")}</b><button data-nav="1" aria-label="Следующий месяц"${nextOk?"":" disabled"}>›</button></div><div class="calgrid">`;
+  ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"].forEach((w,i)=>h+=`<span class="${i>4?"we":""}">${w}</span>`);
+  h+="<i></i>".repeat(lead);
+  for(let d=1;d<=n;d++){const t=Date.UTC(y,m,d), off=t<DMIN||t>DMAX, we=(lead+d-1)%7>4;
+    h+=`<button data-day="${t}" class="${we?"we":""}" aria-pressed="${t===sel}"${off?" disabled":""}>${d}</button>`;}
+  h+=`</div><div class="calfoot"><span>${fdate(DMIN)} — ${fdate(DMAX)}</span><span class="chips"><button data-go="${DMIN}">Начало</button><button data-go="${DMAX}">Конец</button></span></div>`;
+  cal.innerHTML=h;
+}
+function openCal(o){cal.hidden=!o;datebtn.setAttribute("aria-expanded",o);
+  if(o){const d=new Date(Math.min(now,T1-1));calMonth=[d.getUTCFullYear(),d.getUTCMonth()];drawCal();}}
+// состояние показывается на полдень выбранного дня (в 00:00 большинство рейсов дня ещё не начато)
+function goDay(t){if(playing){playing=false;$("play").textContent="▶";} setTime(t+12*HOUR);}
+datebtn.addEventListener("click",ev=>{ev.stopPropagation();openCal(cal.hidden);});
+cal.addEventListener("click",ev=>{ev.stopPropagation();const b=ev.target.closest("button");if(!b||b.disabled)return;
+  if(b.dataset.nav){const d=new Date(Date.UTC(calMonth[0],calMonth[1]+Number(b.dataset.nav),1));calMonth=[d.getUTCFullYear(),d.getUTCMonth()];drawCal();}
+  else if(b.dataset.day){goDay(Number(b.dataset.day));openCal(false);}
+  else if(b.dataset.go){goDay(Number(b.dataset.go));openCal(false);}});
+if(window.__calClose) document.removeEventListener("click",window.__calClose), document.removeEventListener("keydown",window.__calKey);
+window.__calClose=()=>{const c=document.getElementById("cal");if(c&&!c.hidden){c.hidden=true;document.getElementById("datebtn").setAttribute("aria-expanded",false);}};
+window.__calKey=ev=>{if(ev.key==="Escape")window.__calClose();};
+document.addEventListener("click",window.__calClose); document.addEventListener("keydown",window.__calKey);
 function tick(){
   $("date").textContent=fdt(now);
-  if(document.activeElement!==pick){const d=isoDay(Math.min(now,T1-1));if(pick.value!==d)pick.value=d;}
+
   slider.style.setProperty("--p",(100*(now-T0)/(T1-T0)).toFixed(2)+"%");
   drawMap(); drawSegTable(); drawFleet();
   for(const [c,x] of [[cumCursor,cumX],[ganttCursor,ganttX],[depthCursor,depthX]]) if(c){c.setAttribute("x1",x(now));c.setAttribute("x2",x(now));}
@@ -902,7 +945,7 @@ function initApp(){
     if(j.scenarios.length) start({builtin:j.scenarios[0].id});          // сразу показываем пример, а не пустую страницу
   }).catch(e=>{$("status").innerHTML=`<div class="errbox">Сервер недоступен: ${escapeHtml(e.message)}</div>`;});
 }
-if(APP) initApp();
+if(APP){ document.getElementById('netlink').hidden=false; initApp(); }
 if(D0) render(D0);
 else if(!APP) document.getElementById("dash").innerHTML='<p style="padding:24px">Нет данных. Соберите страницу: python map/build_map.py — или запустите приложение: python app/server.py</p>';
 </script>

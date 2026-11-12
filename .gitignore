@@ -27,6 +27,8 @@
 !/data/network_demo/**
 !/data/yakutia_demo/
 !/data/yakutia_demo/**
+!/data/yakutia/
+!/data/yakutia/**
 !/results/
 /results/*
 !/results/demo/
@@ -43,3 +45,4 @@ venv*/
 *.tmp
 *.bak
 *~
+yakutia/build/

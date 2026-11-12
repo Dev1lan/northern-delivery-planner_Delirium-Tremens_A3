@@ -1,0 +1,13 @@
+{
+ "currency": "RUB",
+ "source_status": "DEMO_PLACEHOLDER — условные ставки до финансового ядра",
+ "rates": {
+  "loaded_km": 180,
+  "empty_km": 120,
+  "loading_hour": 6000,
+  "unloading_hour": 6000,
+  "waiting_hour": 2500,
+  "tug_busy_hour": 9000,
+  "barge_busy_hour": 1500
+ }
+}

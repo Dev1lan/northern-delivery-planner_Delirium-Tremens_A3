@@ -1,0 +1,94 @@
+{
+ "tariff_version": 2,
+ "currency": "RUB",
+ "source_status": "SYNTHETIC",
+ "fuel_basis": "km",
+ "rates": {
+  "loaded_fuel": {
+   "value": 180,
+   "unit": "km",
+   "source": "Условная демо-ставка (пересчёт tariffs_demo.json); рыночных данных нет",
+   "source_status": "SYNTHETIC"
+  },
+  "empty_fuel": {
+   "value": 120,
+   "unit": "km",
+   "source": "Условная демо-ставка (пересчёт tariffs_demo.json); рыночных данных нет",
+   "source_status": "SYNTHETIC"
+  },
+  "tug_operation": {
+   "value": 9000,
+   "unit": "hour",
+   "source": "Условная демо-ставка (пересчёт tariffs_demo.json); рыночных данных нет",
+   "source_status": "SYNTHETIC"
+  },
+  "barge_operation": {
+   "value": 1500,
+   "unit": "hour",
+   "source": "Условная демо-ставка (пересчёт tariffs_demo.json); рыночных данных нет",
+   "source_status": "SYNTHETIC"
+  },
+  "loading": {
+   "value": 30,
+   "unit": "tonne",
+   "source": "Условная демо-ставка (пересчёт tariffs_demo.json); рыночных данных нет",
+   "source_status": "SYNTHETIC"
+  },
+  "unloading": {
+   "value": 30,
+   "unit": "tonne",
+   "source": "Условная демо-ставка (пересчёт tariffs_demo.json); рыночных данных нет",
+   "source_status": "SYNTHETIC"
+  },
+  "port_call": {
+   "value": 20000,
+   "unit": "call",
+   "source": "Условная демо-ставка (пересчёт tariffs_demo.json); рыночных данных нет",
+   "source_status": "SYNTHETIC"
+  },
+  "waiting": {
+   "value": 2500,
+   "unit": "hour",
+   "source": "Условная демо-ставка (пересчёт tariffs_demo.json); рыночных данных нет",
+   "source_status": "SYNTHETIC"
+  },
+  "repositioning": {
+   "value": 0,
+   "unit": "km",
+   "source": "Условная демо-ставка (пересчёт tariffs_demo.json); рыночных данных нет",
+   "source_status": "SYNTHETIC"
+  }
+ },
+ "alternative_delivery": {
+  "coal": {
+   "value": 9000,
+   "unit": "tonne",
+   "source": "Условная демо-ставка (пересчёт tariffs_demo.json); рыночных данных нет",
+   "source_status": "SYNTHETIC"
+  },
+  "concentrate": {
+   "value": 6000,
+   "unit": "tonne",
+   "source": "Условная демо-ставка (пересчёт tariffs_demo.json); рыночных данных нет",
+   "source_status": "SYNTHETIC"
+  },
+  "food": {
+   "value": 45000,
+   "unit": "tonne",
+   "source": "Условная демо-ставка (пересчёт tariffs_demo.json); рыночных данных нет",
+   "source_status": "SYNTHETIC"
+  },
+  "fuel": {
+   "value": 25000,
+   "unit": "tonne",
+   "source": "Условная демо-ставка (пересчёт tariffs_demo.json); рыночных данных нет",
+   "source_status": "SYNTHETIC"
+  },
+  "general": {
+   "value": 30000,
+   "unit": "tonne",
+   "source": "Условная демо-ставка (пересчёт tariffs_demo.json); рыночных данных нет",
+   "source_status": "SYNTHETIC"
+  }
+ }
+}

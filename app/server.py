@@ -34,13 +34,13 @@ import uuid
 from pathlib import Path
 from typing import Dict, Optional
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Body, FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from pydantic import BaseModel, Field
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
-for p in (ROOT, ROOT / "ml", ROOT / "map"):
+for p in (ROOT, ROOT / "ml", ROOT / "map", ROOT / "yakutia"):
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 
@@ -108,6 +108,7 @@ class Job:
         self.status, self.error = "running", None
         self.started, self.finished = time.time(), None
         self.proc: Optional[subprocess.Popen] = None
+        self.kind = "linear"
 
 
 JOBS: Dict[str, Job] = {}
@@ -218,8 +219,23 @@ def _evict():
 
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
 def index():
-    html = (ROOT / "map/template.html").read_text(encoding="utf-8")
+    """Главная: сеть рек (сетевое ядро 3.0.0)."""
+    html = (ROOT / "yakutia/network.html").read_text(encoding="utf-8")
     return html.replace("/*__APP__*/false", "true")
+
+
+@app.get("/v2", response_class=HTMLResponse, include_in_schema=False)
+def index_v2():
+    """Черновик нового оформления главной (та же логика и карта, другой стиль и панель)."""
+    html = (ROOT / "yakutia/network_v2.html").read_text(encoding="utf-8")
+    return html.replace("/*__APP__*/false", "true")
+
+
+@app.get("/yana", include_in_schema=False)
+def yana_page():
+    """Одна река теперь открывается на той же странице, что и сеть."""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse("/?scenario=r1_baseline_central_central")
 
 
 @app.get("/api/health")
@@ -345,6 +361,321 @@ def job_result(job_id: str, strategy: str):
     if j.status != "done" or not path.exists():
         raise HTTPException(409, "Результат ещё не готов")
     return FileResponse(path, media_type="application/json", filename=f"result_{strategy}.json")
+
+
+# ---------- сетевое ядро 3.0.0 (network/) ----------
+NET_DATA = ROOT / "data/yakutia"
+NET_DEMO = ROOT / "data/yakutia_demo"
+NET_TARIFFS = NET_DATA / "tariffs_v2.json"      # тарифы v2: цена по статьям, поиск NETWORK_COST, денежные разницы
+NET_STRATEGIES = ("NETWORK_REPOSITION", "NETWORK_SOCIAL", "NETWORK_GREEDY", "NETWORK_FCFS", "NETWORK_COST")
+
+
+def network_builtin() -> Dict[str, dict]:
+    out = {}
+    if (NET_DATA / "yakutia_network.json").exists():
+        out["yakutia"] = dict(title="Якутия: Лена, Алдан, Вилюй, Яна, Индигирка, Колыма",
+                              scenario=NET_DATA / "yakutia_network.json", limits=NET_DATA / "limits.json",
+                              tariffs=NET_TARIFFS, cards=NET_DATA / "fleet_cards.json")
+    if (NET_DEMO / "yakutia_stress.json").exists():
+        out["yakutia_stress"] = dict(title="Якутия, стресс-тест причала: Нижнеянск, один причал",
+                                     scenario=NET_DEMO / "yakutia_stress.json", tariffs=NET_DEMO / "tariffs_base.json",
+                                     presets=NET_DEMO / "improvements.json")
+    for sid, title in (("c_reposition_chain", "Пример ядра: перегон с продолжением"),
+                       ("b_backhaul", "Пример ядра: обратная загрузка"),
+                       ("e_social_tradeoff", "Пример ядра: соцминимум против тоннажа"),
+                       ("g_shared_tug", "Пример ядра: общий буксир")):
+        f = ROOT / "data/network_demo" / f"{sid}.json"
+        if f.exists():
+            out[sid] = dict(title=title, scenario=f, tariffs=NET_TARIFFS)
+    return out
+
+
+class NetworkRequest(BaseModel):
+    builtin: Optional[str] = Field(None, description="id из /api/network/scenarios (сеть или одна река)")
+    files: Optional[Files] = Field(None, description="одна река: cargo/units/conditions CSV (+ config)")
+    river: Optional[str] = Field(None, max_length=60)
+    scenario: Optional[dict] = Field(None, description="сетевой сценарий в формате data/network_demo/*.json")
+    limits: Optional[dict] = Field(None, description="пределы поиска network.models.Limits")
+    tariffs: Optional[dict] = Field(None, description="тарифы v2 (или v1) network.financial; без них — демо-ставки v2")
+    presets: Optional[list] = Field(None, description="готовые изменения для «Что, если?» (формат change)")
+
+
+def _ru_error(msg: str) -> str:
+    hints = {"must be labeled SYNTHETIC": "ядро 3.0.0 принимает только сценарии с data_status = \"SYNTHETIC\"",
+             "Unknown port": "участок или заявка ссылается на порт, которого нет в списке ports",
+             "Missing condition": "для какого-то дня нет условий участка",
+             "Invalid or duplicate compatible pair": "в compatible_pairs неизвестный или повторный буксир/баржа"}
+    for k, v in hints.items():
+        if k in msg:
+            return f"{v} ({msg})"
+    return msg
+
+
+@app.get("/api/network/scenarios")
+def network_scenarios():
+    linear = [dict(name=k, title=v["title"], kind="linear") for k, v in builtin_scenarios().items()]
+    return dict(builtin=[dict(name=k, title=v["title"], kind="network") for k, v in network_builtin().items()] + linear,
+                strategies=list(NET_STRATEGIES), job_timeout_s=JOB_TIMEOUT_S,
+                max_upload_mb=MAX_BODY_BYTES // 1024 // 1024)
+
+
+@app.get("/api/network/sample/{name}")
+def network_sample(name: str):
+    files = {"yakutia": NET_DATA / "yakutia_network.json", "demo": ROOT / "data/network_demo/c_reposition_chain.json",
+             "limits": NET_DATA / "limits.json", "tariffs": NET_TARIFFS,
+             "stress": NET_DEMO / "yakutia_stress.json", "improvements": NET_DEMO / "improvements.json"}
+    if name not in files or not files[name].exists():
+        raise HTTPException(404, "Нет такого примера")
+    return FileResponse(files[name], filename=files[name].name)
+
+
+@app.post("/api/network/jobs", status_code=202)
+def network_job(req: NetworkRequest):
+    """Проверить сетевой сценарий ядром и посчитать 4 стратегии в отдельном процессе."""
+    from network.models import Limits, parse_scenario
+    if req.files or (req.builtin and req.builtin in builtin_scenarios()):
+        # одна река: прежний конвейер (проверка матмоделью, прогноз ML, расчёт трёх стратегий)
+        out = create_job(JobRequest(builtin=None if req.files else req.builtin, files=req.files, river=req.river))
+        JOBS[out["job_id"]].kind = "linear"
+        return dict(job_id=out["job_id"], status="running", kind="linear", forecast=out.get("forecast"),
+                    forecast_ms=out.get("forecast_ms"))
+    with LOCK:
+        if sum(j.status == "running" for j in JOBS.values()) >= MAX_RUNNING:
+            raise HTTPException(429, "Сейчас считаются другие сценарии, попробуйте через минуту")
+    job_id = "n" + uuid.uuid4().hex[:11]
+    job_dir = WORK / job_id
+    job_dir.mkdir(parents=True)
+    try:
+        if req.builtin:
+            b = network_builtin().get(req.builtin)
+            if not b:
+                raise HTTPException(404, "Нет такого готового сценария")
+            raw = json.loads(Path(b["scenario"]).read_text(encoding="utf-8-sig"))
+            limits = json.loads(Path(b["limits"]).read_text(encoding="utf-8")) if b.get("limits") else None
+            tariffs = json.loads(Path(b["tariffs"]).read_text(encoding="utf-8-sig")) if b.get("tariffs") else None
+            presets = json.loads(Path(b["presets"]).read_text(encoding="utf-8-sig")) if b.get("presets") else None
+            cards, title = b.get("cards"), b["title"].split(":")[0] if req.builtin == "yakutia" else b["title"]
+            if req.builtin == "yakutia":
+                title = "Северный завоз · Якутия"
+        elif req.scenario:
+            raw, limits, cards, presets = req.scenario, req.limits, None, req.presets
+            tariffs = req.tariffs or json.loads(NET_TARIFFS.read_text(encoding="utf-8"))
+            title = str(raw.get("scenario_id", "Свой сценарий"))[:80]
+        else:
+            raise HTTPException(422, "Нужен builtin или scenario")
+        try:                                   # проверка входа самим ядром — до запуска
+            parse_scenario(raw)
+            if limits:
+                Limits(**limits)
+        except (KeyError, TypeError, ValueError) as e:
+            raise HTTPException(422, "Проверка сетевого ядра: " + _ru_error(f"{type(e).__name__}: {e}"))
+        (job_dir / "scenario.json").write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+        cmd = [sys.executable, str(ROOT / "yakutia/payload.py"), "--scenario", str(job_dir / "scenario.json"),
+               "--title", title, "--out", str(job_dir / "payload.json"), "--results-dir", str(job_dir / "results"),
+               "--limits", "none", "--tariffs", "none", "--cards", str(cards) if cards else "none"]
+        if presets:
+            (job_dir / "presets.json").write_text(json.dumps(presets, ensure_ascii=False), encoding="utf-8")
+        for name, data in (("limits", limits), ("tariffs", tariffs)):
+            if data:
+                (job_dir / f"{name}.json").write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+                cmd[cmd.index(f"--{name}") + 1] = str(job_dir / f"{name}.json")
+    except HTTPException:
+        shutil.rmtree(job_dir, ignore_errors=True)
+        raise
+    job = Job(job_id, job_dir)
+    job.kind = "network"
+    job.proc = subprocess.Popen(cmd, cwd=str(ROOT), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    with LOCK:
+        JOBS[job_id] = job
+    threading.Thread(target=_watch, args=(job,), daemon=True).start()
+    _evict()
+    return dict(job_id=job_id, status="running", kind="network")
+
+
+@app.get("/api/network/jobs/{job_id}")
+def network_job_status(job_id: str):
+    return job_status(job_id)
+
+
+@app.get("/api/network/jobs/{job_id}/data")
+def network_job_data(job_id: str):
+    """Данные страницы в формате network-view/1; одна река переводится из данных map/build_map."""
+    j = _job(job_id)
+    if j.kind != "linear":
+        return job_data(job_id)
+    if j.status != "done":
+        raise HTTPException(409, f"Задание в состоянии {j.status}")
+    view = j.dir / "view.json"
+    if not view.exists():
+        import linear_view
+        data = linear_view.convert(json.loads((j.dir / "payload.json").read_text(encoding="utf-8")))
+        view.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    return Response(view.read_text(encoding="utf-8"), media_type="application/json")
+
+
+@app.get("/api/network/jobs/{job_id}/result/{strategy}")
+def network_job_result(job_id: str, strategy: str):
+    """Полный результат стратегии по контракту v3 (result.v3.schema.json), без изменений."""
+    j = _job(job_id)
+    if j.kind == "linear":
+        return job_result(job_id, strategy)
+    if strategy not in NET_STRATEGIES:
+        raise HTTPException(404, "Нет такой стратегии")
+    path = j.dir / "results" / f"result_{strategy}.json"
+    if j.status != "done" or not path.exists():
+        raise HTTPException(409, "Результат ещё не готов")
+    return FileResponse(path, media_type="application/json", filename=f"result_v3_{strategy}.json")
+
+
+# ---------- ручки контракта ядра v3 (docs/network/API_CONTRACT.md) поверх заданий ----------
+# Формы ответов — как в контракте. Отличие — адресация: вместо встроенного пакета A/B/C/D
+# план выбирается внутри задания: variant = имя стратегии (NETWORK_*) или W1, W2… — сохранённый
+# результат «Что, если?». По умолчанию — лучшая стратегия задания. Ошибки входа — 400 {"error": ...}.
+WHATIF_MAX_BYTES = 65536
+WHATIF_SLOTS = threading.BoundedSemaphore(MAX_RUNNING)
+
+
+class ContractError(Exception):
+    pass
+
+
+@app.exception_handler(ContractError)
+def _contract_error(_request: Request, exc: ContractError):
+    return JSONResponse({"error": str(exc)}, status_code=400)
+
+
+def _net_job(job_id: str) -> Job:
+    j = _job(job_id)
+    if j.kind != "network":
+        raise HTTPException(409, "Ручка доступна только для сетевых заданий ядра v3")
+    if j.status != "done":
+        raise HTTPException(409, f"Задание в состоянии {j.status}")
+    if not hasattr(j, "results"):
+        j.results, j.whatif = {}, []
+        j.best = json.loads((j.dir / "payload.json").read_text(encoding="utf-8"))["best"]
+    return j
+
+
+def _read_opt(path: Path):
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+
+
+def _plan(j: Job, variant: Optional[str]) -> dict:
+    """Результат v3 задания по ключу варианта (стратегия или W<n>), с кэшем в памяти."""
+    key = variant or j.best
+    if not isinstance(key, str):
+        raise ContractError("variant must be a string")
+    if key not in j.results:
+        path = j.dir / "results" / f"result_{key}.json"
+        if not re.fullmatch(r"NETWORK_[A-Z_]+|W\d+", key) or not path.exists():
+            raise ContractError(f"Unknown variant: {key}")
+        j.results[key] = json.loads(path.read_text(encoding="utf-8"))
+    return j.results[key]
+
+
+def _core_call(fn, *args):
+    try:
+        return fn(*args)
+    except (ValueError, KeyError, TypeError, IndexError, AttributeError, StopIteration) as e:
+        raise ContractError(str(e) or type(e).__name__)
+
+
+@app.get("/api/network/jobs/{job_id}/plans")
+def network_plans(job_id: str):
+    """Ключи вариантов задания для параметров variant/from/to: стратегии и сохранённые «Что, если?»."""
+    j = _net_job(job_id)
+    strategies = sorted(p.name[len("result_"):-len(".json")] for p in (j.dir / "results").glob("result_NETWORK_*.json"))
+    return dict(best=j.best, strategies=strategies, whatif=j.whatif)
+
+
+@app.get("/api/network/jobs/{job_id}/state")
+def network_state(job_id: str, moment: str, variant: Optional[str] = None):
+    """Положения всех судов и состояние всех портов на момент moment (контракт: GET /api/state)."""
+    from network.analysis import port_at, positions_at
+    plan = _plan(_net_job(job_id), variant)
+    vessels = _core_call(positions_at, plan, moment)
+    return dict(vessels=vessels, ports={port: _core_call(port_at, plan, port, moment) for port in plan["scenario"]["ports"]})
+
+
+@app.get("/api/network/jobs/{job_id}/port-load")
+def network_port_load(job_id: str, port: str, start: str, end: str, variant: Optional[str] = None):
+    """Статистика порта за период или null, если причалы порта не моделируются (контракт: GET /api/port-load)."""
+    from network.analysis import port_load
+    return _core_call(port_load, _plan(_net_job(job_id), variant), port, start, end)
+
+
+@app.get("/api/network/jobs/{job_id}/explain")
+def network_explain(job_id: str, voyage: str, variant: Optional[str] = None):
+    """Маршрут, срок, аудит и цена рейса; номер рейса с 1 внутри варианта (контракт: GET /api/explain)."""
+    from network.analysis import explain_voyage
+    return _core_call(explain_voyage, _plan(_net_job(job_id), variant), voyage)
+
+
+@app.get("/api/network/jobs/{job_id}/diagnose")
+def network_diagnose(job_id: str, variant: Optional[str] = None):
+    """Причины недовоза по заявкам и наблюдаемые очереди {cargo, queues} (контракт: diagnoses[вариант])."""
+    from network.analysis import diagnose
+    return _core_call(diagnose, _plan(_net_job(job_id), variant))
+
+
+@app.get("/api/network/jobs/{job_id}/compare")
+def network_compare(job_id: str, to: str, from_: str = Query(..., alias="from")):
+    """Разницы метрик to − from (контракт: GET /api/compare)."""
+    from network.analysis import compare_results
+    j = _net_job(job_id)
+    return _core_call(compare_results, _plan(j, from_), _plan(j, to))
+
+
+@app.get("/api/network/jobs/{job_id}/presets")
+def network_presets(job_id: str):
+    """Готовые изменения для «Что, если?»: индекс в массиве — значение preset."""
+    return _read_opt(_net_job(job_id).dir / "presets.json") or []
+
+
+@app.post("/api/network/jobs/{job_id}/what-if")
+def network_what_if(job_id: str, request: Request, body: dict = Body(...)):
+    """Пересчитать одно изменение относительно базового варианта (контракт: POST /api/what-if).
+
+    Тело: {"preset": 0} или {"change": {...}}; опционально "base" — вариант-основа (по умолчанию
+    лучшая стратегия задания). Ответ — {baseline_fingerprint, improvement_found, alternatives}
+    по контракту и дополнительно "variant": ключ, под которым изменённый план сохранён в задании —
+    его можно передать в state/port-load/explain/diagnose/compare.
+    """
+    from network.analysis import find_improvements
+    from network.models import Limits
+    size = request.headers.get("content-length")
+    if not size or not size.isdigit() or not 0 < int(size) <= WHATIF_MAX_BYTES:
+        raise ContractError("Provide one change as JSON, up to 64 KiB")
+    j = _net_job(job_id)
+    base_key = body.get("base") or j.best
+    base = _plan(j, base_key)
+    if "preset" in body:
+        presets = _read_opt(j.dir / "presets.json") or []
+        index = body["preset"]
+        if type(index) is not int or not 0 <= index < len(presets):
+            raise ContractError("Unknown preset")
+        option = presets[index]
+    else:
+        option = body.get("change")
+    if not isinstance(option, dict):
+        raise ContractError("Provide one change object")
+    limits = _read_opt(j.dir / "limits.json")
+    tariffs = _read_opt(j.dir / "tariffs.json")
+    raw = json.loads((j.dir / "scenario.json").read_text(encoding="utf-8"))
+    if not WHATIF_SLOTS.acquire(blocking=False):
+        raise HTTPException(429, "Сейчас считаются другие изменения, попробуйте через минуту")
+    try:
+        report = _core_call(lambda: find_improvements(raw, base, [option], strategy=base["strategy"],
+                                                      limits=Limits(**limits) if limits else None, tariffs=tariffs))
+    finally:
+        WHATIF_SLOTS.release()
+    result = report["alternatives"][0]["result"]
+    with LOCK:
+        key = f"W{len(j.whatif) + 1}"
+        j.whatif.append(dict(variant=key, base=base_key, change=option))
+        j.results[key] = result
+    (j.dir / "results" / f"result_{key}.json").write_text(json.dumps(result, ensure_ascii=False), encoding="utf-8")
+    return dict(variant=key, base=base_key, **report)
 
 
 @app.on_event("startup")
