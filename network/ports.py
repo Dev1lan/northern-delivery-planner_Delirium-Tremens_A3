@@ -128,11 +128,21 @@ def port_report(scenario, events, start=None, end=None):
                            'utilization': busy_seconds / capacity_seconds if capacity_seconds else None,
                            'reservations': [{'start': a.isoformat(), 'end': b.isoformat()} for a, b in sorted(reserved)]})
         handled = [e for e in operations if start < datetime.fromisoformat(e['end']) <= end]
+        queue_changes = []
         for event in local:
             if event['state'] == 'PORT_QUEUE':
-                a, b = datetime.fromisoformat(event['start']), datetime.fromisoformat(event['end'])
-                waits += max(0, (min(b, end) - max(a, start)).total_seconds())
-        result[port] = {'waiting_seconds': int(waits), 'handled_voyages': len({e['voyage_id'] for e in handled}),
+                a = max(start, datetime.fromisoformat(event['start']))
+                b = min(end, datetime.fromisoformat(event['end']))
+                if a < b:
+                    waits += (b - a).total_seconds()
+                    queue_changes.extend(((a, 1), (b, -1)))
+        queue = peak = 0
+        for _, change in sorted(queue_changes):
+            queue += change
+            peak = max(peak, queue)
+        result[port] = {'waiting_seconds': int(waits), 'peak_queue': peak,
+                        'mean_wait_seconds': waits / (len(queue_changes) / 2) if queue_changes else None,
+                        'handled_voyages': len({e['voyage_id'] for e in handled}),
                         'loaded_t': round(sum(e['volume_t'] for e in handled if e['state'] == 'LOADING'), 3),
                         'unloaded_t': round(sum(e['volume_t'] for e in handled if e['state'] == 'UNLOADING'), 3),
                         'mean_operation_seconds': (sum((datetime.fromisoformat(e['end']) - datetime.fromisoformat(e['start']))
