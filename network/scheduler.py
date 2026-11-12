@@ -27,7 +27,7 @@ class State:
 
     def score(self, social):
         minimums = (-sum(x > 0 for x in self.deficit), -sum(self.deficit)) if social else ()
-        return (*minimums, self.on_time, self.delivered, -round(self.empty_km, 6), -len(self.moves))
+        return (*minimums, self.on_time, self.delivered, -self.empty_km, -len(self.moves))
 
     def key(self):
         return tuple(sorted(self.locations.items())), tuple(sorted(self.remaining.items())), self.deficit
