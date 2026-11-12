@@ -41,8 +41,8 @@ def replan(previous, revised_raw, as_of, *, resource_updates=None, delivered_t=N
     reserved = defaultdict(int)
     for move in locked:
         old, new = original.cargo[move.cargo_id], revised.cargo.get(move.cargo_id)
-        if new is None or (old.type, old.origin, old.destination, old.ready, old.due) != (
-                new.type, new.origin, new.destination, new.ready, new.due):
+        if new is None or (old.type, old.origin, old.destination, old.ready, old.due, old.expires_at) != (
+                new.type, new.origin, new.destination, new.ready, new.due, new.expires_at):
             raise ValueError(f'Locked cargo identity or dates changed: {move.cargo_id}')
         reserved[move.cargo_id] += move.kg
         if move.unloading_end <= instant:
@@ -163,7 +163,8 @@ def replan(previous, revised_raw, as_of, *, resource_updates=None, delivered_t=N
     for row in suffix['cargo']:
         row['volume_t'] = (revised.cargo[row['cargo_id']].kg - reserved[row['cargo_id']]) / 1000
     locked_rows = [{'cargo_type': revised.cargo[v.cargo_id].type, 'volume_t': v.kg / 1000,
-                    'unloading_end': v.unloading_end.isoformat()} for v in locked]
+                    'unloading_end': v.unloading_end.isoformat()} for v in locked
+                   if revised.cargo[v.cargo_id].usable_at(v.unloading_end)]
     credited, _ = delivered_kg(revised.requirements, locked_rows)
     suffix['social_requirements'] = [{**r.as_dict(), 'required_t': max(0, r.required_kg - credited[r]) / 1000}
                                      for r in revised.requirements]

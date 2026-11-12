@@ -87,8 +87,9 @@ def diagnose(result):
     checked(result)
     scenario = parse_scenario(result['scenario'])
     late = {}
+    expired = {c['cargo_id']: c['expired_t'] for c in result.get('cargo_condition', [])}
     for voyage in result['financial_inputs']['voyages']:
-        if not voyage['on_time']:
+        if voyage['late_seconds']:
             key = voyage['cargo_id']
             late[key] = late.get(key, 0) + voyage['volume_t']
     rows = []
@@ -104,6 +105,10 @@ def diagnose(result):
             evidence.append({'kind': 'PROVEN', 'code': 'NO_COMPATIBLE_PAIR'})
         if cargo.ready >= scenario.end:
             evidence.append({'kind': 'PROVEN', 'code': 'READY_AFTER_SEASON'})
+        if cargo.expires_at is not None and cargo.ready >= cargo.expires_at:
+            evidence.append({'kind': 'PROVEN', 'code': 'EXPIRED_BEFORE_DISPATCH'})
+        if expired.get(key):
+            evidence.append({'kind': 'OBSERVED', 'code': 'EXPIRED_BY_UNLOADING', 'expired_t': expired[key]})
         if late.get(key):
             evidence.append({'kind': 'OBSERVED', 'code': 'LATE_UNLOADING', 'late_t': round(late[key], 3)})
         if item['remaining_t'] and not any(e['kind'] == 'PROVEN' for e in evidence):

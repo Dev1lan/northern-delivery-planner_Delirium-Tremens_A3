@@ -77,6 +77,10 @@ class Cargo:
     priority: int
     critical_category: str | None
     data_status: str
+    expires_at: datetime | None
+
+    def usable_at(self, at):
+        return self.expires_at is None or at <= self.expires_at
 
 
 @dataclass(frozen=True)
@@ -272,6 +276,7 @@ def parse_scenario(raw):
         origin, destination = port(row['origin_port']), port(row['destination_port'])
         ready = timestamp(row['ready_at'], 'ready_at')
         due = timestamp(row['due_at'], 'due_at')
+        expiry = timestamp(row['expires_at'], 'expires_at') if 'expires_at' in row else None
         priority = row.get('priority', 0)
         if origin == destination or due < ready or type(priority) is not int or priority < 0:
             raise ValueError('Cargo needs different ports, ordered dates and integer nonnegative priority')
@@ -280,7 +285,7 @@ def parse_scenario(raw):
             ident(critical, 'critical_category')
         status = provenance(row, data_status)
         return Cargo(ident(row['cargo_id'], 'cargo_id'), ident(row['cargo_type'], 'cargo_type'),
-                     origin, destination, kilograms(row['volume_t']), ready, due, priority, critical, status)
+                     origin, destination, kilograms(row['volume_t']), ready, due, priority, critical, status, expiry)
 
     edges = _unique(raw['edges'], edge)
     tugs = _unique(raw['tugs'], tug)

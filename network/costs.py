@@ -135,10 +135,12 @@ class CostModel:
                     by_port[port] += amount
             voyages.append({'voyage_id': i, 'total_cost': money(sum(charge.values(), ZERO)),
                             'cost_by_item': {k: money(v) for k, v in charge.items()}})
-            remaining[move.cargo_id] -= move.kg
-            delivered += move.kg
-            if move.unloading_end <= self.scenario.cargo[move.cargo_id].due:
-                timely += move.kg
+            cargo = self.scenario.cargo[move.cargo_id]
+            if cargo.usable_at(move.unloading_end):
+                remaining[move.cargo_id] -= move.kg
+                delivered += move.kg
+                if move.unloading_end <= cargo.due:
+                    timely += move.kg
         penalty, unpriced = self.residual(remaining)
         by_item['alternative_delivery'] = penalty
         total = sum(by_item.values(), ZERO)

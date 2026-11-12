@@ -60,9 +60,11 @@ def summarize(scenario, moves, report):
     details = []
     for index, move in enumerate(moves, 1):
         cargo = scenario.cargo[move.cargo_id]
-        by_cargo[cargo.id] += move.kg
-        by_type[cargo.type] += move.kg
-        if move.unloading_end <= cargo.due:
+        usable = cargo.usable_at(move.unloading_end)
+        if usable:
+            by_cargo[cargo.id] += move.kg
+            by_type[cargo.type] += move.kg
+        if usable and move.unloading_end <= cargo.due:
             timely[cargo.type] += move.kg
         late = max(0, seconds(cargo.due, move.unloading_end))
         loaded = distance(scenario, move.loaded)
@@ -85,7 +87,7 @@ def summarize(scenario, moves, report):
         details.append({'voyage_id': index, 'tug_id': move.tug_id, 'barge_id': move.barge_id,
                         'cargo_id': cargo.id, 'cargo_type': cargo.type, 'origin_port': cargo.origin,
                         'destination_port': cargo.destination, 'volume_t': move.kg / 1000,
-                        'on_time': not late, 'late_seconds': late, 'loaded_km': loaded, 'empty_km': empty,
+                        'on_time': usable and not late, 'late_seconds': late, 'loaded_km': loaded, 'empty_km': empty,
                         'tonne_km': loaded * (move.kg / 1000), 'transit_seconds': transit,
                         'loading_seconds': loading, 'unloading_seconds': unloading, 'waiting_seconds': waiting})
     resources = []
@@ -114,3 +116,16 @@ def summarize(scenario, moves, report):
     cargo_status = [{'cargo_id': c.id, 'cargo_type': c.type, 'delivered_t': by_cargo[c.id] / 1000,
                      'remaining_t': (c.kg - by_cargo[c.id]) / 1000} for c in scenario.cargo.values()]
     return metrics, finance, cargo_status
+
+
+def cargo_condition(scenario, moves):
+    physical, expired = defaultdict(int), defaultdict(int)
+    for move in moves:
+        cargo = scenario.cargo[move.cargo_id]
+        physical[cargo.id] += move.kg
+        if not cargo.usable_at(move.unloading_end):
+            expired[cargo.id] += move.kg
+    return [{'cargo_id': cargo.id, 'physically_delivered_t': physical[cargo.id] / 1000,
+             'usable_delivered_t': (physical[cargo.id] - expired[cargo.id]) / 1000,
+             'expired_t': expired[cargo.id] / 1000}
+            for cargo in scenario.cargo.values()]

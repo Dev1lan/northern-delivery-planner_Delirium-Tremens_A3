@@ -29,6 +29,12 @@
   ],
   "additionalProperties": false,
   "properties": {
+    "cargo_condition": {"type": "array", "items": {"type": "object", "additionalProperties": false,
+      "required": ["cargo_id", "physically_delivered_t", "usable_delivered_t", "expired_t"],
+      "properties": {"cargo_id": {"type": "string"},
+        "physically_delivered_t": {"type": "number", "minimum": 0},
+        "usable_delivered_t": {"type": "number", "minimum": 0},
+        "expired_t": {"type": "number", "minimum": 0}}}},
     "port_operations": {"type": "object", "additionalProperties": {"type": "object"}},
     "cost_service_floor": {"type": "object", "required": ["on_time_t", "total_t"],
       "additionalProperties": false, "properties": {"on_time_t": {"type": "number", "minimum": 0},

@@ -9,7 +9,7 @@ import sys
 
 from network import VERSION
 from network.financial import evaluate_schedule
-from network.metrics import event_rows, summarize
+from network.metrics import cargo_condition, event_rows, summarize
 from network.models import Leg, Limits, Voyage, parse_scenario, timestamp
 from network.ports import port_report
 from network.scheduler import COST, REPOSITION, RETURN_EMPTY, STRATEGIES, Scheduler
@@ -79,6 +79,8 @@ def build_result(raw, scenario, plan, limits, tariffs=None):
               'reposition_comparison': None, 'financial_evaluation': None}
     if scenario.berths:
         result['port_operations'] = port_report(scenario, result['events'])
+    if any(c.expires_at is not None for c in scenario.cargo.values()):
+        result['cargo_condition'] = cargo_condition(scenario, moves)
     if plan.cost_service_floor is not None:
         timely, total = plan.cost_service_floor
         result['cost_service_floor'] = {'on_time_t': timely / 1000, 'total_t': total / 1000}
@@ -140,6 +142,8 @@ def audit_result(result):
                 'cargo_status': cargo_status, 'final_resources': _resources(scenario, state.locations)}
     if scenario.berths:
         expected['port_operations'] = port_report(scenario, expected['events'])
+    if any(c.expires_at is not None for c in scenario.cargo.values()):
+        expected['cargo_condition'] = cargo_condition(scenario, moves)
     mismatches = [name for name, value in expected.items() if result.get(name) != value]
     if mismatches:
         code = 'EVENT_LOG_MISMATCH' if 'events' in mismatches else 'DERIVED_FIELDS_MISMATCH'

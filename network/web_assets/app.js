@@ -10,6 +10,8 @@ const states = {IDLE: 'свободно', UNAVAILABLE: 'недоступно', E
   UNLOADING: 'выгрузка', OPEN: 'свободен', OCCUPIED: 'занят', CLOSED: 'закрыт'};
 const reason = {NO_DIRECTED_PATH: 'в графе нет пути', NO_COMPATIBLE_PAIR: 'нет совместимой пары',
   READY_AFTER_SEASON: 'заявка готова после закрытия сезона', LATE_UNLOADING: 'выгрузка после срока',
+  EXPIRED_BEFORE_DISPATCH: 'срок годности истекает до отправления',
+  EXPIRED_BY_UNLOADING: 'срок годности истёк к разгрузке',
   RESIDUAL_WITHOUT_PROVEN_CAUSE: 'причина недовоза не установлена'};
 const certainty = {PROVEN: 'доказано', OBSERVED: 'наблюдается', UNDETERMINED: 'не установлено'};
 const changes = {add_berth: 'Добавить причал', handling_tph: 'Ускорить обработку', close_berth: 'Закрыть причал'};

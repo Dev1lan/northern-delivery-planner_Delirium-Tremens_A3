@@ -120,7 +120,8 @@ def replay(scenario, voyages, *, allow_reposition=True, allow_return=False, init
 
 def requirement_report(scenario, voyages):
     trips = [{'cargo_type': scenario.cargo[v.cargo_id].type, 'volume_t': v.kg / 1000,
-              'unloading_end': v.unloading_end.isoformat()} for v in voyages]
+              'unloading_end': v.unloading_end.isoformat()} for v in voyages
+             if scenario.cargo[v.cargo_id].usable_at(v.unloading_end)]
     return evaluate(scenario.requirements, scenario.social_input, trips)
 
 
