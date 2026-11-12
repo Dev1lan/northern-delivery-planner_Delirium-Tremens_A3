@@ -1,6 +1,7 @@
 """Replay proposed voyages against the inputs, independently of path search."""
 
 from dataclasses import dataclass
+from network.access import admission_error
 
 from network.models import Location, handling_time, loaded_draft, sailing_time
 from network.routing import passage_open
@@ -50,13 +51,17 @@ def replay(scenario, voyages, *, allow_reposition=True, allow_return=False, init
         require(move.load_start >= cargo.ready, 'CARGO_NOT_READY', cargo.id)
         require(move.loaded, 'MISSING_LOADED_PATH', cargo.id)
 
-        def follow(legs, origin, destination, not_before, kg):
+        def follow(legs, origin, destination, not_before, kg, reposition=False):
             current = origin
             visited = {origin}
             draft = loaded_draft(tug, barge, kg)
             for leg in legs:
                 edge = scenario.edges.get(leg.edge_id)
                 require(edge is not None, 'UNKNOWN_EDGE', leg.edge_id)
+                denied = admission_error(scenario, edge, tug, barge)
+                require(not denied, denied, leg.edge_id)
+                require(not (reposition and edge.marine and not scenario.allow_marine_reposition),
+                        'MARINE_REPOSITION_DISABLED', leg.edge_id)
                 require(edge.origin == current, 'DISCONTINUOUS_PATH', leg.edge_id)
                 require(edge.destination not in visited, 'PATH_CYCLE', leg.edge_id)
                 require(not_before <= leg.depart and leg.arrive == leg.depart + sailing_time(edge, tug),
@@ -70,7 +75,7 @@ def replay(scenario, voyages, *, allow_reposition=True, allow_return=False, init
         if move.empty:
             require(allow_reposition and tug_state.port != cargo.origin, 'UNJUSTIFIED_EMPTY_PATH', cargo.id)
             require(move.unloading_end <= cargo.due, 'REPOSITION_MISSES_DEADLINE', cargo.id)
-        at_pickup = follow(move.empty, tug_state.port, cargo.origin, move.start, 0)
+        at_pickup = follow(move.empty, tug_state.port, cargo.origin, move.start, 0, reposition=True)
         handling = handling_time(scenario, barge, move.kg)
         require(move.load_start >= at_pickup and move.departure == move.load_start + handling,
                 'LOADING_TIME', cargo.id)

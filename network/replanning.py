@@ -1,6 +1,7 @@
 """Replan the unstarted work while retaining the executed and committed itinerary."""
 
 from collections import defaultdict
+from network.access import admission_error
 from copy import deepcopy
 
 from network.adapter import audit_result, decode_voyages, run_scenario
@@ -115,6 +116,7 @@ def replan(previous, revised_raw, as_of, *, resource_updates=None, delivered_t=N
                 new_edge = revised.edges.get(leg.edge_id)
                 if (new_edge is None or (old_edge.origin, old_edge.destination) != (new_edge.origin, new_edge.destination)
                         or sailing_time(new_edge, tug) != leg.arrive - leg.depart
+                        or admission_error(revised, new_edge, tug, barge)
                         or not passage_open(revised, new_edge, max(instant, leg.depart), leg.arrive, draft)):
                     return intervention('ONGOING_PASSAGE_UNSAFE', leg.edge_id)
 

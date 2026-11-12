@@ -60,7 +60,7 @@ def build_result(raw, scenario, plan, limits, tariffs=None):
     metrics, financial_inputs, cargo_status = summarize(scenario, moves, report)
     final_resources = _resources(scenario, state.locations)
     result = {'schema_version': VERSION, 'algorithm_version': VERSION, 'scenario_id': scenario.id,
-              'data_status': 'SYNTHETIC', 'strategy': plan.strategy, 'scenario': deepcopy(raw),
+              'data_status': scenario.data_status, 'strategy': plan.strategy, 'scenario': deepcopy(raw),
               'input_fingerprint': fingerprint(raw), 'parameters': asdict(limits),
               'termination_reason': plan.termination_reason, 'expanded_states': plan.expanded_states,
               **report, 'metrics': metrics, 'financial_inputs': financial_inputs, 'cargo_status': cargo_status,
@@ -107,7 +107,8 @@ def audit_result(result):
         raise ValueError('Invalid network version or input fingerprint')
     scenario = parse_scenario(result['scenario'])
     strategy = result['strategy']
-    if scenario.id != result['scenario_id'] or strategy not in (*STRATEGIES, RETURN_EMPTY):
+    if (scenario.id != result['scenario_id'] or result['data_status'] != scenario.data_status
+            or strategy not in (*STRATEGIES, RETURN_EMPTY)):
         raise ValueError('Invalid scenario or strategy')
     moves = decode_voyages(result['voyages'])
     policy = {'allow_reposition': strategy == REPOSITION, 'allow_return': strategy == RETURN_EMPTY}

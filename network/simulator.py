@@ -13,7 +13,8 @@ def voyages(scenario, tug, barge, cargo, capacity, origin, ready, limits, *,
         return ()
     empty_draft = loaded_draft(tug, barge, 0)
     empty_cutoff = min(cutoff, cargo.due) if origin != cargo.origin else cutoff
-    approaches = paths(scenario, tug, origin, cargo.origin, ready, empty_cutoff, empty_draft, limits)
+    approaches = paths(scenario, tug, barge, origin, cargo.origin, ready, empty_cutoff, empty_draft,
+                       limits, reposition=True)
     results = {}
     for empty in approaches:
         load_start = max(cargo.ready, empty[-1].arrive if empty else ready)
@@ -27,10 +28,10 @@ def voyages(scenario, tug, barge, cargo, capacity, origin, ready, limits, *,
             departure = load_start + handling
             draft = loaded_draft(tug, barge, kg)
             options = []
-            for loaded in paths(scenario, tug, cargo.origin, cargo.destination, departure,
+            for loaded in paths(scenario, tug, barge, cargo.origin, cargo.destination, departure,
                                 deadline - handling, draft, limits):
                 unloaded = loaded[-1].arrive + handling
-                back = paths(scenario, tug, cargo.destination, cargo.origin, unloaded, cutoff,
+                back = paths(scenario, tug, barge, cargo.destination, cargo.origin, unloaded, cutoff,
                              empty_draft, limits) if require_return else ((),)
                 for return_legs in back:
                     options.append(Voyage(tug.id, barge.id, cargo.id, kg, empty, load_start, departure,
