@@ -1,0 +1,31 @@
+{
+  "scenario_id": "b_backhaul",
+  "data_status": "SYNTHETIC",
+  "start": "2026-07-01T00:00:00",
+  "end": "2026-07-02T00:00:00",
+  "ports": ["A","B","C","D"],
+  "underkeel_m": 0.15,
+  "fixed_handling_seconds": 0,
+  "edges": [
+    {"edge_id":"AB","origin_port":"A","destination_port":"B","distance_km":10,"direction":"upstream","condition":{"usable_depth_m":2,"max_allowed_draft_m":1.8}},
+    {"edge_id":"BC","origin_port":"B","destination_port":"C","distance_km":12,"direction":"upstream","condition":{"usable_depth_m":2,"max_allowed_draft_m":1.8}},
+    {"edge_id":"CB","origin_port":"C","destination_port":"B","distance_km":12,"direction":"downstream","condition":{"usable_depth_m":2,"max_allowed_draft_m":1.8}},
+    {"edge_id":"BA","origin_port":"B","destination_port":"A","distance_km":10,"direction":"downstream","condition":{"usable_depth_m":2,"max_allowed_draft_m":1.8}},
+    {"edge_id":"DA","origin_port":"D","destination_port":"A","distance_km":80,"direction":"upstream","condition":{"usable_depth_m":2,"max_allowed_draft_m":1.8}},
+    {"edge_id":"BD","origin_port":"B","destination_port":"D","distance_km":8,"direction":"upstream","condition":{"usable_depth_m":2,"max_allowed_draft_m":1.8}}
+  ],
+  "tugs": [
+    {"vessel_id":"T1","current_port":"A","available_at":"2026-07-01T00:00:00","available_to":"2026-07-02T00:00:00","draft_empty_m":0.35,"speed_upstream_kmh":10,"speed_downstream_kmh":12}
+  ],
+  "barges": [
+    {"vessel_id":"B1","current_port":"A","available_at":"2026-07-01T00:00:00","available_to":"2026-07-02T00:00:00","capacity_t":100,"draft_empty_m":0.3,"draft_full_m":1.1,"handling_tph":100,"cargo_types_allowed":["coal","food"]}
+  ],
+  "compatible_pairs": [
+    {"tug_id":"T1","barge_id":"B1"}
+  ],
+  "social_requirements": [],
+  "cargo": [
+    {"cargo_id":"AB","cargo_type":"coal","origin_port":"A","destination_port":"B","volume_t":100,"ready_at":"2026-07-01T00:00:00","due_at":"2026-07-01T12:00:00","priority":0,"critical_category":null,"data_status":"SYNTHETIC"},
+    {"cargo_id":"BA","cargo_type":"coal","origin_port":"B","destination_port":"A","volume_t":80,"ready_at":"2026-07-01T00:00:00","due_at":"2026-07-01T12:00:00","priority":0,"critical_category":null,"data_status":"SYNTHETIC"}
+  ]
+}

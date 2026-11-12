@@ -1,0 +1,10 @@
+{
+  "as_of": "2026-07-01T04:00:00",
+  "edge_updates": {"BC": {"is_closed": true}},
+  "resource_updates": {"T1": {"current_port": "B", "available_at": "2026-07-01T04:30:00"}},
+  "delivered_t": {"AB": 100},
+  "remaining_t": {"AB": 0, "BC": 80, "BD_URGENT": 35},
+  "new_cargo": [
+    {"cargo_id": "BD_URGENT", "cargo_type": "food", "origin_port": "B", "destination_port": "D", "volume_t": 35, "ready_at": "2026-07-01T04:00:00", "due_at": "2026-07-01T10:00:00", "priority": 2, "critical_category": "food", "data_status": "SYNTHETIC"}
+  ]
+}

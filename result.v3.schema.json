@@ -1,0 +1,965 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:case-a3:network-result:3.0.0",
+  "title": "Case A3 audited network itinerary",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "algorithm_version",
+    "scenario_id",
+    "data_status",
+    "strategy",
+    "scenario",
+    "input_fingerprint",
+    "parameters",
+    "termination_reason",
+    "expanded_states",
+    "schedule_audit",
+    "requirements_status",
+    "feasibility_status",
+    "requirements",
+    "metrics",
+    "financial_inputs",
+    "cargo_status",
+    "voyages",
+    "final_resources",
+    "events",
+    "reposition_comparison",
+    "financial_evaluation"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": "3.0.0" },
+    "algorithm_version": { "const": "3.0.0" },
+    "scenario_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "data_status": { "const": "SYNTHETIC" },
+    "strategy": {
+      "enum": [
+        "NETWORK_FCFS",
+        "NETWORK_GREEDY",
+        "NETWORK_SOCIAL",
+        "NETWORK_REPOSITION",
+        "NETWORK_RETURN_EMPTY"
+      ]
+    },
+    "scenario": {
+      "type": "object",
+      "required": [
+        "scenario_id",
+        "data_status",
+        "start",
+        "end",
+        "ports",
+        "edges",
+        "tugs",
+        "barges",
+        "compatible_pairs",
+        "cargo"
+      ]
+    },
+    "input_fingerprint": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "parameters": {
+      "type": "object",
+      "required": [
+        "beam_width",
+        "candidate_limit",
+        "max_actions",
+        "max_states",
+        "max_route_expansions",
+        "max_hops",
+        "max_wait_days",
+        "route_options",
+        "repair_attempts",
+        "repair_states"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "beam_width": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "candidate_limit": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_actions": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_states": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_route_expansions": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_hops": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_wait_days": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "route_options": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "repair_attempts": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "repair_states": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "termination_reason": {
+      "enum": [
+        "SEARCH_FINISHED",
+        "SEARCH_LIMIT"
+      ]
+    },
+    "expanded_states": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "schedule_audit": {
+      "type": "object",
+      "required": [
+        "status",
+        "violations"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "status": { "const": "PASSED" },
+        "violations": {
+          "type": "array",
+          "maxItems": 0
+        }
+      }
+    },
+    "requirements_status": {
+      "enum": [
+        "SATISFIED",
+        "NOT_SATISFIED",
+        "NOT_CONFIGURED"
+      ]
+    },
+    "feasibility_status": {
+      "enum": [
+        "FEASIBLE",
+        "INFEASIBLE",
+        "UNKNOWN",
+        "NOT_CHECKED"
+      ]
+    },
+    "requirements": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/requirement"
+      }
+    },
+    "metrics": {
+      "$ref": "#/$defs/metrics"
+    },
+    "financial_inputs": {
+      "$ref": "#/$defs/financial_inputs"
+    },
+    "cargo_status": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "cargo_id",
+          "cargo_type",
+          "delivered_t",
+          "remaining_t"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "cargo_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "cargo_type": {
+            "type": "string",
+            "minLength": 1
+          },
+          "delivered_t": {
+            "type": "number",
+            "minimum": 0
+          },
+          "remaining_t": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "voyages": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/voyage"
+      }
+    },
+    "final_resources": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/resource"
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/event"
+      }
+    },
+    "reposition_comparison": {
+      "anyOf": [
+        {
+          "type": "object",
+          "required": [
+            "baseline_strategy",
+            "selected_repositioning",
+            "decision_reason",
+            "baseline_metrics",
+            "delta_on_time_t",
+            "delta_total_t",
+            "delta_social_deficit_t"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "baseline_strategy": { "const": "NETWORK_SOCIAL" },
+            "selected_repositioning": { "type": "boolean" },
+            "decision_reason": {
+              "enum": ["NO_IMPROVING_REPOSITION_FOUND", "IMPROVES_SOCIAL_MINIMUMS", "IMPROVES_ON_TIME_TONNES", "IMPROVES_TOTAL_TONNES"]
+            },
+            "baseline_metrics": {
+              "$ref": "#/$defs/metrics"
+            },
+            "delta_on_time_t": { "type": "number" },
+            "delta_total_t": { "type": "number" },
+            "delta_social_deficit_t": { "type": "number" }
+          }
+        },
+        { "type": "null" }
+      ]
+    },
+    "financial_evaluation": {
+      "anyOf": [
+        {
+          "type": "object",
+          "required": [
+            "currency",
+            "source_status",
+            "rates",
+            "cost_by_unit",
+            "total_cost"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "currency": {
+              "type": "string",
+              "minLength": 1
+            },
+            "source_status": {
+              "type": "string",
+              "minLength": 1
+            },
+            "rates": { "type": "object" },
+            "cost_by_unit": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string",
+                "pattern": "^\\d+\\.\\d{2}$"
+              }
+            },
+            "total_cost": {
+              "type": "string",
+              "pattern": "^\\d+\\.\\d{2}$"
+            }
+          }
+        },
+        { "type": "null" }
+      ]
+    }
+  },
+  "$defs": {
+    "leg": {
+      "type": "object",
+      "required": [
+        "edge_id",
+        "depart",
+        "arrive"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "edge_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "depart": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$"
+        },
+        "arrive": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$"
+        }
+      }
+    },
+    "voyage": {
+      "type": "object",
+      "required": [
+        "tug_id",
+        "barge_id",
+        "cargo_id",
+        "volume_t",
+        "empty",
+        "load_start",
+        "departure",
+        "loaded",
+        "unloading_end",
+        "return_empty"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "tug_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "barge_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cargo_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "volume_t": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "empty": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/leg"
+          }
+        },
+        "load_start": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$"
+        },
+        "departure": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$"
+        },
+        "loaded": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/leg"
+          },
+          "minItems": 1
+        },
+        "unloading_end": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$"
+        },
+        "return_empty": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/leg"
+          }
+        }
+      }
+    },
+    "event": {
+      "type": "object",
+      "required": [
+        "voyage_id",
+        "tug_id",
+        "barge_id",
+        "cargo_id",
+        "state",
+        "origin_port",
+        "destination_port",
+        "start",
+        "end",
+        "edge_id",
+        "km",
+        "volume_t"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "voyage_id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "tug_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "barge_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cargo_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            { "type": "null" }
+          ]
+        },
+        "state": {
+          "enum": [
+            "WAITING",
+            "LOADING",
+            "LOADED_TRANSIT",
+            "UNLOADING",
+            "EMPTY_TRANSIT"
+          ]
+        },
+        "origin_port": {
+          "type": "string",
+          "minLength": 1
+        },
+        "destination_port": {
+          "type": "string",
+          "minLength": 1
+        },
+        "start": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$"
+        },
+        "end": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$"
+        },
+        "edge_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            { "type": "null" }
+          ]
+        },
+        "km": {
+          "type": "number",
+          "minimum": 0
+        },
+        "volume_t": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "required": [
+        "demand_t",
+        "delivered_on_time_t",
+        "delivered_total_t",
+        "undelivered_t",
+        "critical_on_time_t",
+        "social_deficit_t",
+        "loaded_km",
+        "empty_km",
+        "tonne_km",
+        "late_tonne_hours",
+        "resource_busy_hours",
+        "resource_idle_hours",
+        "completed_voyages",
+        "repositioning_voyages"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "demand_t": {
+          "type": "number",
+          "minimum": 0
+        },
+        "delivered_on_time_t": {
+          "type": "number",
+          "minimum": 0
+        },
+        "delivered_total_t": {
+          "type": "number",
+          "minimum": 0
+        },
+        "undelivered_t": {
+          "type": "number",
+          "minimum": 0
+        },
+        "critical_on_time_t": {
+          "type": "number",
+          "minimum": 0
+        },
+        "social_deficit_t": {
+          "type": "number",
+          "minimum": 0
+        },
+        "loaded_km": {
+          "type": "number",
+          "minimum": 0
+        },
+        "empty_km": {
+          "type": "number",
+          "minimum": 0
+        },
+        "tonne_km": {
+          "type": "number",
+          "minimum": 0
+        },
+        "late_tonne_hours": {
+          "type": "number",
+          "minimum": 0
+        },
+        "resource_busy_hours": {
+          "type": "number",
+          "minimum": 0
+        },
+        "resource_idle_hours": {
+          "type": "number",
+          "minimum": 0
+        },
+        "completed_voyages": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "repositioning_voyages": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "requirement": {
+      "type": "object",
+      "required": [
+        "requirement_id",
+        "cargo_types",
+        "required_t",
+        "deadline",
+        "basis",
+        "source_status",
+        "delivered_by_deadline_t",
+        "delivered_total_t",
+        "deficit_t",
+        "deficit_lower_bound_t",
+        "satisfied",
+        "reason"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "requirement_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cargo_types": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "required_t": {
+          "type": "number",
+          "minimum": 0
+        },
+        "deadline": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            { "type": "null" }
+          ]
+        },
+        "basis": {
+          "enum": [
+            "delivered_by_deadline",
+            "delivered_total"
+          ]
+        },
+        "source_status": {
+          "type": "string",
+          "minLength": 1
+        },
+        "delivered_by_deadline_t": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            { "type": "null" }
+          ]
+        },
+        "delivered_total_t": {
+          "type": "number",
+          "minimum": 0
+        },
+        "deficit_t": {
+          "type": "number",
+          "minimum": 0
+        },
+        "deficit_lower_bound_t": {
+          "type": "number",
+          "minimum": 0
+        },
+        "satisfied": { "type": "boolean" },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "resource": {
+      "type": "object",
+      "required": [
+        "vessel_id",
+        "current_port",
+        "available_at",
+        "available_to",
+        "status"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "vessel_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "current_port": {
+          "type": "string",
+          "minLength": 1
+        },
+        "available_at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$"
+        },
+        "available_to": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$"
+        },
+        "status": {
+          "enum": [
+            "IDLE",
+            "UNAVAILABLE"
+          ]
+        }
+      }
+    },
+    "financial_inputs": {
+      "type": "object",
+      "required": [
+        "voyages",
+        "resources",
+        "totals"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "voyages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "voyage_id",
+              "tug_id",
+              "barge_id",
+              "cargo_id",
+              "cargo_type",
+              "origin_port",
+              "destination_port",
+              "volume_t",
+              "on_time",
+              "late_seconds",
+              "loaded_km",
+              "empty_km",
+              "tonne_km",
+              "transit_seconds",
+              "loading_seconds",
+              "unloading_seconds",
+              "waiting_seconds"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "voyage_id": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "tug_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "barge_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "cargo_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "cargo_type": {
+                "type": "string",
+                "minLength": 1
+              },
+              "origin_port": {
+                "type": "string",
+                "minLength": 1
+              },
+              "destination_port": {
+                "type": "string",
+                "minLength": 1
+              },
+              "volume_t": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "on_time": { "type": "boolean" },
+              "late_seconds": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "loaded_km": {
+                "type": "number",
+                "minimum": 0
+              },
+              "empty_km": {
+                "type": "number",
+                "minimum": 0
+              },
+              "tonne_km": {
+                "type": "number",
+                "minimum": 0
+              },
+              "transit_seconds": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "loading_seconds": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "unloading_seconds": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "waiting_seconds": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        "resources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "vessel_id",
+              "vessel_type",
+              "busy_seconds",
+              "idle_seconds"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "vessel_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "vessel_type": {
+                "enum": [
+                  "tug",
+                  "barge"
+                ]
+              },
+              "busy_seconds": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "idle_seconds": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        "totals": {
+          "type": "object",
+          "required": [
+            "loaded_km",
+            "empty_km",
+            "tonne_km",
+            "transit_seconds",
+            "loading_seconds",
+            "unloading_seconds",
+            "waiting_seconds",
+            "undelivered_t",
+            "late_tonne_hours",
+            "social_deficit_t"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "loaded_km": {
+              "type": "number",
+              "minimum": 0
+            },
+            "empty_km": {
+              "type": "number",
+              "minimum": 0
+            },
+            "tonne_km": {
+              "type": "number",
+              "minimum": 0
+            },
+            "transit_seconds": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "loading_seconds": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "unloading_seconds": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "waiting_seconds": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "undelivered_t": {
+              "type": "number",
+              "minimum": 0
+            },
+            "late_tonne_hours": {
+              "type": "number",
+              "minimum": 0
+            },
+            "social_deficit_t": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "strategy": { "const": "NETWORK_REPOSITION" }
+        }
+      },
+      "then": {
+        "properties": {
+          "reposition_comparison": { "type": "object" }
+        }
+      },
+      "else": {
+        "properties": {
+          "reposition_comparison": { "type": "null" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "requirements_status": { "const": "SATISFIED" }
+        }
+      },
+      "then": {
+        "properties": {
+          "feasibility_status": { "const": "FEASIBLE" },
+          "requirements": {
+            "minItems": 1,
+            "items": {
+              "properties": {
+                "satisfied": { "const": true },
+                "deficit_t": { "const": 0 }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "requirements_status": { "const": "NOT_CONFIGURED" }
+        }
+      },
+      "then": {
+        "properties": {
+          "feasibility_status": { "const": "NOT_CHECKED" },
+          "requirements": {
+            "maxItems": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "requirements_status": { "const": "NOT_SATISFIED" }
+        }
+      },
+      "then": {
+        "properties": {
+          "feasibility_status": {
+            "enum": [
+              "INFEASIBLE",
+              "UNKNOWN"
+            ]
+          },
+          "requirements": {
+            "contains": {
+              "properties": {
+                "satisfied": { "const": false },
+                "deficit_t": {
+                  "exclusiveMinimum": 0
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "feasibility_status": { "const": "INFEASIBLE" }
+        }
+      },
+      "then": {
+        "properties": {
+          "requirements": {
+            "contains": {
+              "properties": {
+                "deficit_lower_bound_t": {
+                  "exclusiveMinimum": 0
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
