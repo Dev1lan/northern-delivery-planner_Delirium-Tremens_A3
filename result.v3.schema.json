@@ -30,6 +30,9 @@
   "additionalProperties": false,
   "properties": {
     "port_operations": {"type": "object", "additionalProperties": {"type": "object"}},
+    "cost_service_floor": {"type": "object", "required": ["on_time_t", "total_t"],
+      "additionalProperties": false, "properties": {"on_time_t": {"type": "number", "minimum": 0},
+      "total_t": {"type": "number", "minimum": 0}}},
     "schema_version": { "const": "3.0.0" },
     "algorithm_version": { "const": "3.0.0" },
     "scenario_id": {
@@ -43,6 +46,7 @@
         "NETWORK_GREEDY",
         "NETWORK_SOCIAL",
         "NETWORK_REPOSITION",
+        "NETWORK_COST",
         "NETWORK_RETURN_EMPTY"
       ]
     },
@@ -277,6 +281,16 @@
               "minLength": 1
             },
             "rates": { "type": "object" },
+            "tariff_parameters": {"type": "object"},
+            "cost_by_voyage": {"type": "array", "items": {"type": "object"}},
+            "cost_by_vessel": {"type": "object"},
+            "cost_by_port": {"type": "object"},
+            "cost_per_t": {"type": ["string", "null"]},
+            "cost_per_t_on_time": {"type": ["string", "null"]},
+            "undelivered_penalty": {"type": "string"},
+            "unpriced_undelivered_t": {"type": "number", "minimum": 0},
+            "empty_transition_cost": {"type": "string"},
+            "price_status": {"enum": ["PARTIAL", "PRICED"]},
             "cost_by_unit": {
               "type": "object",
               "additionalProperties": {

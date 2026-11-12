@@ -1,6 +1,7 @@
 """Deterministic dispatch and bounded search over complete network schedules."""
 
 from dataclasses import dataclass, field
+from decimal import Decimal
 
 from network.models import Limits, Location
 from network.routing import distance
@@ -13,6 +14,7 @@ GREEDY = 'NETWORK_GREEDY'
 SOCIAL = 'NETWORK_SOCIAL'
 REPOSITION = 'NETWORK_REPOSITION'
 RETURN_EMPTY = 'NETWORK_RETURN_EMPTY'
+COST = 'NETWORK_COST'
 STRATEGIES = (FCFS, GREEDY, SOCIAL, REPOSITION)
 
 
@@ -26,6 +28,7 @@ class State:
     empty_km: float = 0
     moves: tuple = ()
     bookings: dict = field(default_factory=dict)
+    operating_cost: Decimal = Decimal(0)
 
     def score(self, social):
         minimums = (-sum(x > 0 for x in self.deficit), -sum(self.deficit)) if social else ()
@@ -44,12 +47,14 @@ class Plan:
     expanded_states: int
     counterfactual: tuple | None = None
     reposition_selected: bool = False
+    cost_service_floor: tuple | None = None
 
 
 class Scheduler:
-    def __init__(self, scenario, limits=None):
+    def __init__(self, scenario, limits=None, cost_model=None):
         self.scenario = scenario
         self.limits = limits or Limits()
+        self.cost_model = cost_model
         self.minimum_for_type = {category: i for i, r in enumerate(scenario.requirements) for category in r.cargo_types}
         self.cargo = tuple(sorted(scenario.cargo.values(), key=lambda c: (c.ready, c.id)))
 
@@ -72,14 +77,16 @@ class Scheduler:
         bookings = dict(state.bookings)
         for berth, interval in reservations(move):
             bookings[berth] = (*bookings.get(berth, ()), interval)
+        charge = self.cost_model.voyage_cost(move) if self.cost_model else Decimal(0)
         return State({**state.locations, move.tug_id: location, move.barge_id: location},
                      {**state.remaining, cargo.id: state.remaining[cargo.id] - move.kg}, tuple(deficits),
                      state.on_time + (move.kg if move.unloading_end <= cargo.due else 0),
-                     state.delivered + move.kg, state.empty_km + empty, (*state.moves, move), bookings)
+                     state.delivered + move.kg, state.empty_km + empty, (*state.moves, move), bookings,
+                     state.operating_cost + charge)
 
     def candidates(self, state, strategy):
         s = self.scenario
-        social = strategy in (SOCIAL, REPOSITION)
+        social = strategy in (SOCIAL, REPOSITION, COST)
         candidates = []
         for tug_id, barge_id in s.pairs:
             tug_loc, barge_loc = state.locations[tug_id], state.locations[barge_id]
@@ -94,7 +101,7 @@ class Scheduler:
                 requirement = s.requirements[index] if index is not None else None
                 deficit = state.deficit[index] if index is not None else 0
                 for move in voyages(s, tug, barge, cargo, min(barge.capacity_kg, state.remaining[cargo.id]),
-                                    tug_loc.port, ready, self.limits, allow_reposition=strategy == REPOSITION,
+                                    tug_loc.port, ready, self.limits, allow_reposition=strategy in (REPOSITION, COST),
                                     require_return=strategy == RETURN_EMPTY, requirement=requirement,
                                     deficit_kg=deficit, bookings=state.bookings):
                     on_time = move.unloading_end <= cargo.due
@@ -106,6 +113,8 @@ class Scheduler:
                         elapsed = max(1, (move.end - move.start).total_seconds())
                         rank = (-int(useful > 0), -useful, -int(on_time), -(move.kg / elapsed), -move.kg,
                                 distance(s, move.empty), move.end, cargo.due, cargo.id)
+                        if strategy == COST:
+                            rank = (*rank[:3], self.cost_model.voyage_cost(move) / move.kg, *rank[3:])
                     candidates.append((rank, move))
         candidates.sort(key=lambda item: item[0])
         return [move for _, move in candidates[:self.limits.candidate_limit]]
@@ -119,59 +128,65 @@ class Scheduler:
             state = self.append(state, candidates[0], strategy == RETURN_EMPTY)
         return state, self.limits.max_actions, True
 
-    def search(self, initial, strategy, incumbent, *, skip_first=None, max_states=None):
+    def search(self, initial, strategy, incumbent, *, skip_first=None, max_states=None, score=None):
         """Evaluate alternative cargo orders and pair assignments before committing to moves."""
         limits = self.limits
         budget = limits.max_states if max_states is None else max_states
         frontier = [initial]
         expanded = 0
         visited = {}
+        if score is None:
+            def score(state):
+                return state.score(True)
         for _ in range(max(0, limits.max_actions - len(initial.moves))):
             next_frontier = {}
             for state in frontier:
                 key = state.key()
                 previous_score = visited.get(key)
-                if previous_score is not None and previous_score >= state.score(True):
+                if previous_score is not None and previous_score >= score(state):
                     continue
                 if expanded >= budget:
                     return incumbent, expanded, True
-                visited[key] = state.score(True)
+                visited[key] = score(state)
                 expanded += 1
                 for move in self.candidates(state, strategy):
                     if state is initial and move == skip_first:
                         continue
                     child = self.append(state, move)
-                    score = child.score(True)
-                    if score > incumbent.score(True):
+                    child_score = score(child)
+                    if child_score > score(incumbent):
                         incumbent = child
                     key = child.key()
                     old = next_frontier.get(key)
-                    if old is None or score > old.score(True):
+                    if old is None or child_score > score(old):
                         next_frontier[key] = child
             if not next_frontier:
                 return incumbent, expanded, False
-            frontier = sorted(next_frontier.values(), key=lambda item: item.score(True), reverse=True)[:limits.beam_width]
+            frontier = sorted(next_frontier.values(), key=score, reverse=True)[:limits.beam_width]
         return incumbent, expanded, True
 
-    def repair(self, seed, incumbent, strategy):
+    def repair(self, seed, incumbent, strategy, *, score=None):
         """Rebuild a few suffixes after excluding their previous first assignment."""
         prefix = seed
         original = incumbent.moves[len(seed.moves):]
         expanded, truncated = 0, False
         for move in original[:self.limits.repair_attempts]:
             incumbent, count, limited = self.search(prefix, strategy, incumbent, skip_first=move,
-                                                    max_states=self.limits.repair_states)
+                                                    max_states=self.limits.repair_states, score=score)
             expanded += count
             truncated = truncated or limited
             prefix = self.append(prefix, move)
         return incumbent, expanded, truncated
 
     def plan(self, strategy):
-        if strategy not in (*STRATEGIES, RETURN_EMPTY):
+        if strategy not in (*STRATEGIES, RETURN_EMPTY, COST):
             raise ValueError(f'Unknown network strategy: {strategy}')
+        if strategy == COST and self.cost_model is None:
+            raise ValueError('NETWORK_COST requires version 2 tariffs')
         seed = self.initial()
         baseline = None
         reposition_selected = False
+        floor = None
         if strategy in (FCFS, GREEDY, RETURN_EMPTY):
             state, expanded, truncated = self.dispatch(seed, strategy)
         else:
@@ -183,7 +198,7 @@ class Scheduler:
             expanded += sum(count for _, count, _ in simple)
             truncated = truncated or limited or any(limit for _, _, limit in simple)
             state = baseline
-            if strategy == REPOSITION:
+            if strategy in (REPOSITION, COST):
                 alternative, count, limited = self.search(seed, REPOSITION, baseline)
                 expanded += count
                 truncated = truncated or limited
@@ -194,8 +209,22 @@ class Scheduler:
                 if alternative.score(True) > baseline.score(True):
                     state = alternative
                     reposition_selected = any(move.empty for move in state.moves[len(seed.moves):])
+            if strategy == COST:
+                floor = (state.on_time, state.delivered)
+
+                def cost_score(item):
+                    penalty, _ = self.cost_model.residual(item.remaining)
+                    return (*item.score(True)[:2], min(item.on_time, floor[0]), min(item.delivered, floor[1]),
+                            -(item.operating_cost + penalty), *item.score(False))
+
+                state, count, limited = self.search(seed, COST, state, score=cost_score)
+                expanded += count
+                truncated = truncated or limited
+                state, count, limited = self.repair(seed, state, COST, score=cost_score)
+                expanded += count
+                truncated = truncated or limited
         # Reconstruct positions and mass independently before exposing the plan.
-        replay(self.scenario, state.moves, allow_reposition=strategy == REPOSITION,
+        replay(self.scenario, state.moves, allow_reposition=strategy in (REPOSITION, COST),
                allow_return=strategy == RETURN_EMPTY)
         return Plan(strategy, state.moves, 'SEARCH_LIMIT' if truncated else 'SEARCH_FINISHED', expanded,
-                    baseline.moves if strategy == REPOSITION else None, reposition_selected)
+                    baseline.moves if strategy == REPOSITION else None, reposition_selected, floor)

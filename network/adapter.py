@@ -12,7 +12,7 @@ from network.financial import evaluate_schedule
 from network.metrics import event_rows, summarize
 from network.models import Leg, Limits, Voyage, parse_scenario, timestamp
 from network.ports import port_report
-from network.scheduler import REPOSITION, RETURN_EMPTY, STRATEGIES, Scheduler
+from network.scheduler import COST, REPOSITION, RETURN_EMPTY, STRATEGIES, Scheduler
 from network.validator import audit, replay, requirement_report
 from result_adapter import fingerprint
 from social_requirements import kilograms
@@ -64,7 +64,7 @@ def _resources(scenario, locations):
 
 def build_result(raw, scenario, plan, limits, tariffs=None):
     moves = tuple(sorted(plan.moves, key=lambda move: (move.start, move.tug_id, move.barge_id, move.cargo_id)))
-    policy = {'allow_reposition': plan.strategy == REPOSITION, 'allow_return': plan.strategy == RETURN_EMPTY}
+    policy = {'allow_reposition': plan.strategy in (REPOSITION, COST), 'allow_return': plan.strategy == RETURN_EMPTY}
     state = replay(scenario, moves, **policy)
     report = {'schedule_audit': {'status': 'PASSED', 'violations': []}, **requirement_report(scenario, moves)}
     metrics, financial_inputs, cargo_status = summarize(scenario, moves, report)
@@ -79,6 +79,9 @@ def build_result(raw, scenario, plan, limits, tariffs=None):
               'reposition_comparison': None, 'financial_evaluation': None}
     if scenario.berths:
         result['port_operations'] = port_report(scenario, result['events'])
+    if plan.cost_service_floor is not None:
+        timely, total = plan.cost_service_floor
+        result['cost_service_floor'] = {'on_time_t': timely / 1000, 'total_t': total / 1000}
     if plan.counterfactual is not None:
         replay(scenario, plan.counterfactual, allow_reposition=False)
         baseline_report = requirement_report(scenario, plan.counterfactual)
@@ -110,7 +113,11 @@ def build_result(raw, scenario, plan, limits, tariffs=None):
 def run_scenario(raw, strategy=REPOSITION, *, limits=None, tariffs=None):
     limits = limits or Limits()
     scenario = parse_scenario(raw)
-    return build_result(raw, scenario, Scheduler(scenario, limits).plan(strategy), limits, tariffs)
+    model = None
+    if strategy == COST and tariffs is not None and tariffs.get('tariff_version') == 2:
+        from network.costs import CostModel
+        model = CostModel(scenario, tariffs)
+    return build_result(raw, scenario, Scheduler(scenario, limits, model).plan(strategy), limits, tariffs)
 
 
 def audit_result(result):
@@ -120,10 +127,10 @@ def audit_result(result):
     scenario = parse_scenario(result['scenario'])
     strategy = result['strategy']
     if (scenario.id != result['scenario_id'] or result['data_status'] != scenario.data_status
-            or strategy not in (*STRATEGIES, RETURN_EMPTY)):
+            or strategy not in (*STRATEGIES, RETURN_EMPTY, COST)):
         raise ValueError('Invalid scenario or strategy')
     moves = decode_voyages(result['voyages'])
-    policy = {'allow_reposition': strategy == REPOSITION, 'allow_return': strategy == RETURN_EMPTY}
+    policy = {'allow_reposition': strategy in (REPOSITION, COST), 'allow_return': strategy == RETURN_EMPTY}
     report = audit(scenario, moves, **policy)
     if report['schedule_audit']['status'] == 'FAILED':
         return report
@@ -144,7 +151,7 @@ def audit_result(result):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('scenario', type=Path, help='Synthetic scenario JSON')
-    parser.add_argument('--strategy', choices=(*STRATEGIES, RETURN_EMPTY), default=REPOSITION)
+    parser.add_argument('--strategy', choices=(*STRATEGIES, RETURN_EMPTY, COST), default=REPOSITION)
     parser.add_argument('--limits', type=Path, help='JSON object overriding search limits')
     parser.add_argument('--tariffs', type=Path)
     parser.add_argument('--output', type=Path)
