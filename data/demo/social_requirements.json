@@ -1,0 +1,10 @@
+[
+  {
+    "requirement_id": "FOOD_01",
+    "cargo_types": ["food", "food_extended"],
+    "required_t": 50.0,
+    "deadline": "2026-09-01T00:00:00",
+    "basis": "delivered_by_deadline",
+    "source_status": "SCENARIO_ASSUMPTION"
+  }
+]
