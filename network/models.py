@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from datetime import date as calendar_date, datetime, timedelta
 import math
 from network.access import VesselAccess, provenance, vessel_access
+from network.ports import parse_ports
 
 from scenario_validation import date, ident, number
 from social_requirements import Requirement, kilograms, parse_requirements
@@ -97,10 +98,18 @@ class Voyage:
     loaded: tuple[Leg, ...]
     unloading_end: datetime
     return_empty: tuple[Leg, ...] = ()
+    loading_berth: str | None = None
+    unloading_berth: str | None = None
+    port_ready_at: datetime | None = None
+    unloading_start: datetime | None = None
 
     @property
     def start(self):
-        return self.empty[0].depart if self.empty else self.load_start
+        return self.empty[0].depart if self.empty else (self.port_ready_at or self.load_start)
+
+    @property
+    def unload_start(self):
+        return self.unloading_start or self.loaded[-1].arrive
 
     @property
     def end(self):
@@ -144,6 +153,7 @@ class Scenario:
     fixed_handling_seconds: int
     data_status: str
     allow_marine_reposition: bool
+    berths: dict
 
     def get(self, key):
         """Calendar lookup accepted by the existing physical passage check."""
@@ -296,7 +306,8 @@ def parse_scenario(raw):
     return Scenario(ident(raw['scenario_id'], 'scenario_id'), start, end, ports, edges, outgoing,
                     tugs, barges, tuple(sorted(pairs)), cargo_rows, minima, social,
                     number(raw.get('underkeel_m', 0), 'underkeel_m', nonnegative=True), fixed,
-                    data_status, marine_reposition)
+                    data_status, marine_reposition,
+                    parse_ports(raw.get('port_operations', {}), ports, timestamp, start, end, data_status))
 
 
 def handling_time(scenario, barge, kg):

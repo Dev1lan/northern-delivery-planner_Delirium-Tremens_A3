@@ -5,6 +5,7 @@ from network.access import admission_error
 
 from network.models import Location, handling_time, loaded_draft, sailing_time
 from network.routing import passage_open
+from network.ports import service_duration
 from social_requirements import evaluate
 
 
@@ -28,6 +29,7 @@ class Replay:
 def replay(scenario, voyages, *, allow_reposition=True, allow_return=False, initial=None):
     locations = scenario.initial_locations() if initial is None else dict(initial.locations)
     remaining = {c.id: c.kg for c in scenario.cargo.values()} if initial is None else dict(initial.remaining)
+    booked = {berth.id: list(berth.occupied) for berths in scenario.berths.values() for berth in berths}
     for index, move in sorted(enumerate(voyages, 1), key=lambda item: (item[1].start, item[0])):
         def require(condition, code, detail):
             if not condition:
@@ -76,11 +78,35 @@ def replay(scenario, voyages, *, allow_reposition=True, allow_return=False, init
             require(allow_reposition and tug_state.port != cargo.origin, 'UNJUSTIFIED_EMPTY_PATH', cargo.id)
             require(move.unloading_end <= cargo.due, 'REPOSITION_MISSES_DEADLINE', cargo.id)
         at_pickup = follow(move.empty, tug_state.port, cargo.origin, move.start, 0, reposition=True)
-        handling = handling_time(scenario, barge, move.kg)
-        require(move.load_start >= at_pickup and move.departure == move.load_start + handling,
-                'LOADING_TIME', cargo.id)
+
+        def operation(port, berth_id, kind, start, end, ready):
+            require(start >= ready, 'OPERATION_BEFORE_ARRIVAL', cargo.id)
+            if port not in scenario.berths:
+                require(berth_id is None and end - start == handling_time(scenario, barge, move.kg),
+                        'HANDLING_TIME', cargo.id)
+                return
+            berth = next((b for b in scenario.berths[port] if b.id == berth_id), None)
+            require(berth is not None, 'UNKNOWN_BERTH', str(berth_id))
+            duration = service_duration(scenario, berth, kind, barge, cargo.type, move.kg,
+                                        loaded_draft(tug, barge, move.kg))
+            require(duration is not None and end - start == duration, 'INCOMPATIBLE_BERTH_OR_TIME', berth_id)
+            require(any(a <= start < end <= b for a, b in berth.windows), 'BERTH_CLOSED', berth_id)
+            require(not any(start < b and a < end for a, b in booked[berth_id]), 'BERTH_BUSY', berth_id)
+            booked[berth_id].append((start, end))
+
+        if cargo.origin in scenario.berths:
+            expected = max(cargo.ready, move.empty[-1].arrive if move.empty
+                           else max(tug_state.available_at, barge_state.available_at))
+            require(move.port_ready_at == expected, 'PORT_QUEUE_START', cargo.id)
+        else:
+            require(move.port_ready_at is None, 'UNEXPECTED_PORT_QUEUE', cargo.id)
+        operation(cargo.origin, move.loading_berth, 'LOADING', move.load_start, move.departure,
+                  max(at_pickup, move.port_ready_at or at_pickup))
         arrival = follow(move.loaded, cargo.origin, cargo.destination, move.departure, move.kg)
-        require(move.unloading_end == arrival + handling, 'UNLOADING_TIME', cargo.id)
+        if cargo.destination not in scenario.berths:
+            require(move.unloading_start is None, 'UNEXPECTED_PORT_QUEUE', cargo.id)
+        operation(cargo.destination, move.unloading_berth, 'UNLOADING',
+                  move.unload_start, move.unloading_end, arrival)
         require(bool(move.return_empty) == allow_return, 'RETURN_POLICY', cargo.id)
         final_port = cargo.destination
         if move.return_empty:

@@ -1,9 +1,10 @@
 """Deterministic dispatch and bounded search over complete network schedules."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from network.models import Limits, Location
 from network.routing import distance
+from network.ports import reservations
 from network.simulator import voyages
 from network.validator import replay
 
@@ -24,13 +25,15 @@ class State:
     delivered: int = 0
     empty_km: float = 0
     moves: tuple = ()
+    bookings: dict = field(default_factory=dict)
 
     def score(self, social):
         minimums = (-sum(x > 0 for x in self.deficit), -sum(self.deficit)) if social else ()
         return (*minimums, self.on_time, self.delivered, -self.empty_km, -len(self.moves))
 
     def key(self):
-        return tuple(sorted(self.locations.items())), tuple(sorted(self.remaining.items())), self.deficit
+        booked = tuple((key, tuple(sorted(value))) for key, value in sorted(self.bookings.items()))
+        return tuple(sorted(self.locations.items())), tuple(sorted(self.remaining.items())), self.deficit, booked
 
 
 @dataclass(frozen=True)
@@ -66,10 +69,13 @@ class Scheduler:
             if deadline is None or move.unloading_end <= deadline:
                 deficits[index] = max(0, deficits[index] - move.kg)
         empty = distance(self.scenario, (*move.empty, *move.return_empty))
+        bookings = dict(state.bookings)
+        for berth, interval in reservations(move):
+            bookings[berth] = (*bookings.get(berth, ()), interval)
         return State({**state.locations, move.tug_id: location, move.barge_id: location},
                      {**state.remaining, cargo.id: state.remaining[cargo.id] - move.kg}, tuple(deficits),
                      state.on_time + (move.kg if move.unloading_end <= cargo.due else 0),
-                     state.delivered + move.kg, state.empty_km + empty, (*state.moves, move))
+                     state.delivered + move.kg, state.empty_km + empty, (*state.moves, move), bookings)
 
     def candidates(self, state, strategy):
         s = self.scenario
@@ -89,7 +95,8 @@ class Scheduler:
                 deficit = state.deficit[index] if index is not None else 0
                 for move in voyages(s, tug, barge, cargo, min(barge.capacity_kg, state.remaining[cargo.id]),
                                     tug_loc.port, ready, self.limits, allow_reposition=strategy == REPOSITION,
-                                    require_return=strategy == RETURN_EMPTY, requirement=requirement, deficit_kg=deficit):
+                                    require_return=strategy == RETURN_EMPTY, requirement=requirement,
+                                    deficit_kg=deficit, bookings=state.bookings):
                     on_time = move.unloading_end <= cargo.due
                     if strategy in (FCFS, RETURN_EMPTY):
                         rank = (cargo.ready, cargo.id, move.load_start, -move.kg, move.end)

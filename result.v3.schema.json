@@ -29,6 +29,7 @@
   ],
   "additionalProperties": false,
   "properties": {
+    "port_operations": {"type": "object", "additionalProperties": {"type": "object"}},
     "schema_version": { "const": "3.0.0" },
     "algorithm_version": { "const": "3.0.0" },
     "scenario_id": {
@@ -374,6 +375,10 @@
           "type": "string",
           "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$"
         },
+        "loading_berth": {"type": "string", "minLength": 1},
+        "unloading_berth": {"type": "string", "minLength": 1},
+        "port_ready_at": {"type": "string"},
+        "unloading_start": {"type": "string"},
         "return_empty": {
           "type": "array",
           "items": {
@@ -424,6 +429,7 @@
         "state": {
           "enum": [
             "WAITING",
+            "PORT_QUEUE",
             "LOADING",
             "LOADED_TRANSIT",
             "UNLOADING",
@@ -455,6 +461,7 @@
             { "type": "null" }
           ]
         },
+        "berth_id": {"type": "string", "minLength": 1},
         "km": {
           "type": "number",
           "minimum": 0

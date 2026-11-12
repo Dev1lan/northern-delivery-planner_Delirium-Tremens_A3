@@ -6,8 +6,9 @@ from copy import deepcopy
 
 from network.adapter import audit_result, decode_voyages, run_scenario
 from network.metrics import event_rows
-from network.models import handling_time, loaded_draft, parse_scenario, sailing_time, timestamp
+from network.models import loaded_draft, parse_scenario, sailing_time, timestamp
 from network.routing import passage_open
+from network.ports import service_duration
 from network.scheduler import REPOSITION, RETURN_EMPTY
 from network.validator import replay, requirement_report
 from result_adapter import fingerprint
@@ -94,6 +95,7 @@ def replan(previous, revised_raw, as_of, *, resource_updates=None, delivered_t=N
             if key not in active and ready > instant:
                 observed[key].update(state='UNAVAILABLE', available_at=ready.isoformat())
 
+    berth_locks = defaultdict(list)
     for move in locked:
         if move.end <= instant:
             continue
@@ -103,10 +105,26 @@ def replan(previous, revised_raw, as_of, *, resource_updates=None, delivered_t=N
             return intervention('ONGOING_RESOURCE_UNAVAILABLE', move.cargo_id)
         if move.kg > barge.capacity_kg or revised.cargo[move.cargo_id].type not in barge.cargo_types:
             return intervention('ONGOING_LOAD_INCOMPATIBLE', move.cargo_id)
-        handling = handling_time(revised, barge, move.kg)
-        if ((move.departure > instant and move.departure - move.load_start != handling)
-                or move.unloading_end - move.loaded[-1].arrive != handling):
-            return intervention('ONGOING_HANDLING_CHANGED', move.cargo_id)
+        cargo = revised.cargo[move.cargo_id]
+        for port, berth_id, kind, a, b in (
+                (cargo.origin, move.loading_berth, 'LOADING', move.load_start, move.departure),
+                (cargo.destination, move.unloading_berth, 'UNLOADING', move.unload_start, move.unloading_end)):
+            if b <= instant:
+                continue
+            berth = next((x for x in revised.berths.get(port, ()) if x.id == berth_id), None)
+            if (port in revised.berths) != (berth is not None) or (berth_id is not None and berth is None):
+                return intervention('ONGOING_BERTH_UNAVAILABLE', str(berth_id))
+            duration = service_duration(revised, berth, kind, barge, cargo.type, move.kg,
+                                        loaded_draft(tug, barge, move.kg))
+            if duration != b - a:
+                return intervention('ONGOING_HANDLING_CHANGED', move.cargo_id)
+            if berth is not None:
+                active_start = max(a, instant)
+                occupied = (*berth.occupied, *berth_locks[berth_id])
+                if (not any(x <= active_start < b <= y for x, y in berth.windows)
+                        or any(active_start < y and x < b for x, y in occupied)):
+                    return intervention('ONGOING_BERTH_UNAVAILABLE', berth_id)
+                berth_locks[berth_id].append((active_start, b))
         for legs, kg in ((move.empty, 0), (move.loaded, move.kg)):
             draft = loaded_draft(tug, barge, kg)
             for leg in legs:
@@ -122,6 +140,10 @@ def replan(previous, revised_raw, as_of, *, resource_updates=None, delivered_t=N
 
     suffix = deepcopy(revised_raw)
     suffix['start'] = instant.isoformat()
+    for port in suffix.get('port_operations', {}).values():
+        for berth in port['berths']:
+            booked = [{'start': a.isoformat(), 'end': b.isoformat()} for a, b in berth_locks[berth['berth_id']]]
+            berth['initial_occupancy'] = [*berth.get('initial_occupancy', []), *booked]
     # Existing resources follow the execution log; revised availability can delay them.
     available_ids = set()
     for key in ('tugs', 'barges'):

@@ -13,13 +13,15 @@ def event_rows(scenario, move, index):
     cargo = scenario.cargo[move.cargo_id]
     rows = []
 
-    def event(state, origin, destination, start, end, edge=None, kg=0):
+    def event(state, origin, destination, start, end, edge=None, kg=0, berth=None):
         if start < end:
             rows.append({'voyage_id': index, 'tug_id': move.tug_id, 'barge_id': move.barge_id,
                          'cargo_id': cargo.id if kg else None, 'state': state, 'origin_port': origin,
                          'destination_port': destination, 'start': start.isoformat(), 'end': end.isoformat(),
                          'edge_id': edge.id if edge else None, 'km': edge.km if edge else 0,
                          'volume_t': kg / 1000})
+            if berth is not None:
+                rows[-1]['berth_id'] = berth
 
     def transit(legs, ready, kg):
         for leg in legs:
@@ -31,10 +33,17 @@ def event_rows(scenario, move, index):
         return ready
 
     at_pickup = transit(move.empty, move.start, 0)
-    event('WAITING', cargo.origin, cargo.origin, at_pickup, move.load_start)
-    event('LOADING', cargo.origin, cargo.origin, move.load_start, move.departure, kg=move.kg)
+    if move.loading_berth is None:
+        event('WAITING', cargo.origin, cargo.origin, at_pickup, move.load_start)
+    else:
+        event('WAITING', cargo.origin, cargo.origin, at_pickup, move.port_ready_at)
+        event('PORT_QUEUE', cargo.origin, cargo.origin, move.port_ready_at, move.load_start)
+    event('LOADING', cargo.origin, cargo.origin, move.load_start, move.departure,
+          kg=move.kg, berth=move.loading_berth)
     arrival = transit(move.loaded, move.departure, move.kg)
-    event('UNLOADING', cargo.destination, cargo.destination, arrival, move.unloading_end, kg=move.kg)
+    event('PORT_QUEUE', cargo.destination, cargo.destination, arrival, move.unload_start, kg=move.kg)
+    event('UNLOADING', cargo.destination, cargo.destination, move.unload_start, move.unloading_end,
+          kg=move.kg, berth=move.unloading_berth)
     transit(move.return_empty, move.unloading_end, 0)
     return rows
 
@@ -64,7 +73,7 @@ def summarize(scenario, moves, report):
         late_tonne_hours += late / 3600 * (move.kg / 1000)
         transit = sum(seconds(leg.depart, leg.arrive) for leg in (*move.empty, *move.loaded, *move.return_empty))
         loading = seconds(move.load_start, move.departure)
-        unloading = seconds(move.loaded[-1].arrive, move.unloading_end)
+        unloading = seconds(move.unload_start, move.unloading_end)
         duration = seconds(move.start, move.end)
         waiting = duration - transit - loading - unloading
         transit_seconds += transit
