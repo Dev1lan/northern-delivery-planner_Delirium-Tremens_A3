@@ -1,0 +1,52 @@
+{
+  "scenarios": 114,
+  "schedules": 456,
+  "historical_matches": 228,
+  "physical_violations": 0,
+  "by_strategy": {
+    "FCFS": {
+      "mean_delivered_on_time_t": 2809.121,
+      "mean_delivered_total_t": 9377.486,
+      "mean_critical_on_time_t": 0.0,
+      "mean_critical_total_t": 24.543,
+      "mean_social_deficit_t": 44.785,
+      "FEASIBLE": 1,
+      "INFEASIBLE": 0,
+      "UNKNOWN": 113,
+      "NOT_CHECKED": 0
+    },
+    "EARLIEST_DUE": {
+      "mean_delivered_on_time_t": 2592.487,
+      "mean_delivered_total_t": 9384.107,
+      "mean_critical_on_time_t": 5.92,
+      "mean_critical_total_t": 24.17,
+      "mean_social_deficit_t": 43.203,
+      "FEASIBLE": 2,
+      "INFEASIBLE": 0,
+      "UNKNOWN": 112,
+      "NOT_CHECKED": 0
+    },
+    "OPTIMIZED": {
+      "mean_delivered_on_time_t": 11219.454,
+      "mean_delivered_total_t": 11561.276,
+      "mean_critical_on_time_t": 0.939,
+      "mean_critical_total_t": 0.939,
+      "mean_social_deficit_t": 50.0,
+      "FEASIBLE": 0,
+      "INFEASIBLE": 0,
+      "UNKNOWN": 114,
+      "NOT_CHECKED": 0
+    },
+    "SOCIAL_PRIORITY": {
+      "mean_delivered_on_time_t": 11034.43,
+      "mean_delivered_total_t": 11376.252,
+      "mean_critical_on_time_t": 50.939,
+      "mean_critical_total_t": 50.939,
+      "mean_social_deficit_t": 0.0,
+      "FEASIBLE": 114,
+      "INFEASIBLE": 0,
+      "UNKNOWN": 0,
+      "NOT_CHECKED": 0
+    }
+  }
+}

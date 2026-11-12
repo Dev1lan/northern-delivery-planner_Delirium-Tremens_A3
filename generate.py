@@ -122,7 +122,7 @@ def trial_trip(c, unit, cargo, qty, start, condition_map, close):
         released_at=iso(now),loaded_draft_m=round(draft,6),events_json=json.dumps(events,ensure_ascii=False,separators=(',',':')),
         data_status='SYNTHETIC',source_url='')
 
-def best_load(c, unit, cargo, qty, start, condition_map, close):
+def best_load(c, unit, cargo, qty, start, condition_map, close, *, unload_by=None):
     """Largest feasible load on the 0.001 t grid, including non-monotone days.
 
     Passage timestamps are affine in load and draft is linear. Feasibility can
@@ -130,6 +130,21 @@ def best_load(c, unit, cargo, qty, start, condition_map, close):
     grid points around each boundary; check_passage remains the authority.
     """
     max_tick = math.floor(qty * 1000 + 1e-8)
+    if unload_by is not None:
+        # Unloading time grows monotonically with mass, even when physical
+        # feasibility does not. Limit the grid before the physical search.
+        crossing = sum((timedelta(hours=s['distance_km'] / unit['speed_upstream_kmh'])
+                        for s in c['segments']), timedelta())
+        lo, hi = 0, max_tick
+        while lo < hi:
+            tick = (lo + hi + 1) // 2
+            handling = timedelta(hours=c['handling_fixed_hours'] + (tick / 1000) / unit['handling_tph'])
+            unloaded = start + handling + crossing + handling
+            if dt(iso(unloaded)) <= unload_by:
+                lo = tick
+            else:
+                hi = tick - 1
+        max_tick = lo
     if max_tick < 1:
         return None
     first = trial_trip(c, unit, cargo, max_tick / 1000, start, condition_map, close)

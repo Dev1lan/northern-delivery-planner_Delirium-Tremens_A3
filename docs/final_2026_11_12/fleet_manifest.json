@@ -1,0 +1,37 @@
+{
+  "algorithm_version": "2.2.0",
+  "revision": null,
+  "python": "3.12.14",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "strategies": [
+    "FCFS",
+    "EARLIEST_DUE",
+    "OPTIMIZED",
+    "SOCIAL_PRIORITY"
+  ],
+  "workers": 4,
+  "data_status": "SYNTHETIC",
+  "source_sha256": {
+    "optimizer.py": "d632fb816677b1ff1a2b681e354c4decc68555993747d8955d5e5f8cbc3ded06",
+    "generate.py": "80b6051680de5997b7b8095ebb13e5ef9cb255dd353d5f360946efb49fcd6316",
+    "validate.py": "1d323be88fec0ac94be6e55d7cf750de75e89a9464d40fd07d1d233bc37470d7",
+    "scenario_validation.py": "ffa4ec4860bf6b76ac548244abf1166618eaa091aa6b0f655176e8e2f6ade452",
+    "social_requirements.py": "b5336c512d5d78bc3ae591cdf2f5c4a05e59b9f56502c31d540e8afda9892033",
+    "result_adapter.py": "b1ce1867fd58b28af3f3d7e92f46f7299d353f2b9ae3b503e56cfc0b7309886d",
+    "result.v2.schema.json": "a64b0783b67eeeb5ae2b96be2760e0f03c07e1658d7459f3f86d7cb1a5d4e68f",
+    "experiments/run_comparison.py": "4e1bbe72aeb29a3f6d1a923a25cb7f4ca89aac61859f8410d8d7358237181f5a",
+    "experiments/social_examples.py": "8f95e4a82119f68ea6aa232f105d4a5312a0162bbb5a627718d0d3fd56bad33d",
+    "experiments/verify_final_reproducibility.py": "dd6d4291f81336298f965720492de13db91ed6797105743d5e81fd84590ac8c8",
+    "experiments/tiny_exact.py": "5a68fc628a9576c6581a2e6d0a2ce5de8936f764786f82fd17393af1ea4db5ce",
+    "experiments/fleet_analysis.py": "5b475692aca5db9feecfc5ea1a8ce5bf79377933c019f1124dc0365b645aaa73",
+    "finance_export.py": "ee34b3c352a0d5d7646f80713044136b18ab5519fccdc2143a474f8af6133cea"
+  },
+  "input_sha256": {
+    "CURRENT_FLEET.json": "3d9f6007bf7564ea90020fab7d0e026adaa742aecb5155c8136bdda10dc96749",
+    "PLUS_BARGE.json": "d9e206b77719b9f5e7dee38eeac33b49986ade644f332012485346a3ea302118",
+    "PLUS_TUG.json": "30ad2472fec09784cb8c70cf8c3cd9a939657e0136ab8512028b3a304fba64a5",
+    "PLUS_UNIT.json": "99b930eb8b844f54da0399700f55e541160181cdd9ebd44eab011e1460915648",
+    "REDUCED_FLEET.json": "b563b67b617748aa64795bac0091fcbd9d50c3ee93ea84a129c3d05ea5e70fcb"
+  },
+  "replay": "python -m experiments.run_comparison --snapshot-root <this-output> --output <new-path>"
+}
