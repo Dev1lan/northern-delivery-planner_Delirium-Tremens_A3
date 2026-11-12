@@ -1,0 +1,4 @@
+fastapi>=0.110
+uvicorn>=0.29
+# расчёт и проверка контракта — зависимости матмодели (../requirements.txt, jsonschema)
+# прогноз ML необязателен — ../ml/requirements.txt

@@ -1,0 +1,68 @@
+{
+  "provenance": "synthetic",
+  "purpose": "только проверка; в обучение не идёт",
+  "seed": 20261110,
+  "families_per_regime": 60,
+  "variants": 1,
+  "regimes": {
+    "fleet_deficit": {
+      "capacity_scale": [
+        0.3,
+        0.45
+      ],
+      "extra_dry": [
+        -1,
+        -1
+      ],
+      "extra_oil": [
+        0,
+        0
+      ]
+    },
+    "fleet_surplus": {
+      "capacity_scale": [
+        1.4,
+        1.8
+      ],
+      "extra_dry": [
+        3,
+        5
+      ],
+      "extra_oil": [
+        1,
+        2
+      ]
+    },
+    "demand_growth": {
+      "demand_scale": [
+        2.0,
+        3.0
+      ]
+    },
+    "shallow_bar": {
+      "depth_offset": [
+        -0.5,
+        -0.35
+      ]
+    },
+    "short_navigation": {
+      "close_early_days": [
+        35,
+        50
+      ]
+    },
+    "few_large_lots": {
+      "batch_max_t": [
+        9000,
+        20000
+      ]
+    },
+    "long_route": {
+      "route_scale": [
+        1.6,
+        2.0
+      ]
+    }
+  },
+  "note": "значения режима намеренно за пределами обучающих диапазонов RANGES"
+}

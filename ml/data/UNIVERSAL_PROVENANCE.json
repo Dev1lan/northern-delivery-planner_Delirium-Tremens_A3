@@ -1,0 +1,108 @@
+{
+  "provenance": "synthetic",
+  "seed": 20261110,
+  "families": 1000,
+  "variants": 2,
+  "generator": "a3_bridge.build_universal: произвольная линейная цепочка участков, флот, глубины, грузы; грузы — generate.make_cargo матмодели",
+  "label_source": "optimizer.simulate, алгоритм 2.1.0; метка по (вовремя, всего, −рейсы)",
+  "ranges": {
+    "nav_days": [
+      60,
+      170
+    ],
+    "start_shift_days": [
+      0,
+      45
+    ],
+    "n_segments": [
+      1,
+      5
+    ],
+    "route_km": [
+      60,
+      2500
+    ],
+    "n_classes": [
+      1,
+      3
+    ],
+    "units_per_class": [
+      1,
+      4
+    ],
+    "capacity_t": [
+      100,
+      3000
+    ],
+    "draft_empty_m": [
+      0.3,
+      0.9
+    ],
+    "draft_span_m": [
+      0.5,
+      2.2
+    ],
+    "speed_upstream_kmh": [
+      5,
+      14
+    ],
+    "downstream_ratio": [
+      1.2,
+      2.0
+    ],
+    "handling_tph": [
+      15,
+      200
+    ],
+    "handling_fixed_hours": [
+      1,
+      6
+    ],
+    "underkeel_m": [
+      0.1,
+      0.3
+    ],
+    "depth_start_ratio": [
+      0.9,
+      1.6
+    ],
+    "depth_end_ratio": [
+      0.45,
+      1.3
+    ],
+    "segment_depth_jitter": [
+      -0.12,
+      0.12
+    ],
+    "close_early_days": [
+      0,
+      20
+    ],
+    "demand_to_capacity": [
+      0.05,
+      3.0
+    ],
+    "target_lots": [
+      8,
+      220
+    ],
+    "ready_lo": [
+      0.0,
+      0.3
+    ],
+    "ready_hi": [
+      0.5,
+      0.98
+    ],
+    "due_lo": [
+      3,
+      25
+    ],
+    "due_span": [
+      3,
+      40
+    ]
+  },
+  "max_expected_trips": 220,
+  "note": "диапазоны — сценарные допущения ML-модуля, не данные о реальных реках"
+}

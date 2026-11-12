@@ -6,13 +6,13 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 
-from a3_bridge import BASE_FEATURES, ALL_FEATURES, STRATEGIES
+from a3_bridge import BASE_FEATURES, V1_FEATURES, ALL_FEATURES, STRATEGIES
 
 # Признаки с большим разбросом масштаба логарифмируем перед стандартизацией
 LOG_FEATURES = {"cargo_total_t", "total_capacity_t", "cargo_count", "vessel_count",
                 "demand_to_throughput"}
 
-FEATURE_SETS = {"base": BASE_FEATURES, "extended": ALL_FEATURES}
+FEATURE_SETS = {"base": BASE_FEATURES, "v1": V1_FEATURES, "extended": ALL_FEATURES}
 
 
 class Preprocessor:
@@ -127,3 +127,66 @@ def build_torch_mlp(n_in: int, hidden: int, n_out: int = len(STRATEGIES)):
 def save_json(obj, path):
     with open(path, "w", encoding="utf-8") as f:
         json.dump(obj, f, ensure_ascii=False, indent=2)
+
+
+# ---------------------------------------------------------------------------
+# Прогноз доли тоннажа вовремя: ансамбль MLP-регрессоров + калиброванный интервал
+# ---------------------------------------------------------------------------
+class ShareEnsemble:
+    """Прогноз доли тоннажа вовремя по каждой стратегии.
+
+    Точечный прогноз — среднее нескольких MLPRegressor с разными seed.
+    Если задана base (столбцы жидкостной оценки), сети учат ПОПРАВКУ к ней:
+    прогноз = жидкостная оценка + поправка сети. Иначе сети предсказывают долю
+    напрямую (так работает набор признаков первой сборки).
+
+    Интервал — conformalized quantile regression: градиентный бустинг на
+    квантили той же цели + поправка q, подобранная на val-выборке так, чтобы
+    интервал накрывал заданную долю сценариев. Это эмпирическая калибровка на
+    синтетике, а не гарантия для реальных условий."""
+
+    def __init__(self, models, coverage=0.9, base=None):
+        self.models = list(models)
+        self.coverage = coverage
+        self.base = base         # None или dict(idx=[...], mean=[...], std=[...]) — столбцы X с жидкостной оценкой
+        self.q_models = None     # [(lo_model, hi_model)] по стратегиям
+        self.q = None
+
+    def base_of(self, X):
+        if self.base is None:
+            return 0.0
+        idx = self.base["idx"]
+        return np.asarray(X, dtype=np.float64)[:, idx] * np.asarray(self.base["std"]) + np.asarray(self.base["mean"])
+
+    def target(self, X, Y):
+        return Y - self.base_of(X)
+
+    def predict(self, X):
+        raw = np.mean([m.predict(X) for m in self.models], axis=0)
+        return np.clip(self.base_of(X) + raw, 0, 1)
+
+    def _raw_interval(self, X):
+        b = self.base_of(X)
+        lo = np.column_stack([a.predict(X) for a, _ in self.q_models]) + b
+        hi = np.column_stack([c.predict(X) for _, c in self.q_models]) + b
+        return np.minimum(lo, hi), np.maximum(lo, hi)
+
+    def fit_interval(self, Xtr, Ytr, Xva, Yva, seed=0):
+        from sklearn.ensemble import HistGradientBoostingRegressor as GB
+        a = (1 - self.coverage) / 2
+        T = self.target(Xtr, Ytr)
+        mk = lambda q: GB(loss="quantile", quantile=q, max_iter=300, learning_rate=0.05,
+                          min_samples_leaf=10, l2_regularization=1.0, random_state=seed)
+        self.q_models = [(mk(a).fit(Xtr, T[:, j]), mk(1 - a).fit(Xtr, T[:, j])) for j in range(T.shape[1])]
+        lo, hi = self._raw_interval(Xva)
+        score = np.maximum(lo - Yva, Yva - hi)
+        n = len(score)
+        level = min(1.0, np.ceil((n + 1) * self.coverage) / n)
+        self.q = np.quantile(score, level, axis=0, method="higher")
+        return self
+
+    def predict_interval(self, X):
+        mu = self.predict(X)
+        lo, hi = self._raw_interval(X)
+        # точечный прогноз всегда внутри интервала
+        return mu, np.clip(np.minimum(lo - self.q, mu), 0, 1), np.clip(np.maximum(hi + self.q, mu), 0, 1)

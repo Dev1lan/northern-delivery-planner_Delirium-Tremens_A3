@@ -1,16 +1,21 @@
 {
   "disclaimer": "Синтетические сценарии; метки и тоннаж — матмодель Case A3 (алгоритм 2.1.0, эвристика, не глобальный оптимум). Не реальные диспетчерские решения и не факты о Яне. Модель не готова к эксплуатации.",
   "data": {
-    "file": "dataset_synthetic.csv",
-    "n_scenarios": 520,
-    "n_families": 260,
+    "file": "dataset_synthetic.csv + dataset_universal.csv",
+    "n_scenarios": 4000,
+    "n_families": 2000,
     "split": "70/15/15 по family_id",
-    "n_train": 364,
-    "n_val": 78,
-    "n_test": 78,
+    "n_train": 2800,
+    "n_val": 600,
+    "n_test": 600,
     "label_distribution_train": {
-      "OPTIMIZED": 363,
-      "FCFS": 1
+      "OPTIMIZED": 2285,
+      "FCFS": 444,
+      "EARLIEST_DUE": 71
+    },
+    "n_by_source": {
+      "generated": 2000,
+      "universal": 2000
     }
   },
   "features": [
@@ -28,88 +33,446 @@
     "mean_allowed_draft_m",
     "draft_limited_load_frac",
     "mean_due_window_days",
-    "mean_ready_fraction"
+    "mean_ready_fraction",
+    "fluid_on_time_share_smart",
+    "fluid_on_time_share_edf",
+    "fluid_on_time_share_fcfs",
+    "fluid_total_share"
   ],
-  "backend": "sklearn",
+  "backend": "torch",
   "mlp": {
     "hidden": 64,
     "layers": 2,
     "activation": "ReLU",
     "loss": "CrossEntropy",
     "optimizer": "Adam",
-    "best_val_loss": 0.0001,
-    "epochs": 139
+    "best_val_loss": 0.1983,
+    "epochs": 56
+  },
+  "decision_rule": {
+    "safe_strategy": "OPTIMIZED",
+    "deviate_confidence_threshold": 1.01,
+    "val_regret_t_mean_by_threshold": {
+      "0.5": 12.5,
+      "0.6": 11.3,
+      "0.7": 9.4,
+      "0.8": 7.0,
+      "0.9": 5.5,
+      "0.95": 6.8,
+      "0.99": 6.8,
+      "1.01": 6.8
+    },
+    "val_gain_vs_always_safe_t_p05": 0.0,
+    "note": "mlp_safe: стратегия сети берётся только при confidence >= порога, иначе OPTIMIZED; порог > 1 = всегда OPTIMIZED"
   },
   "on_time_share_mlp": {
     "layers": 2,
     "activation": "ReLU",
     "solver": "L-BFGS",
-    "hidden": 32,
+    "hidden": 64,
     "alpha": 1.0,
-    "val_mae": 0.0695
+    "val_mae_single": 0.0469,
+    "ensemble_size": 5,
+    "interval_coverage_target": 0.9,
+    "target": "поправка к жидкостной оценке",
+    "interval_method": "conformalized quantile regression (HistGradientBoosting + поправка по val)",
+    "interval_conformal_q": [
+      0.0348,
+      0.0332,
+      0.0289
+    ],
+    "val_mae_ensemble": 0.0425
   },
   "test": {
+    "mlp_safe": {
+      "n": 600,
+      "accuracy": 0.8033,
+      "accuracy_tie_aware": 0.9433,
+      "tonnage_vs_best_ratio": 0.9988,
+      "regret_t_mean": 16.5,
+      "regret_t_max": 4022.4,
+      "regret_pct_of_demand_mean": 0.133,
+      "share_regret_over_1pct_demand": 0.025
+    },
     "dummy_most_frequent": {
-      "n": 78,
-      "accuracy": 1.0,
-      "accuracy_tie_aware": 1.0,
-      "tonnage_vs_best_ratio": 1.0,
-      "regret_t_mean": 0.0,
-      "regret_t_max": 0.0,
-      "regret_pct_of_demand_mean": 0.0,
-      "share_regret_over_1pct_demand": 0.0
+      "n": 600,
+      "accuracy": 0.8033,
+      "accuracy_tie_aware": 0.9433,
+      "tonnage_vs_best_ratio": 0.9988,
+      "regret_t_mean": 16.5,
+      "regret_t_max": 4022.4,
+      "regret_pct_of_demand_mean": 0.133,
+      "share_regret_over_1pct_demand": 0.025
     },
     "random_forest": {
-      "n": 78,
-      "accuracy": 1.0,
-      "accuracy_tie_aware": 1.0,
-      "tonnage_vs_best_ratio": 1.0,
-      "regret_t_mean": 0.0,
-      "regret_t_max": 0.0,
-      "regret_pct_of_demand_mean": 0.0,
-      "share_regret_over_1pct_demand": 0.0
+      "n": 600,
+      "accuracy": 0.8933,
+      "accuracy_tie_aware": 0.9267,
+      "tonnage_vs_best_ratio": 0.9983,
+      "regret_t_mean": 22.9,
+      "regret_t_max": 4022.4,
+      "regret_pct_of_demand_mean": 0.316,
+      "share_regret_over_1pct_demand": 0.0467
     },
     "mlp": {
-      "n": 78,
-      "accuracy": 1.0,
-      "accuracy_tie_aware": 1.0,
-      "tonnage_vs_best_ratio": 1.0,
-      "regret_t_mean": 0.0,
-      "regret_t_max": 0.0,
-      "regret_pct_of_demand_mean": 0.0,
-      "share_regret_over_1pct_demand": 0.0
+      "n": 600,
+      "accuracy": 0.9,
+      "accuracy_tie_aware": 0.92,
+      "tonnage_vs_best_ratio": 0.9973,
+      "regret_t_mean": 35.8,
+      "regret_t_max": 4022.4,
+      "regret_pct_of_demand_mean": 0.488,
+      "share_regret_over_1pct_demand": 0.0583
     },
     "label_distribution": {
-      "OPTIMIZED": 78
+      "OPTIMIZED": 482,
+      "FCFS": 99,
+      "EARLIEST_DUE": 19
     },
-    "share_ties_on_tonnage": 0.0,
+    "share_ties_on_tonnage": 0.17,
     "on_time_share_forecast": {
       "mlp_mae": {
-        "FCFS": 0.0517,
-        "EARLIEST_DUE": 0.0534,
-        "OPTIMIZED": 0.0448
+        "FCFS": 0.0519,
+        "EARLIEST_DUE": 0.0543,
+        "OPTIMIZED": 0.0308
       },
       "random_forest_mae": {
-        "FCFS": 0.0576,
-        "EARLIEST_DUE": 0.0605,
-        "OPTIMIZED": 0.0509
+        "FCFS": 0.0647,
+        "EARLIEST_DUE": 0.066,
+        "OPTIMIZED": 0.0482
+      },
+      "gradient_boosting_mae": {
+        "FCFS": 0.0592,
+        "EARLIEST_DUE": 0.0617,
+        "OPTIMIZED": 0.0435
       },
       "train_mean_mae": {
-        "FCFS": 0.122,
-        "EARLIEST_DUE": 0.1264,
-        "OPTIMIZED": 0.179
+        "FCFS": 0.2878,
+        "EARLIEST_DUE": 0.2937,
+        "OPTIMIZED": 0.2469
+      },
+      "mlp_rmse": {
+        "FCFS": 0.0934,
+        "EARLIEST_DUE": 0.0975,
+        "OPTIMIZED": 0.0583
+      },
+      "mlp_abs_err_p90": {
+        "FCFS": 0.1381,
+        "EARLIEST_DUE": 0.1562,
+        "OPTIMIZED": 0.0871
+      },
+      "interval90_coverage": {
+        "FCFS": 0.925,
+        "EARLIEST_DUE": 0.935,
+        "OPTIMIZED": 0.912
+      },
+      "interval90_mean_width": {
+        "FCFS": 0.323,
+        "EARLIEST_DUE": 0.33,
+        "OPTIMIZED": 0.199
+      },
+      "fluid_estimate_without_ml_mae": {
+        "FCFS": 0.1605,
+        "EARLIEST_DUE": 0.162,
+        "OPTIMIZED": 0.0932
+      },
+      "mlp_without_fluid_features_mae": {
+        "FCFS": 0.0658,
+        "EARLIEST_DUE": 0.0668,
+        "OPTIMIZED": 0.0591
+      },
+      "accepted_n": 584,
+      "accepted_mlp_mae": {
+        "FCFS": 0.0527,
+        "EARLIEST_DUE": 0.055,
+        "OPTIMIZED": 0.0311
+      },
+      "accepted_interval90_coverage": {
+        "FCFS": 0.923,
+        "EARLIEST_DUE": 0.933,
+        "OPTIMIZED": 0.911
+      },
+      "flagged_n": 16,
+      "flagged_mlp_mae": {
+        "FCFS": 0.0229,
+        "EARLIEST_DUE": 0.0267,
+        "OPTIMIZED": 0.0189
       }
     },
-    "ood_flag_rate": 0.0769,
+    "ood_flag_rate": 0.0267,
     "top_ood_reasons": {
-      "mean_due_window_days": 3,
+      "avg_trip_days": 6,
+      "mean_ready_fraction": 3,
+      "demand_to_throughput": 2,
       "комбинация": 2,
       "min_allowed_draft_m": 2
     },
     "violations_total": 0
   },
+  "test_by_source": {
+    "note": "тот же тест, отдельно по происхождению: generated — сценарии вокруг Яны, universal — произвольные маршруты",
+    "generated": {
+      "mlp_safe": {
+        "n": 316,
+        "accuracy": 0.8544,
+        "accuracy_tie_aware": 0.9589,
+        "tonnage_vs_best_ratio": 0.9997,
+        "regret_t_mean": 2.1,
+        "regret_t_max": 200.6,
+        "regret_pct_of_demand_mean": 0.022,
+        "share_regret_over_1pct_demand": 0.0095
+      },
+      "dummy_most_frequent": {
+        "n": 316,
+        "accuracy": 0.8544,
+        "accuracy_tie_aware": 0.9589,
+        "tonnage_vs_best_ratio": 0.9997,
+        "regret_t_mean": 2.1,
+        "regret_t_max": 200.6,
+        "regret_pct_of_demand_mean": 0.022,
+        "share_regret_over_1pct_demand": 0.0095
+      },
+      "random_forest": {
+        "n": 316,
+        "accuracy": 0.9082,
+        "accuracy_tie_aware": 0.9525,
+        "tonnage_vs_best_ratio": 0.9996,
+        "regret_t_mean": 2.7,
+        "regret_t_max": 200.6,
+        "regret_pct_of_demand_mean": 0.06,
+        "share_regret_over_1pct_demand": 0.019
+      },
+      "mlp": {
+        "n": 316,
+        "accuracy": 0.9335,
+        "accuracy_tie_aware": 0.9462,
+        "tonnage_vs_best_ratio": 0.9987,
+        "regret_t_mean": 9.8,
+        "regret_t_max": 1388.1,
+        "regret_pct_of_demand_mean": 0.186,
+        "share_regret_over_1pct_demand": 0.0316
+      },
+      "label_distribution": {
+        "OPTIMIZED": 270,
+        "FCFS": 40,
+        "EARLIEST_DUE": 6
+      },
+      "share_ties_on_tonnage": 0.1329,
+      "on_time_share_forecast": {
+        "mlp_mae": {
+          "FCFS": 0.0393,
+          "EARLIEST_DUE": 0.0416,
+          "OPTIMIZED": 0.0194
+        },
+        "random_forest_mae": {
+          "FCFS": 0.0488,
+          "EARLIEST_DUE": 0.0489,
+          "OPTIMIZED": 0.0346
+        },
+        "gradient_boosting_mae": {
+          "FCFS": 0.0446,
+          "EARLIEST_DUE": 0.0465,
+          "OPTIMIZED": 0.029
+        },
+        "train_mean_mae": {
+          "FCFS": 0.2693,
+          "EARLIEST_DUE": 0.2734,
+          "OPTIMIZED": 0.2311
+        },
+        "mlp_rmse": {
+          "FCFS": 0.0699,
+          "EARLIEST_DUE": 0.073,
+          "OPTIMIZED": 0.0342
+        },
+        "mlp_abs_err_p90": {
+          "FCFS": 0.1144,
+          "EARLIEST_DUE": 0.123,
+          "OPTIMIZED": 0.0559
+        },
+        "interval90_coverage": {
+          "FCFS": 0.959,
+          "EARLIEST_DUE": 0.962,
+          "OPTIMIZED": 0.94
+        },
+        "interval90_mean_width": {
+          "FCFS": 0.299,
+          "EARLIEST_DUE": 0.305,
+          "OPTIMIZED": 0.172
+        },
+        "fluid_estimate_without_ml_mae": {
+          "FCFS": 0.1457,
+          "EARLIEST_DUE": 0.1473,
+          "OPTIMIZED": 0.0727
+        },
+        "mlp_without_fluid_features_mae": {
+          "FCFS": 0.0525,
+          "EARLIEST_DUE": 0.0531,
+          "OPTIMIZED": 0.0483
+        },
+        "accepted_n": 313,
+        "accepted_mlp_mae": {
+          "FCFS": 0.0397,
+          "EARLIEST_DUE": 0.042,
+          "OPTIMIZED": 0.0196
+        },
+        "accepted_interval90_coverage": {
+          "FCFS": 0.958,
+          "EARLIEST_DUE": 0.962,
+          "OPTIMIZED": 0.939
+        },
+        "flagged_n": 3,
+        "flagged_mlp_mae": {
+          "FCFS": 0.0029,
+          "EARLIEST_DUE": 0.0037,
+          "OPTIMIZED": 0.0017
+        }
+      },
+      "ood_flag_rate": 0.0095,
+      "top_ood_reasons": {
+        "demand_to_throughput": 2,
+        "mean_ready_fraction": 1
+      },
+      "violations_total": 0
+    },
+    "universal": {
+      "mlp_safe": {
+        "n": 284,
+        "accuracy": 0.7465,
+        "accuracy_tie_aware": 0.9261,
+        "tonnage_vs_best_ratio": 0.9984,
+        "regret_t_mean": 32.4,
+        "regret_t_max": 4022.4,
+        "regret_pct_of_demand_mean": 0.256,
+        "share_regret_over_1pct_demand": 0.0423
+      },
+      "dummy_most_frequent": {
+        "n": 284,
+        "accuracy": 0.7465,
+        "accuracy_tie_aware": 0.9261,
+        "tonnage_vs_best_ratio": 0.9984,
+        "regret_t_mean": 32.4,
+        "regret_t_max": 4022.4,
+        "regret_pct_of_demand_mean": 0.256,
+        "share_regret_over_1pct_demand": 0.0423
+      },
+      "random_forest": {
+        "n": 284,
+        "accuracy": 0.8768,
+        "accuracy_tie_aware": 0.8979,
+        "tonnage_vs_best_ratio": 0.9978,
+        "regret_t_mean": 45.3,
+        "regret_t_max": 4022.4,
+        "regret_pct_of_demand_mean": 0.601,
+        "share_regret_over_1pct_demand": 0.0775
+      },
+      "mlp": {
+        "n": 284,
+        "accuracy": 0.8627,
+        "accuracy_tie_aware": 0.8908,
+        "tonnage_vs_best_ratio": 0.9968,
+        "regret_t_mean": 64.9,
+        "regret_t_max": 4022.4,
+        "regret_pct_of_demand_mean": 0.823,
+        "share_regret_over_1pct_demand": 0.088
+      },
+      "label_distribution": {
+        "OPTIMIZED": 212,
+        "FCFS": 59,
+        "EARLIEST_DUE": 13
+      },
+      "share_ties_on_tonnage": 0.2113,
+      "on_time_share_forecast": {
+        "mlp_mae": {
+          "FCFS": 0.0658,
+          "EARLIEST_DUE": 0.0683,
+          "OPTIMIZED": 0.0435
+        },
+        "random_forest_mae": {
+          "FCFS": 0.0824,
+          "EARLIEST_DUE": 0.0851,
+          "OPTIMIZED": 0.0634
+        },
+        "gradient_boosting_mae": {
+          "FCFS": 0.0755,
+          "EARLIEST_DUE": 0.0787,
+          "OPTIMIZED": 0.0598
+        },
+        "train_mean_mae": {
+          "FCFS": 0.3083,
+          "EARLIEST_DUE": 0.3164,
+          "OPTIMIZED": 0.2645
+        },
+        "mlp_rmse": {
+          "FCFS": 0.114,
+          "EARLIEST_DUE": 0.119,
+          "OPTIMIZED": 0.0766
+        },
+        "mlp_abs_err_p90": {
+          "FCFS": 0.1979,
+          "EARLIEST_DUE": 0.1953,
+          "OPTIMIZED": 0.1146
+        },
+        "interval90_coverage": {
+          "FCFS": 0.887,
+          "EARLIEST_DUE": 0.905,
+          "OPTIMIZED": 0.88
+        },
+        "interval90_mean_width": {
+          "FCFS": 0.348,
+          "EARLIEST_DUE": 0.359,
+          "OPTIMIZED": 0.229
+        },
+        "fluid_estimate_without_ml_mae": {
+          "FCFS": 0.177,
+          "EARLIEST_DUE": 0.1784,
+          "OPTIMIZED": 0.116
+        },
+        "mlp_without_fluid_features_mae": {
+          "FCFS": 0.0807,
+          "EARLIEST_DUE": 0.0822,
+          "OPTIMIZED": 0.0711
+        },
+        "accepted_n": 271,
+        "accepted_mlp_mae": {
+          "FCFS": 0.0677,
+          "EARLIEST_DUE": 0.0701,
+          "OPTIMIZED": 0.0445
+        },
+        "accepted_interval90_coverage": {
+          "FCFS": 0.882,
+          "EARLIEST_DUE": 0.9,
+          "OPTIMIZED": 0.878
+        },
+        "flagged_n": 13,
+        "flagged_mlp_mae": {
+          "FCFS": 0.0275,
+          "EARLIEST_DUE": 0.032,
+          "OPTIMIZED": 0.0228
+        }
+      },
+      "ood_flag_rate": 0.0458,
+      "top_ood_reasons": {
+        "avg_trip_days": 6,
+        "комбинация": 2,
+        "min_allowed_draft_m": 2,
+        "mean_allowed_draft_m": 2,
+        "mean_ready_fraction": 2
+      },
+      "violations_total": 0
+    }
+  },
   "archive_check": {
     "note": "архивные сценарии проекта (data/scenarios + demo); в обучении не участвовали",
+    "mlp_safe": {
+      "n": 109,
+      "accuracy": 0.9908,
+      "accuracy_tie_aware": 1.0,
+      "tonnage_vs_best_ratio": 1.0,
+      "regret_t_mean": 0.0,
+      "regret_t_max": 0.0,
+      "regret_pct_of_demand_mean": 0.0,
+      "share_regret_over_1pct_demand": 0.0
+    },
     "dummy_most_frequent": {
       "n": 109,
       "accuracy": 0.9908,
@@ -122,7 +485,7 @@
     },
     "random_forest": {
       "n": 109,
-      "accuracy": 0.9908,
+      "accuracy": 1.0,
       "accuracy_tie_aware": 1.0,
       "tonnage_vs_best_ratio": 1.0,
       "regret_t_mean": 0.0,
@@ -132,7 +495,7 @@
     },
     "mlp": {
       "n": 109,
-      "accuracy": 0.9908,
+      "accuracy": 1.0,
       "accuracy_tie_aware": 1.0,
       "tonnage_vs_best_ratio": 1.0,
       "regret_t_mean": 0.0,
@@ -147,27 +510,928 @@
     "share_ties_on_tonnage": 0.0092,
     "on_time_share_forecast": {
       "mlp_mae": {
-        "FCFS": 0.0295,
-        "EARLIEST_DUE": 0.0312,
-        "OPTIMIZED": 0.0313
+        "FCFS": 0.0073,
+        "EARLIEST_DUE": 0.0071,
+        "OPTIMIZED": 0.0022
       },
       "random_forest_mae": {
-        "FCFS": 0.0461,
-        "EARLIEST_DUE": 0.0493,
-        "OPTIMIZED": 0.029
+        "FCFS": 0.0107,
+        "EARLIEST_DUE": 0.0113,
+        "OPTIMIZED": 0.0044
+      },
+      "gradient_boosting_mae": {
+        "FCFS": 0.0099,
+        "EARLIEST_DUE": 0.0117,
+        "OPTIMIZED": 0.0093
       },
       "train_mean_mae": {
-        "FCFS": 0.1809,
-        "EARLIEST_DUE": 0.1878,
-        "OPTIMIZED": 0.2139
+        "FCFS": 0.3115,
+        "EARLIEST_DUE": 0.317,
+        "OPTIMIZED": 0.2356
+      },
+      "mlp_rmse": {
+        "FCFS": 0.0093,
+        "EARLIEST_DUE": 0.0083,
+        "OPTIMIZED": 0.0028
+      },
+      "mlp_abs_err_p90": {
+        "FCFS": 0.0135,
+        "EARLIEST_DUE": 0.0122,
+        "OPTIMIZED": 0.0047
+      },
+      "interval90_coverage": {
+        "FCFS": 1.0,
+        "EARLIEST_DUE": 1.0,
+        "OPTIMIZED": 1.0
+      },
+      "interval90_mean_width": {
+        "FCFS": 0.092,
+        "EARLIEST_DUE": 0.088,
+        "OPTIMIZED": 0.076
+      },
+      "fluid_estimate_without_ml_mae": {
+        "FCFS": 0.0241,
+        "EARLIEST_DUE": 0.0227,
+        "OPTIMIZED": 0.0026
+      },
+      "mlp_without_fluid_features_mae": {
+        "FCFS": 0.0179,
+        "EARLIEST_DUE": 0.0167,
+        "OPTIMIZED": 0.0109
+      },
+      "accepted_n": 109,
+      "accepted_mlp_mae": {
+        "FCFS": 0.0073,
+        "EARLIEST_DUE": 0.0071,
+        "OPTIMIZED": 0.0022
+      },
+      "accepted_interval90_coverage": {
+        "FCFS": 1.0,
+        "EARLIEST_DUE": 1.0,
+        "OPTIMIZED": 1.0
       }
     },
-    "ood_flag_rate": 0.0092,
-    "top_ood_reasons": {
-      "cargo_count": 1,
-      "комбинация": 1
-    },
+    "ood_flag_rate": 0.0,
+    "top_ood_reasons": {},
     "violations_total": 0
   },
-  "train_seconds": 3.8
+  "stress_check": {
+    "note": "стресс-режимы ТЗ (a3_bridge.REGIMES), значения намеренно за пределами обучающих диапазонов; в обучении не участвовали. Ожидаемое поведение: высокая доля OOD -> fallback к OPTIMIZED",
+    "demand_growth": {
+      "mlp_safe": {
+        "n": 60,
+        "accuracy": 1.0,
+        "accuracy_tie_aware": 1.0,
+        "tonnage_vs_best_ratio": 1.0,
+        "regret_t_mean": 0.0,
+        "regret_t_max": 0.0,
+        "regret_pct_of_demand_mean": 0.0,
+        "share_regret_over_1pct_demand": 0.0
+      },
+      "dummy_most_frequent": {
+        "n": 60,
+        "accuracy": 1.0,
+        "accuracy_tie_aware": 1.0,
+        "tonnage_vs_best_ratio": 1.0,
+        "regret_t_mean": 0.0,
+        "regret_t_max": 0.0,
+        "regret_pct_of_demand_mean": 0.0,
+        "share_regret_over_1pct_demand": 0.0
+      },
+      "random_forest": {
+        "n": 60,
+        "accuracy": 1.0,
+        "accuracy_tie_aware": 1.0,
+        "tonnage_vs_best_ratio": 1.0,
+        "regret_t_mean": 0.0,
+        "regret_t_max": 0.0,
+        "regret_pct_of_demand_mean": 0.0,
+        "share_regret_over_1pct_demand": 0.0
+      },
+      "mlp": {
+        "n": 60,
+        "accuracy": 1.0,
+        "accuracy_tie_aware": 1.0,
+        "tonnage_vs_best_ratio": 1.0,
+        "regret_t_mean": 0.0,
+        "regret_t_max": 0.0,
+        "regret_pct_of_demand_mean": 0.0,
+        "share_regret_over_1pct_demand": 0.0
+      },
+      "label_distribution": {
+        "OPTIMIZED": 60
+      },
+      "share_ties_on_tonnage": 0.0,
+      "on_time_share_forecast": {
+        "mlp_mae": {
+          "FCFS": 0.0038,
+          "EARLIEST_DUE": 0.0032,
+          "OPTIMIZED": 0.0017
+        },
+        "random_forest_mae": {
+          "FCFS": 0.0048,
+          "EARLIEST_DUE": 0.0044,
+          "OPTIMIZED": 0.0042
+        },
+        "gradient_boosting_mae": {
+          "FCFS": 0.0058,
+          "EARLIEST_DUE": 0.0062,
+          "OPTIMIZED": 0.0066
+        },
+        "train_mean_mae": {
+          "FCFS": 0.3438,
+          "EARLIEST_DUE": 0.3464,
+          "OPTIMIZED": 0.4127
+        },
+        "mlp_rmse": {
+          "FCFS": 0.0048,
+          "EARLIEST_DUE": 0.0038,
+          "OPTIMIZED": 0.0021
+        },
+        "mlp_abs_err_p90": {
+          "FCFS": 0.008,
+          "EARLIEST_DUE": 0.0065,
+          "OPTIMIZED": 0.0032
+        },
+        "interval90_coverage": {
+          "FCFS": 1.0,
+          "EARLIEST_DUE": 1.0,
+          "OPTIMIZED": 1.0
+        },
+        "interval90_mean_width": {
+          "FCFS": 0.069,
+          "EARLIEST_DUE": 0.065,
+          "OPTIMIZED": 0.071
+        },
+        "fluid_estimate_without_ml_mae": {
+          "FCFS": 0.0032,
+          "EARLIEST_DUE": 0.0031,
+          "OPTIMIZED": 0.0019
+        },
+        "mlp_without_fluid_features_mae": {
+          "FCFS": 0.011,
+          "EARLIEST_DUE": 0.0107,
+          "OPTIMIZED": 0.0194
+        },
+        "accepted_n": 38,
+        "accepted_mlp_mae": {
+          "FCFS": 0.0042,
+          "EARLIEST_DUE": 0.0031,
+          "OPTIMIZED": 0.0017
+        },
+        "accepted_interval90_coverage": {
+          "FCFS": 1.0,
+          "EARLIEST_DUE": 1.0,
+          "OPTIMIZED": 1.0
+        },
+        "flagged_n": 22,
+        "flagged_mlp_mae": {
+          "FCFS": 0.0033,
+          "EARLIEST_DUE": 0.0032,
+          "OPTIMIZED": 0.0016
+        }
+      },
+      "ood_flag_rate": 0.3667,
+      "top_ood_reasons": {
+        "demand_to_throughput": 22
+      },
+      "violations_total": 0
+    },
+    "few_large_lots": {
+      "mlp_safe": {
+        "n": 60,
+        "accuracy": 0.7333,
+        "accuracy_tie_aware": 0.9833,
+        "tonnage_vs_best_ratio": 0.9998,
+        "regret_t_mean": 1.0,
+        "regret_t_max": 57.5,
+        "regret_pct_of_demand_mean": 0.012,
+        "share_regret_over_1pct_demand": 0.0
+      },
+      "dummy_most_frequent": {
+        "n": 60,
+        "accuracy": 0.7333,
+        "accuracy_tie_aware": 0.9833,
+        "tonnage_vs_best_ratio": 0.9998,
+        "regret_t_mean": 1.0,
+        "regret_t_max": 57.5,
+        "regret_pct_of_demand_mean": 0.012,
+        "share_regret_over_1pct_demand": 0.0
+      },
+      "random_forest": {
+        "n": 60,
+        "accuracy": 0.8667,
+        "accuracy_tie_aware": 0.9833,
+        "tonnage_vs_best_ratio": 0.9991,
+        "regret_t_mean": 3.9,
+        "regret_t_max": 231.5,
+        "regret_pct_of_demand_mean": 0.064,
+        "share_regret_over_1pct_demand": 0.0167
+      },
+      "mlp": {
+        "n": 60,
+        "accuracy": 0.8833,
+        "accuracy_tie_aware": 0.9667,
+        "tonnage_vs_best_ratio": 0.9984,
+        "regret_t_mean": 6.6,
+        "regret_t_max": 231.5,
+        "regret_pct_of_demand_mean": 0.291,
+        "share_regret_over_1pct_demand": 0.0333
+      },
+      "label_distribution": {
+        "OPTIMIZED": 44,
+        "FCFS": 16
+      },
+      "share_ties_on_tonnage": 0.2667,
+      "on_time_share_forecast": {
+        "mlp_mae": {
+          "FCFS": 0.0179,
+          "EARLIEST_DUE": 0.0192,
+          "OPTIMIZED": 0.0109
+        },
+        "random_forest_mae": {
+          "FCFS": 0.0258,
+          "EARLIEST_DUE": 0.0252,
+          "OPTIMIZED": 0.0178
+        },
+        "gradient_boosting_mae": {
+          "FCFS": 0.0261,
+          "EARLIEST_DUE": 0.0341,
+          "OPTIMIZED": 0.0206
+        },
+        "train_mean_mae": {
+          "FCFS": 0.2775,
+          "EARLIEST_DUE": 0.2786,
+          "OPTIMIZED": 0.3013
+        },
+        "mlp_rmse": {
+          "FCFS": 0.0285,
+          "EARLIEST_DUE": 0.0293,
+          "OPTIMIZED": 0.0181
+        },
+        "mlp_abs_err_p90": {
+          "FCFS": 0.0483,
+          "EARLIEST_DUE": 0.0469,
+          "OPTIMIZED": 0.0257
+        },
+        "interval90_coverage": {
+          "FCFS": 0.967,
+          "EARLIEST_DUE": 0.967,
+          "OPTIMIZED": 0.967
+        },
+        "interval90_mean_width": {
+          "FCFS": 0.17,
+          "EARLIEST_DUE": 0.164,
+          "OPTIMIZED": 0.114
+        },
+        "fluid_estimate_without_ml_mae": {
+          "FCFS": 0.0154,
+          "EARLIEST_DUE": 0.0148,
+          "OPTIMIZED": 0.0107
+        },
+        "mlp_without_fluid_features_mae": {
+          "FCFS": 0.0722,
+          "EARLIEST_DUE": 0.0709,
+          "OPTIMIZED": 0.0757
+        },
+        "accepted_n": 54,
+        "accepted_mlp_mae": {
+          "FCFS": 0.0179,
+          "EARLIEST_DUE": 0.0193,
+          "OPTIMIZED": 0.011
+        },
+        "accepted_interval90_coverage": {
+          "FCFS": 0.963,
+          "EARLIEST_DUE": 0.963,
+          "OPTIMIZED": 0.963
+        },
+        "flagged_n": 6,
+        "flagged_mlp_mae": {
+          "FCFS": 0.018,
+          "EARLIEST_DUE": 0.018,
+          "OPTIMIZED": 0.0095
+        }
+      },
+      "ood_flag_rate": 0.1,
+      "top_ood_reasons": {
+        "mean_ready_fraction": 6
+      },
+      "violations_total": 0
+    },
+    "fleet_deficit": {
+      "mlp_safe": {
+        "n": 60,
+        "accuracy": 1.0,
+        "accuracy_tie_aware": 1.0,
+        "tonnage_vs_best_ratio": 1.0,
+        "regret_t_mean": 0.0,
+        "regret_t_max": 0.0,
+        "regret_pct_of_demand_mean": 0.0,
+        "share_regret_over_1pct_demand": 0.0
+      },
+      "dummy_most_frequent": {
+        "n": 60,
+        "accuracy": 1.0,
+        "accuracy_tie_aware": 1.0,
+        "tonnage_vs_best_ratio": 1.0,
+        "regret_t_mean": 0.0,
+        "regret_t_max": 0.0,
+        "regret_pct_of_demand_mean": 0.0,
+        "share_regret_over_1pct_demand": 0.0
+      },
+      "random_forest": {
+        "n": 60,
+        "accuracy": 1.0,
+        "accuracy_tie_aware": 1.0,
+        "tonnage_vs_best_ratio": 1.0,
+        "regret_t_mean": 0.0,
+        "regret_t_max": 0.0,
+        "regret_pct_of_demand_mean": 0.0,
+        "share_regret_over_1pct_demand": 0.0
+      },
+      "mlp": {
+        "n": 60,
+        "accuracy": 1.0,
+        "accuracy_tie_aware": 1.0,
+        "tonnage_vs_best_ratio": 1.0,
+        "regret_t_mean": 0.0,
+        "regret_t_max": 0.0,
+        "regret_pct_of_demand_mean": 0.0,
+        "share_regret_over_1pct_demand": 0.0
+      },
+      "label_distribution": {
+        "OPTIMIZED": 60
+      },
+      "share_ties_on_tonnage": 0.0,
+      "on_time_share_forecast": {
+        "mlp_mae": {
+          "FCFS": 0.0142,
+          "EARLIEST_DUE": 0.0135,
+          "OPTIMIZED": 0.0083
+        },
+        "random_forest_mae": {
+          "FCFS": 0.0189,
+          "EARLIEST_DUE": 0.0195,
+          "OPTIMIZED": 0.0198
+        },
+        "gradient_boosting_mae": {
+          "FCFS": 0.0205,
+          "EARLIEST_DUE": 0.0194,
+          "OPTIMIZED": 0.0178
+        },
+        "train_mean_mae": {
+          "FCFS": 0.3112,
+          "EARLIEST_DUE": 0.313,
+          "OPTIMIZED": 0.3554
+        },
+        "mlp_rmse": {
+          "FCFS": 0.0259,
+          "EARLIEST_DUE": 0.0243,
+          "OPTIMIZED": 0.0161
+        },
+        "mlp_abs_err_p90": {
+          "FCFS": 0.0503,
+          "EARLIEST_DUE": 0.0534,
+          "OPTIMIZED": 0.0272
+        },
+        "interval90_coverage": {
+          "FCFS": 1.0,
+          "EARLIEST_DUE": 1.0,
+          "OPTIMIZED": 1.0
+        },
+        "interval90_mean_width": {
+          "FCFS": 0.126,
+          "EARLIEST_DUE": 0.124,
+          "OPTIMIZED": 0.14
+        },
+        "fluid_estimate_without_ml_mae": {
+          "FCFS": 0.0479,
+          "EARLIEST_DUE": 0.0474,
+          "OPTIMIZED": 0.0332
+        },
+        "mlp_without_fluid_features_mae": {
+          "FCFS": 0.0154,
+          "EARLIEST_DUE": 0.0149,
+          "OPTIMIZED": 0.0291
+        },
+        "accepted_n": 39,
+        "accepted_mlp_mae": {
+          "FCFS": 0.0197,
+          "EARLIEST_DUE": 0.0185,
+          "OPTIMIZED": 0.012
+        },
+        "accepted_interval90_coverage": {
+          "FCFS": 1.0,
+          "EARLIEST_DUE": 1.0,
+          "OPTIMIZED": 1.0
+        },
+        "flagged_n": 21,
+        "flagged_mlp_mae": {
+          "FCFS": 0.004,
+          "EARLIEST_DUE": 0.0043,
+          "OPTIMIZED": 0.0016
+        }
+      },
+      "ood_flag_rate": 0.35,
+      "top_ood_reasons": {
+        "demand_to_throughput": 20,
+        "mean_ready_fraction": 1
+      },
+      "violations_total": 0
+    },
+    "fleet_surplus": {
+      "mlp_safe": {
+        "n": 60,
+        "accuracy": 0.6833,
+        "accuracy_tie_aware": 0.9667,
+        "tonnage_vs_best_ratio": 0.9998,
+        "regret_t_mean": 3.8,
+        "regret_t_max": 164.0,
+        "regret_pct_of_demand_mean": 0.015,
+        "share_regret_over_1pct_demand": 0.0
+      },
+      "dummy_most_frequent": {
+        "n": 60,
+        "accuracy": 0.6833,
+        "accuracy_tie_aware": 0.9667,
+        "tonnage_vs_best_ratio": 0.9998,
+        "regret_t_mean": 3.8,
+        "regret_t_max": 164.0,
+        "regret_pct_of_demand_mean": 0.015,
+        "share_regret_over_1pct_demand": 0.0
+      },
+      "random_forest": {
+        "n": 60,
+        "accuracy": 0.7833,
+        "accuracy_tie_aware": 0.9333,
+        "tonnage_vs_best_ratio": 0.9995,
+        "regret_t_mean": 8.3,
+        "regret_t_max": 259.5,
+        "regret_pct_of_demand_mean": 0.086,
+        "share_regret_over_1pct_demand": 0.0167
+      },
+      "mlp": {
+        "n": 60,
+        "accuracy": 0.7833,
+        "accuracy_tie_aware": 0.9333,
+        "tonnage_vs_best_ratio": 0.9996,
+        "regret_t_mean": 7.4,
+        "regret_t_max": 259.5,
+        "regret_pct_of_demand_mean": 0.079,
+        "share_regret_over_1pct_demand": 0.0167
+      },
+      "label_distribution": {
+        "OPTIMIZED": 41,
+        "FCFS": 19
+      },
+      "share_ties_on_tonnage": 0.3667,
+      "on_time_share_forecast": {
+        "mlp_mae": {
+          "FCFS": 0.0487,
+          "EARLIEST_DUE": 0.0475,
+          "OPTIMIZED": 0.0245
+        },
+        "random_forest_mae": {
+          "FCFS": 0.0938,
+          "EARLIEST_DUE": 0.0922,
+          "OPTIMIZED": 0.0511
+        },
+        "gradient_boosting_mae": {
+          "FCFS": 0.0828,
+          "EARLIEST_DUE": 0.0815,
+          "OPTIMIZED": 0.0437
+        },
+        "train_mean_mae": {
+          "FCFS": 0.3105,
+          "EARLIEST_DUE": 0.3147,
+          "OPTIMIZED": 0.254
+        },
+        "mlp_rmse": {
+          "FCFS": 0.0758,
+          "EARLIEST_DUE": 0.0765,
+          "OPTIMIZED": 0.0371
+        },
+        "mlp_abs_err_p90": {
+          "FCFS": 0.1485,
+          "EARLIEST_DUE": 0.144,
+          "OPTIMIZED": 0.0585
+        },
+        "interval90_coverage": {
+          "FCFS": 0.933,
+          "EARLIEST_DUE": 0.983,
+          "OPTIMIZED": 0.967
+        },
+        "interval90_mean_width": {
+          "FCFS": 0.383,
+          "EARLIEST_DUE": 0.405,
+          "OPTIMIZED": 0.184
+        },
+        "fluid_estimate_without_ml_mae": {
+          "FCFS": 0.0877,
+          "EARLIEST_DUE": 0.085,
+          "OPTIMIZED": 0.0265
+        },
+        "mlp_without_fluid_features_mae": {
+          "FCFS": 0.0552,
+          "EARLIEST_DUE": 0.0564,
+          "OPTIMIZED": 0.0479
+        },
+        "accepted_n": 54,
+        "accepted_mlp_mae": {
+          "FCFS": 0.0481,
+          "EARLIEST_DUE": 0.0466,
+          "OPTIMIZED": 0.0232
+        },
+        "accepted_interval90_coverage": {
+          "FCFS": 0.926,
+          "EARLIEST_DUE": 0.981,
+          "OPTIMIZED": 0.963
+        },
+        "flagged_n": 6,
+        "flagged_mlp_mae": {
+          "FCFS": 0.0535,
+          "EARLIEST_DUE": 0.0555,
+          "OPTIMIZED": 0.0363
+        }
+      },
+      "ood_flag_rate": 0.1,
+      "top_ood_reasons": {
+        "draft_limited_load_frac": 3,
+        "mean_ready_fraction": 3
+      },
+      "violations_total": 0
+    },
+    "long_route": {
+      "mlp_safe": {
+        "n": 60,
+        "accuracy": 0.95,
+        "accuracy_tie_aware": 0.9667,
+        "tonnage_vs_best_ratio": 0.9993,
+        "regret_t_mean": 3.9,
+        "regret_t_max": 225.8,
+        "regret_pct_of_demand_mean": 0.032,
+        "share_regret_over_1pct_demand": 0.0167
+      },
+      "dummy_most_frequent": {
+        "n": 60,
+        "accuracy": 0.95,
+        "accuracy_tie_aware": 0.9667,
+        "tonnage_vs_best_ratio": 0.9993,
+        "regret_t_mean": 3.9,
+        "regret_t_max": 225.8,
+        "regret_pct_of_demand_mean": 0.032,
+        "share_regret_over_1pct_demand": 0.0167
+      },
+      "random_forest": {
+        "n": 60,
+        "accuracy": 0.9667,
+        "accuracy_tie_aware": 0.9667,
+        "tonnage_vs_best_ratio": 0.9993,
+        "regret_t_mean": 3.9,
+        "regret_t_max": 225.8,
+        "regret_pct_of_demand_mean": 0.032,
+        "share_regret_over_1pct_demand": 0.0167
+      },
+      "mlp": {
+        "n": 60,
+        "accuracy": 0.9667,
+        "accuracy_tie_aware": 0.9667,
+        "tonnage_vs_best_ratio": 0.9993,
+        "regret_t_mean": 3.9,
+        "regret_t_max": 225.8,
+        "regret_pct_of_demand_mean": 0.032,
+        "share_regret_over_1pct_demand": 0.0167
+      },
+      "label_distribution": {
+        "OPTIMIZED": 57,
+        "FCFS": 3
+      },
+      "share_ties_on_tonnage": 0.0333,
+      "on_time_share_forecast": {
+        "mlp_mae": {
+          "FCFS": 0.0307,
+          "EARLIEST_DUE": 0.0286,
+          "OPTIMIZED": 0.0198
+        },
+        "random_forest_mae": {
+          "FCFS": 0.0424,
+          "EARLIEST_DUE": 0.0406,
+          "OPTIMIZED": 0.0407
+        },
+        "gradient_boosting_mae": {
+          "FCFS": 0.0386,
+          "EARLIEST_DUE": 0.0388,
+          "OPTIMIZED": 0.0272
+        },
+        "train_mean_mae": {
+          "FCFS": 0.2922,
+          "EARLIEST_DUE": 0.2937,
+          "OPTIMIZED": 0.2953
+        },
+        "mlp_rmse": {
+          "FCFS": 0.0531,
+          "EARLIEST_DUE": 0.0536,
+          "OPTIMIZED": 0.0367
+        },
+        "mlp_abs_err_p90": {
+          "FCFS": 0.0816,
+          "EARLIEST_DUE": 0.0834,
+          "OPTIMIZED": 0.0478
+        },
+        "interval90_coverage": {
+          "FCFS": 0.933,
+          "EARLIEST_DUE": 0.95,
+          "OPTIMIZED": 0.967
+        },
+        "interval90_mean_width": {
+          "FCFS": 0.206,
+          "EARLIEST_DUE": 0.211,
+          "OPTIMIZED": 0.164
+        },
+        "fluid_estimate_without_ml_mae": {
+          "FCFS": 0.1015,
+          "EARLIEST_DUE": 0.1059,
+          "OPTIMIZED": 0.0599
+        },
+        "mlp_without_fluid_features_mae": {
+          "FCFS": 0.0371,
+          "EARLIEST_DUE": 0.0372,
+          "OPTIMIZED": 0.0385
+        },
+        "accepted_n": 55,
+        "accepted_mlp_mae": {
+          "FCFS": 0.0316,
+          "EARLIEST_DUE": 0.0293,
+          "OPTIMIZED": 0.0198
+        },
+        "accepted_interval90_coverage": {
+          "FCFS": 0.927,
+          "EARLIEST_DUE": 0.945,
+          "OPTIMIZED": 0.964
+        },
+        "flagged_n": 5,
+        "flagged_mlp_mae": {
+          "FCFS": 0.0207,
+          "EARLIEST_DUE": 0.0209,
+          "OPTIMIZED": 0.0199
+        }
+      },
+      "ood_flag_rate": 0.0833,
+      "top_ood_reasons": {
+        "demand_to_throughput": 4,
+        "mean_ready_fraction": 1
+      },
+      "violations_total": 0
+    },
+    "shallow_bar": {
+      "mlp_safe": {
+        "n": 60,
+        "accuracy": 0.9333,
+        "accuracy_tie_aware": 0.9833,
+        "tonnage_vs_best_ratio": 0.9999,
+        "regret_t_mean": 0.3,
+        "regret_t_max": 20.0,
+        "regret_pct_of_demand_mean": 0.007,
+        "share_regret_over_1pct_demand": 0.0
+      },
+      "dummy_most_frequent": {
+        "n": 60,
+        "accuracy": 0.9333,
+        "accuracy_tie_aware": 0.9833,
+        "tonnage_vs_best_ratio": 0.9999,
+        "regret_t_mean": 0.3,
+        "regret_t_max": 20.0,
+        "regret_pct_of_demand_mean": 0.007,
+        "share_regret_over_1pct_demand": 0.0
+      },
+      "random_forest": {
+        "n": 60,
+        "accuracy": 0.95,
+        "accuracy_tie_aware": 0.9667,
+        "tonnage_vs_best_ratio": 0.9987,
+        "regret_t_mean": 7.4,
+        "regret_t_max": 426.7,
+        "regret_pct_of_demand_mean": 0.097,
+        "share_regret_over_1pct_demand": 0.0167
+      },
+      "mlp": {
+        "n": 60,
+        "accuracy": 0.95,
+        "accuracy_tie_aware": 0.9667,
+        "tonnage_vs_best_ratio": 0.9987,
+        "regret_t_mean": 7.4,
+        "regret_t_max": 426.7,
+        "regret_pct_of_demand_mean": 0.097,
+        "share_regret_over_1pct_demand": 0.0167
+      },
+      "label_distribution": {
+        "OPTIMIZED": 56,
+        "FCFS": 3,
+        "EARLIEST_DUE": 1
+      },
+      "share_ties_on_tonnage": 0.05,
+      "on_time_share_forecast": {
+        "mlp_mae": {
+          "FCFS": 0.0348,
+          "EARLIEST_DUE": 0.0401,
+          "OPTIMIZED": 0.0209
+        },
+        "random_forest_mae": {
+          "FCFS": 0.0373,
+          "EARLIEST_DUE": 0.04,
+          "OPTIMIZED": 0.0261
+        },
+        "gradient_boosting_mae": {
+          "FCFS": 0.0319,
+          "EARLIEST_DUE": 0.0347,
+          "OPTIMIZED": 0.0208
+        },
+        "train_mean_mae": {
+          "FCFS": 0.266,
+          "EARLIEST_DUE": 0.2704,
+          "OPTIMIZED": 0.2775
+        },
+        "mlp_rmse": {
+          "FCFS": 0.0607,
+          "EARLIEST_DUE": 0.0717,
+          "OPTIMIZED": 0.0373
+        },
+        "mlp_abs_err_p90": {
+          "FCFS": 0.0886,
+          "EARLIEST_DUE": 0.1016,
+          "OPTIMIZED": 0.0553
+        },
+        "interval90_coverage": {
+          "FCFS": 0.967,
+          "EARLIEST_DUE": 0.983,
+          "OPTIMIZED": 0.967
+        },
+        "interval90_mean_width": {
+          "FCFS": 0.222,
+          "EARLIEST_DUE": 0.228,
+          "OPTIMIZED": 0.133
+        },
+        "fluid_estimate_without_ml_mae": {
+          "FCFS": 0.0853,
+          "EARLIEST_DUE": 0.0884,
+          "OPTIMIZED": 0.0463
+        },
+        "mlp_without_fluid_features_mae": {
+          "FCFS": 0.0414,
+          "EARLIEST_DUE": 0.0436,
+          "OPTIMIZED": 0.0527
+        },
+        "accepted_n": 54,
+        "accepted_mlp_mae": {
+          "FCFS": 0.0345,
+          "EARLIEST_DUE": 0.0403,
+          "OPTIMIZED": 0.022
+        },
+        "accepted_interval90_coverage": {
+          "FCFS": 0.963,
+          "EARLIEST_DUE": 0.981,
+          "OPTIMIZED": 0.963
+        },
+        "flagged_n": 6,
+        "flagged_mlp_mae": {
+          "FCFS": 0.0369,
+          "EARLIEST_DUE": 0.0375,
+          "OPTIMIZED": 0.011
+        }
+      },
+      "ood_flag_rate": 0.1,
+      "top_ood_reasons": {
+        "draft_limited_load_frac": 3,
+        "mean_allowed_draft_m": 3,
+        "min_allowed_draft_m": 2,
+        "demand_to_throughput": 1
+      },
+      "violations_total": 0
+    },
+    "short_navigation": {
+      "mlp_safe": {
+        "n": 60,
+        "accuracy": 0.85,
+        "accuracy_tie_aware": 1.0,
+        "tonnage_vs_best_ratio": 1.0,
+        "regret_t_mean": 0.0,
+        "regret_t_max": 0.0,
+        "regret_pct_of_demand_mean": 0.0,
+        "share_regret_over_1pct_demand": 0.0
+      },
+      "dummy_most_frequent": {
+        "n": 60,
+        "accuracy": 0.85,
+        "accuracy_tie_aware": 1.0,
+        "tonnage_vs_best_ratio": 1.0,
+        "regret_t_mean": 0.0,
+        "regret_t_max": 0.0,
+        "regret_pct_of_demand_mean": 0.0,
+        "share_regret_over_1pct_demand": 0.0
+      },
+      "random_forest": {
+        "n": 60,
+        "accuracy": 0.9,
+        "accuracy_tie_aware": 1.0,
+        "tonnage_vs_best_ratio": 1.0,
+        "regret_t_mean": 0.0,
+        "regret_t_max": 0.0,
+        "regret_pct_of_demand_mean": 0.0,
+        "share_regret_over_1pct_demand": 0.0
+      },
+      "mlp": {
+        "n": 60,
+        "accuracy": 0.9333,
+        "accuracy_tie_aware": 0.95,
+        "tonnage_vs_best_ratio": 0.9991,
+        "regret_t_mean": 5.0,
+        "regret_t_max": 164.7,
+        "regret_pct_of_demand_mean": 0.095,
+        "share_regret_over_1pct_demand": 0.0333
+      },
+      "label_distribution": {
+        "OPTIMIZED": 51,
+        "FCFS": 8,
+        "EARLIEST_DUE": 1
+      },
+      "share_ties_on_tonnage": 0.15,
+      "on_time_share_forecast": {
+        "mlp_mae": {
+          "FCFS": 0.0303,
+          "EARLIEST_DUE": 0.0344,
+          "OPTIMIZED": 0.0186
+        },
+        "random_forest_mae": {
+          "FCFS": 0.038,
+          "EARLIEST_DUE": 0.0389,
+          "OPTIMIZED": 0.0328
+        },
+        "gradient_boosting_mae": {
+          "FCFS": 0.0397,
+          "EARLIEST_DUE": 0.0411,
+          "OPTIMIZED": 0.0221
+        },
+        "train_mean_mae": {
+          "FCFS": 0.2282,
+          "EARLIEST_DUE": 0.2291,
+          "OPTIMIZED": 0.232
+        },
+        "mlp_rmse": {
+          "FCFS": 0.0524,
+          "EARLIEST_DUE": 0.0561,
+          "OPTIMIZED": 0.0316
+        },
+        "mlp_abs_err_p90": {
+          "FCFS": 0.0936,
+          "EARLIEST_DUE": 0.1131,
+          "OPTIMIZED": 0.0425
+        },
+        "interval90_coverage": {
+          "FCFS": 0.983,
+          "EARLIEST_DUE": 1.0,
+          "OPTIMIZED": 1.0
+        },
+        "interval90_mean_width": {
+          "FCFS": 0.235,
+          "EARLIEST_DUE": 0.235,
+          "OPTIMIZED": 0.146
+        },
+        "fluid_estimate_without_ml_mae": {
+          "FCFS": 0.0935,
+          "EARLIEST_DUE": 0.0949,
+          "OPTIMIZED": 0.0456
+        },
+        "mlp_without_fluid_features_mae": {
+          "FCFS": 0.0472,
+          "EARLIEST_DUE": 0.0459,
+          "OPTIMIZED": 0.0509
+        },
+        "accepted_n": 41,
+        "accepted_mlp_mae": {
+          "FCFS": 0.0353,
+          "EARLIEST_DUE": 0.0376,
+          "OPTIMIZED": 0.0197
+        },
+        "accepted_interval90_coverage": {
+          "FCFS": 0.976,
+          "EARLIEST_DUE": 1.0,
+          "OPTIMIZED": 1.0
+        },
+        "flagged_n": 19,
+        "flagged_mlp_mae": {
+          "FCFS": 0.0194,
+          "EARLIEST_DUE": 0.0276,
+          "OPTIMIZED": 0.0163
+        }
+      },
+      "ood_flag_rate": 0.3167,
+      "top_ood_reasons": {
+        "mean_ready_fraction": 17,
+        "demand_to_throughput": 2,
+        "комбинация": 1
+      },
+      "violations_total": 0
+    }
+  },
+  "train_seconds": 115.5
 }

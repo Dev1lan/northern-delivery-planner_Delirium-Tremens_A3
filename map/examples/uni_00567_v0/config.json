@@ -1,0 +1,141 @@
+{
+ "seed": 160452747678,
+ "origin": "N0",
+ "destination": "N5",
+ "start": "2026-05-27",
+ "end": "2026-10-01",
+ "segments": [
+  {
+   "segment_id": "S1",
+   "from_node": "N0",
+   "to_node": "N1",
+   "distance_km": 19.786
+  },
+  {
+   "segment_id": "S2",
+   "from_node": "N1",
+   "to_node": "N2",
+   "distance_km": 51.743
+  },
+  {
+   "segment_id": "S3",
+   "from_node": "N2",
+   "to_node": "N3",
+   "distance_km": 60.653
+  },
+  {
+   "segment_id": "S4",
+   "from_node": "N3",
+   "to_node": "N4",
+   "distance_km": 27.093
+  },
+  {
+   "segment_id": "S5",
+   "from_node": "N4",
+   "to_node": "N5",
+   "distance_km": 48.832
+  }
+ ],
+ "plans": [
+  {
+   "plan_id": "P_BULK_1",
+   "cargo_type": "bulk",
+   "volume_t": 8845.227,
+   "source_url": ""
+  }
+ ],
+ "units": [
+  {
+   "capacity_t": 968.4,
+   "draft_empty_m": 0.758,
+   "draft_full_m": 2.078,
+   "tug_draft_m": 0.508,
+   "speed_upstream_kmh": 5.988,
+   "speed_downstream_kmh": 11.571,
+   "handling_tph": 25.809,
+   "unit_id": "U_BULK_1",
+   "barge_id": "B_BULK_1",
+   "tug_id": "T_BULK_1",
+   "project": "SYNTHETIC",
+   "cargo_type_allowed": [
+    "bulk"
+   ],
+   "reference_capacity_t": 968.4,
+   "data_status": "SYNTHETIC",
+   "available_from": "2026-05-27T00:00:00",
+   "available_to": "2026-09-23T00:00:00"
+  },
+  {
+   "capacity_t": 968.4,
+   "draft_empty_m": 0.758,
+   "draft_full_m": 2.078,
+   "tug_draft_m": 0.479,
+   "speed_upstream_kmh": 7.023,
+   "speed_downstream_kmh": 13.572,
+   "handling_tph": 23.392,
+   "unit_id": "U_BULK_2",
+   "barge_id": "B_BULK_2",
+   "tug_id": "T_BULK_2",
+   "project": "SYNTHETIC",
+   "cargo_type_allowed": [
+    "bulk"
+   ],
+   "reference_capacity_t": 968.4,
+   "data_status": "SYNTHETIC",
+   "available_from": "2026-05-27T00:00:00",
+   "available_to": "2026-09-23T00:00:00"
+  },
+  {
+   "capacity_t": 968.4,
+   "draft_empty_m": 0.758,
+   "draft_full_m": 2.078,
+   "tug_draft_m": 1.29,
+   "speed_upstream_kmh": 6.745,
+   "speed_downstream_kmh": 13.034,
+   "handling_tph": 26.822,
+   "unit_id": "U_BULK_3",
+   "barge_id": "B_BULK_3",
+   "tug_id": "T_BULK_3",
+   "project": "SYNTHETIC",
+   "cargo_type_allowed": [
+    "bulk"
+   ],
+   "reference_capacity_t": 968.4,
+   "data_status": "SYNTHETIC",
+   "available_from": "2026-05-27T00:00:00",
+   "available_to": "2026-09-23T00:00:00"
+  },
+  {
+   "capacity_t": 968.4,
+   "draft_empty_m": 0.758,
+   "draft_full_m": 2.078,
+   "tug_draft_m": 1.331,
+   "speed_upstream_kmh": 6.802,
+   "speed_downstream_kmh": 13.146,
+   "handling_tph": 22.208,
+   "unit_id": "U_BULK_4",
+   "barge_id": "B_BULK_4",
+   "tug_id": "T_BULK_4",
+   "project": "SYNTHETIC",
+   "cargo_type_allowed": [
+    "bulk"
+   ],
+   "reference_capacity_t": 968.4,
+   "data_status": "SYNTHETIC",
+   "available_from": "2026-05-27T00:00:00",
+   "available_to": "2026-09-23T00:00:00"
+  }
+ ],
+ "underkeel_m": 0.204,
+ "handling_fixed_hours": 1.35,
+ "batch_max_t": 90,
+ "ready_day_fraction_range": [
+  0.28,
+  0.614
+ ],
+ "due_days_after_ready": [
+  17,
+  56
+ ],
+ "plan_verification": "SYNTHETIC"
+}

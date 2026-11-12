@@ -105,8 +105,14 @@ def recommend_strategy(scenario_features: dict, model_dir=HERE) -> dict:
     strategies = meta["strategies"]
     p = proba(X)[0]
     k = int(np.argmax(p))
+    # правило с учётом цены ошибки: отклоняться от штатного оптимизатора только при высокой уверенности
+    thr = meta.get("deviate_confidence_threshold")
+    safe = meta.get("safe_strategy", FALLBACK_STRATEGY)
+    run = strategies[k]
+    if thr is not None and run != safe and float(p[k]) < thr:
+        run = safe
     out = dict(recommended_strategy=strategies[k], confidence=round(float(p[k]), 4),
-               needs_verification=True, action="RUN_AND_VERIFY", strategy_to_run=strategies[k],
+               needs_verification=True, action="RUN_AND_VERIFY", strategy_to_run=run,
                probabilities={s: round(float(x), 4) for s, x in zip(strategies, p)},
                out_of_distribution=False, model_backend=meta["backend"], disclaimer=DISCLAIMER)
     if share is not None:
@@ -114,6 +120,12 @@ def recommend_strategy(scenario_features: dict, model_dir=HERE) -> dict:
         total = float(scenario_features["cargo_total_t"])
         out["expected_on_time_share"] = {s: round(float(x), 3) for s, x in zip(strategies, sh)}
         out["expected_on_time_t"] = {s: round(float(x) * total, 1) for s, x in zip(strategies, sh)}
+        if hasattr(share, "predict_interval") and getattr(share, "q", None) is not None:
+            _, lo, hi = share.predict_interval(X)
+            out["on_time_share_interval90"] = {s: [round(float(a), 3), round(float(b), 3)]
+                                               for s, a, b in zip(strategies, lo[0], hi[0])}
+            out["interval_note"] = ("≈90% накрытия на синтетических val-сценариях; "
+                                    "эмпирическая калибровка, не гарантия")
     return out
 
 
@@ -152,6 +164,44 @@ def run_recommended(scenario_path, *, config_path=B.DEFAULT_CONFIG, scenario_id=
     return result, rec
 
 
+def run_best_of_all(scenario_path, *, config_path=B.DEFAULT_CONFIG, scenario_id=None, candidate_limit=None,
+                    model_dir=HERE, validate=True, with_ml=True) -> Tuple[dict, dict]:
+    """Посчитать все стратегии матмоделью и вернуть лучшую.
+
+    Возвращает (результат лучшей стратегии по контракту 1.0.0, сводка). Выбор — по целевой
+    функции матмодели (a3_bridge.pick_best), а не по мнению нейросети, поэтому потерь
+    относительно лучшей из трёх нет по построению. ML здесь не обязателен: сводка содержит
+    его прогноз только для сравнения «прогноз / расчёт» (with_ml=False или A3_ML_DISABLED=1
+    — без него). Цена режима — время расчёта трёх стратегий вместо одной."""
+    import time
+    from result_adapter import run_scenario
+    results, seconds = {}, {}
+    for st in B.STRATEGIES:
+        t = time.time()
+        results[st] = run_scenario(scenario_path, config_path=config_path, strategy=st,
+                                   scenario_id=scenario_id, candidate_limit=candidate_limit)
+        seconds[st] = round(time.time() - t, 3)
+        if validate:
+            validate_contract(results[st])
+    metrics = {st: r["metrics"] for st, r in results.items()}
+    pick = B.pick_best(metrics)
+    best = pick["best_strategy"]
+    summary = dict(
+        mode="BEST_OF_ALL", best_strategy=best, tied_strategies=pick["tied_strategies"],
+        strategies={st: dict(delivered_on_time_t=m["delivered_on_time_t"], delivered_total_t=m["delivered_total_t"],
+                             undelivered_t=m["undelivered_t"], completed_trips=m["completed_trips"],
+                             violations=m["violations"], seconds=seconds[st]) for st, m in metrics.items()},
+        gain_vs_optimized_on_time_t=round(metrics[best]["delivered_on_time_t"]
+                                          - metrics["OPTIMIZED"]["delivered_on_time_t"], 3),
+        contract_schema_version=results[best]["schema_version"], contract_schema_validated=bool(validate),
+        note="Лучшая из рассчитанных стратегий матмодели (эвристика); не математически оптимальное решение.")
+    if with_ml:
+        rec = recommend_for_scenario(scenario_path, config_path, model_dir)
+        rec.pop("features", None)
+        summary["ml_forecast"] = rec
+    return results[best], summary
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="ML-рекомендация + результат по контракту Case A3 1.0.0")
     ap.add_argument("--scenario", required=True, type=Path, help="каталог с cargo.csv, units.csv, conditions.csv")
@@ -161,8 +211,22 @@ def main(argv=None):
     ap.add_argument("--output", type=Path, help="файл результата по контракту; без него — stdout")
     ap.add_argument("--recommendation-output", type=Path, help="файл с рекомендацией ML")
     ap.add_argument("--recommend-only", action="store_true", help="только рекомендация, без расчёта")
+    ap.add_argument("--best-of-all", action="store_true",
+                    help="посчитать все стратегии и вернуть лучшую (сводка — в --recommendation-output или stderr)")
     a = ap.parse_args(argv)
     dump = lambda o: json.dumps(o, ensure_ascii=False, indent=2, allow_nan=False) + "\n"
+    if a.best_of_all:
+        result, summary = run_best_of_all(a.scenario, config_path=a.config, scenario_id=a.scenario_id,
+                                          candidate_limit=a.candidate_limit)
+        if a.recommendation_output:
+            a.recommendation_output.write_text(dump(summary), encoding="utf-8")
+        else:
+            sys.stderr.write(dump({k: v for k, v in summary.items() if k != "ml_forecast"}))
+        if a.output:
+            a.output.write_text(dump(result), encoding="utf-8")
+        else:
+            sys.stdout.buffer.write(dump(result).encode("utf-8"))
+        return
     if a.recommend_only:
         sys.stdout.buffer.write(dump(recommend_for_scenario(a.scenario, a.config)).encode("utf-8"))
         return

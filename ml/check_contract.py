@@ -47,9 +47,14 @@ def consistency(result):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int)
+    ap.add_argument("--archive-root", type=Path, default=None,
+                    help="каталог с папками архивных сценариев (по умолчанию <A3_ROOT>/data/scenarios)")
+    ap.add_argument("--comparison", type=Path, default=None,
+                    help="comparison_final.csv (по умолчанию <A3_ROOT>/results/comparison_final.csv)")
     a = ap.parse_args()
     root = B.A3_ROOT
-    folders = sorted(p for p in (root / "data/scenarios").glob("*") if (p / "cargo.csv").exists())
+    arc_root = a.archive_root or root / "data/scenarios"
+    folders = sorted(p for p in arc_root.glob("*") if (p / "cargo.csv").exists())
     if (root / "data/demo/scenario/cargo.csv").exists():
         folders.append(root / "data/demo/scenario")
     if a.limit:
@@ -81,7 +86,7 @@ def main():
 
     # сверка с сохранёнными результатами проекта
     saved = {"comparison_final_rows": 0, "comparison_final_mismatch": 0}
-    cf = root / "results/comparison_final.csv"
+    cf = a.comparison or root / "results/comparison_final.csv"
     mapping = {"baseline": "baseline_central_central", "high_demand": "demand_plus30_central_central",
                "short_navigation": "navigation_minus10_central_central", "shallow": "baseline_shallow_central"}
     if cf.exists() and truth:
