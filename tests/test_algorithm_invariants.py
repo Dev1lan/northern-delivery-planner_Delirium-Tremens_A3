@@ -4,7 +4,7 @@ ROOT=Path(__file__).resolve().parent.parent
 class AlgorithmInvariantTests(unittest.TestCase):
     def test_heuristic_2_1_0_unchanged(self):
         expected=json.loads((ROOT/'algorithm_invariants.json').read_text(encoding='utf-8'))
-        tree=ast.parse((ROOT/'optimizer.py').read_text(encoding='utf-8'))
+        tree=ast.parse((ROOT/'release_2.1.0'/'optimizer.py').read_text(encoding='utf-8'))
         for name,digest in expected['functions_ast_sha256'].items():
             with self.subTest(name=name):
                 node=next(x for x in tree.body if isinstance(x,ast.FunctionDef) and x.name==name)

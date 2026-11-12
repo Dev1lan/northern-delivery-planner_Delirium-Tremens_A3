@@ -1,0 +1,17 @@
+scenario_id,strategy,delta_delivered_on_time_t,delta_delivered_total_t,delta_social_deficit_t,delta_fleet_utilization,delta_completed_trips,resource_interpretation
+PLUS_BARGE,FCFS,0.0,0.0,0.0,-0.123437,0.0,The added barge shares the compatible tug; both cannot sail concurrently.
+PLUS_BARGE,EARLIEST_DUE,0.0,0.0,0.0,-0.123358,0.0,The added barge shares the compatible tug; both cannot sail concurrently.
+PLUS_BARGE,OPTIMIZED,0.0,0.0,0.0,-0.124165,0.0,The added barge shares the compatible tug; both cannot sail concurrently.
+PLUS_BARGE,SOCIAL_PRIORITY,0.0,0.0,0.0,-0.123761,0.0,The added barge shares the compatible tug; both cannot sail concurrently.
+PLUS_TUG,FCFS,0.0,0.0,0.0,-0.123437,0.0,The added tug shares the compatible barge; both cannot sail concurrently.
+PLUS_TUG,EARLIEST_DUE,0.0,0.0,0.0,-0.123358,0.0,The added tug shares the compatible barge; both cannot sail concurrently.
+PLUS_TUG,OPTIMIZED,0.0,0.0,0.0,-0.124165,0.0,The added tug shares the compatible barge; both cannot sail concurrently.
+PLUS_TUG,SOCIAL_PRIORITY,0.0,0.0,0.0,-0.123761,0.0,The added tug shares the compatible barge; both cannot sail concurrently.
+PLUS_UNIT,FCFS,1484.0,3378.5,0.0,0.005065,28.0,Both resources are independent; effects depend on compatible demand and navigation windows.
+PLUS_UNIT,EARLIEST_DUE,1542.0,3617.0,0.0,0.006963,28.0,Both resources are independent; effects depend on compatible demand and navigation windows.
+PLUS_UNIT,OPTIMIZED,4376.661,4376.661,0.0,0.004146,27.0,Both resources are independent; effects depend on compatible demand and navigation windows.
+PLUS_UNIT,SOCIAL_PRIORITY,4376.533,4376.533,0.0,0.004853,27.0,Both resources are independent; effects depend on compatible demand and navigation windows.
+REDUCED_FLEET,FCFS,-791.0,-3316.5,0.0,-0.009217,-28.0,One specified composition was removed; any shared physical resources remain in other compositions.
+REDUCED_FLEET,EARLIEST_DUE,-1055.0,-3110.0,0.0,-0.006448,-28.0,One specified composition was removed; any shared physical resources remain in other compositions.
+REDUCED_FLEET,OPTIMIZED,-4406.533,-4406.533,0.0,-0.008734,-27.0,One specified composition was removed; any shared physical resources remain in other compositions.
+REDUCED_FLEET,SOCIAL_PRIORITY,-4403.611,-4403.611,0.0,-0.010106,-27.0,One specified composition was removed; any shared physical resources remain in other compositions.

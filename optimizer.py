@@ -3,13 +3,16 @@ import argparse
 import copy
 import csv
 import json
-from datetime import timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 from generate import dt, iso, load_scenario, trial_trip, best_load, write_csv, TRIP_FIELDS
 from validate import audit
 from scenario_validation import validate_folder, validate_inputs
+from social_requirements import deficits, evaluate, kilograms, parse_requirements
 
 STRATEGIES = ('FCFS', 'EARLIEST_DUE', 'OPTIMIZED')
+SOCIAL_PRIORITY = 'SOCIAL_PRIORITY'
+ALL_STRATEGIES = (*STRATEGIES, SOCIAL_PRIORITY)
 
 
 def load(folder, config):
@@ -46,7 +49,7 @@ def _audit(s, trips):
     return audit(s['config'], s['cargo'], s['units'], s['conditions'], trips)
 
 
-def _improve(s, trips):
+def _improve(s, trips, requirements=()):
     """First-improvement neighborhood; every proposal is independently audited.
 
     Shift by one day, reassign to another unit, or exchange two start slots.
@@ -55,6 +58,17 @@ def _improve(s, trips):
     units = {u['unit_id']: u for u in s['units']}
     cargo = {x['cargo_id']: x for x in s['cargo']}
     best = trips[:]
+
+    def improves(proposal):
+        if not requirements:
+            return _objective(proposal, s['cargo']) > _objective(best, s['cargo'])
+        before = deficits(requirements, best)
+        after = deficits(requirements, proposal)
+        # Never undo a fulfilled minimum to improve the tonne-based objective.
+        if any(new > old for old, new in zip(before, after)):
+            return False
+        return after != before or _objective(proposal, s['cargo']) > _objective(best, s['cargo'])
+
     for _ in range(2):
         changed = False
         for i, old in enumerate(best):
@@ -74,7 +88,7 @@ def _improve(s, trips):
                     _audit(s, proposal)
                 except AssertionError:
                     continue
-                if _objective(proposal, s['cargo']) > _objective(best, s['cargo']):
+                if improves(proposal):
                     best = proposal; changed = True; break
             if not changed:
                 # Replace the cargo carried in this slot, retaining its amount.
@@ -92,7 +106,7 @@ def _improve(s, trips):
                         _audit(s, proposal)
                     except AssertionError:
                         continue
-                    if _objective(proposal, s['cargo']) > _objective(best, s['cargo']):
+                    if improves(proposal):
                         best = proposal; changed = True; break
             if changed:
                 break
@@ -115,7 +129,7 @@ def _improve(s, trips):
                         _audit(s, proposal)
                     except AssertionError:
                         continue
-                    if _objective(proposal, s['cargo']) > _objective(best, s['cargo']):
+                    if improves(proposal):
                         best = proposal; changed = True; break
                 if changed:
                     break
@@ -124,13 +138,62 @@ def _improve(s, trips):
     return best
 
 
-def simulate(scenario, strategy):
-    if strategy not in STRATEGIES:
+def simulate(scenario, strategy, *, requirements=None):
+    if strategy not in ALL_STRATEGIES:
         raise ValueError(f'Unknown strategy: {strategy}')
     validate_inputs(scenario['config'], scenario['cargo'], scenario['units'], scenario['conditions'])
+    minima = parse_requirements(requirements, scenario)
+    if strategy == SOCIAL_PRIORITY:
+        return _social_result(scenario, minima, {})
+    result = _simulate(scenario, strategy)
+    if requirements is not None:
+        result.update(evaluate(minima, scenario, result['trips']))
+    return result
+
+
+def compare_strategies(scenario, strategies=ALL_STRATEGIES, *, requirements=None):
+    """Reuse audited baselines as alternative plans for the social strategy."""
+    validate_inputs(scenario['config'], scenario['cargo'], scenario['units'], scenario['conditions'])
+    minima = parse_requirements(requirements, scenario)
+    strategies = tuple(strategies)
+    if not strategies or set(strategies) - set(ALL_STRATEGIES) or len(strategies) != len(set(strategies)):
+        raise ValueError('Select a nonempty list of distinct, supported strategies')
+    baselines = {name: _simulate(scenario, name) for name in strategies if name != SOCIAL_PRIORITY}
+    results = {name: {**result, **evaluate(minima, scenario, result['trips'])}
+               for name, result in baselines.items()}
+    if SOCIAL_PRIORITY in strategies:
+        results[SOCIAL_PRIORITY] = _social_result(scenario, minima, baselines)
+    return {name: results[name] for name in strategies}
+
+
+def _social_result(scenario, requirements, baselines):
+    candidates = dict(baselines)
+    for name in (STRATEGIES if requirements else ('OPTIMIZED',)):
+        if name not in candidates:
+            candidates[name] = _simulate(scenario, name)
+    if requirements:
+        candidates[SOCIAL_PRIORITY] = _simulate(scenario, SOCIAL_PRIORITY, requirements)
+
+    def score(item):
+        _, result = item
+        missing = deficits(requirements, result['trips'])
+        return (-sum(x > 0 for x in missing), -sum(missing), *_objective(result['trips'], scenario['cargo']))
+
+    if requirements:
+        source, best = max(((name, candidates[name]) for name in ALL_STRATEGIES), key=score)
+    else:
+        source, best = 'OPTIMIZED', candidates['OPTIMIZED']
+    return {**best, 'metrics': {**best['metrics'], 'strategy': SOCIAL_PRIORITY},
+            **evaluate(requirements, scenario, best['trips']), 'selected_plan_strategy': source}
+
+
+def _simulate(scenario, strategy, requirements=()):
     s = dict(scenario)
     s['_conditions'] = {(r['date'], r['segment_id']): r for r in s['conditions']}
     c, cargo, units = s['config'], s['cargo'], s['units']
+    by_type = {category: r for r in requirements for category in r.cargo_types}
+    missing = {r: r.required_kg for r in requirements}
+    close = dt(c['end']) + timedelta(days=1)
     remain = {x['cargo_id']: float(x['volume_t']) for x in cargo}
     # Resources, not just unit identifiers, are exclusive even if units share a tug.
     available = {r: dt(c['start']) for u in units for r in (u['barge_id'], u['tug_id'])}
@@ -157,7 +220,19 @@ def simulate(scenario, strategy):
                         eligible = eligible[:limit]
                 for rank, x in enumerate(eligible):
                     start = max(start0, dt(x['ready_date']))
-                    t = _best_load(s, u, x, min(remain[x['cargo_id']], u['capacity_t']), start)
+                    quantity = min(remain[x['cargo_id']], u['capacity_t'])
+                    t = _best_load(s, u, x, quantity, start)
+                    requirement = by_type.get(x['cargo_type'])
+                    if requirement is not None and missing[requirement]:
+                        target = min(quantity, missing[requirement] / 1000)
+                        timely = best_load(c, u, x, target, start, s['_conditions'], close,
+                                           unload_by=requirement.deadline)
+                        for option in (timely, t):
+                            if option is not None and requirement.applies(option):
+                                useful = min(missing[requirement], kilograms(option['volume_t']))
+                                key = (0, requirement.deadline or datetime.max, -useful,
+                                       option['released_at'], u['unit_id'], x['cargo_id'])
+                                choices.append((key, option))
                     if not t:
                         continue
                     ontime = dt(t['unloading_end']) <= dt(x['due_date'])
@@ -168,20 +243,23 @@ def simulate(scenario, strategy):
                     else:
                         hours = (dt(t['released_at']) - dt(t['loading_start'])).total_seconds() / 3600
                         key = (-int(ontime), -(float(t['volume_t']) / hours if ontime else 0), -float(t['volume_t']), x['due_date'], t['loading_start'], u['unit_id'], x['cargo_id'])
-                    choices.append((key, t))
-                    if strategy != 'OPTIMIZED':
+                    choices.append(((1, *key) if strategy == SOCIAL_PRIORITY else key, t))
+                    if strategy in ('FCFS', 'EARLIEST_DUE'):
                         break
             if not choices:
                 break
             _, t = min(choices, key=lambda z: z[0])
             t['trip_id'] = f'TR{len(trips)+1:05}'
             trips.append(t)
+            requirement = by_type.get(t['cargo_type'])
+            if requirement is not None and requirement.applies(t):
+                missing[requirement] = max(0, missing[requirement] - kilograms(t['volume_t']))
             remain[t['cargo_id']] = round(remain[t['cargo_id']] - t['volume_t'], 3)
             for r in (t['barge_id'], t['tug_id']):
                 available[r] = dt(t['released_at'])
         day += timedelta(days=1)
-    if strategy == 'OPTIMIZED':
-        trips = _improve(s, trips)
+    if strategy in ('OPTIMIZED', SOCIAL_PRIORITY):
+        trips = _improve(s, trips, requirements)
     delivered, ontime, busy, weighted = _audit(s, trips)
     moved = {x['cargo_id']: 0.0 for x in cargo}
     by_type = {}
