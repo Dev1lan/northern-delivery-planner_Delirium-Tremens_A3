@@ -3,10 +3,11 @@
 from collections import defaultdict
 from dataclasses import dataclass, field
 from decimal import Decimal
+from functools import lru_cache
 from heapq import nlargest, nsmallest
 from time import perf_counter
 
-from network.models import Limits, Location, loaded_draft
+from network.models import Limits, Location
 from network.search_policy import SearchPolicy, TimeLimitReached
 from network.routing import Router, distance
 from network.ports import reservations
@@ -74,6 +75,7 @@ class Scheduler:
         self.minimum_for_type = {category: i for i, r in enumerate(scenario.requirements) for category in r.cargo_types}
         self.cargo = tuple(sorted(scenario.cargo.values(), key=lambda c: (c.ready, c.id)))
 
+        self.assignment_options = lru_cache(maxsize=4096)(self._assignment_options)
         self.cargo_by_barge = {}
         self.cargo_by_barge_port = {}
         for key, barge in scenario.barges.items():
@@ -127,9 +129,31 @@ class Scheduler:
                      state.delivered + move.kg, state.empty_km + empty, (*state.moves, move), bookings,
                      state.operating_cost + charge)
 
+    def _assignment_options(self, tug_id, barge_id, origin, reposition):
+        s = self.scenario
+        tug, barge = s.tugs[tug_id], s.barges[barge_id]
+        cargo_options = (self.cargo_by_barge[barge_id] if reposition
+                         else self.cargo_by_barge_port[barge_id].get(origin, ()))
+        available_to = min(s.end, tug.available_to, barge.available_to)
+        options = []
+        excluded = 0
+        for cargo in cargo_options:
+            self.check_budget()
+            cutoff = min(available_to, cargo.expires_at or available_to)
+            if origin != cargo.origin:
+                cutoff = min(cutoff, cargo.due)
+            approach = self.router.lower_bound(tug, barge, origin, cargo.origin, reposition=True)
+            loaded = self.router.lower_bound(tug, barge, cargo.origin, cargo.destination)
+            if approach is None or loaded is None or cargo.ready + loaded > cutoff:
+                excluded += 1
+                continue
+            options.append((cargo, cutoff, approach, loaded))
+        return tuple(options), excluded
+
     def assignments(self, state, strategy):
         s = self.scenario
         reposition = strategy in (REPOSITION, COST)
+        social = strategy in (SOCIAL, REPOSITION, COST)
         for tug_id, barge_id in s.pairs:
             self.check_budget()
             tug_loc, barge_loc = state.locations[tug_id], state.locations[barge_id]
@@ -137,26 +161,17 @@ class Scheduler:
                 continue
             tug, barge = s.tugs[tug_id], s.barges[barge_id]
             ready = max(tug_loc.available_at, barge_loc.available_at)
-            available_to = min(s.end, tug.available_to, barge.available_to)
             origin = tug_loc.port
-            cargo_options = (self.cargo_by_barge[barge_id] if reposition
-                             else self.cargo_by_barge_port[barge_id].get(origin, ()))
-            for cargo in cargo_options:
+            options, excluded = self.assignment_options(tug_id, barge_id, origin, reposition)
+            self.stats['safe_pruned'] += excluded
+            self.stats['assignments_considered'] += len(options) + excluded
+            for cargo, cutoff, approach, loaded in options:
                 self.check_budget()
-                self.stats['assignments_considered'] += 1
                 capacity = min(barge.capacity_kg, state.remaining[cargo.id])
-                cutoff = min(available_to, cargo.expires_at or available_to)
-                if origin != cargo.origin:
-                    cutoff = min(cutoff, cargo.due)
-                if not capacity or max(ready, cargo.ready) >= cutoff:
+                if not capacity or max(ready, cargo.ready) >= cutoff or max(ready + approach, cargo.ready) + loaded > cutoff:
                     self.stats['safe_pruned'] += 1
                     continue
-                approach = self.router.lower_bound(tug, barge, origin, cargo.origin, reposition=True)
-                loaded = self.router.lower_bound(tug, barge, cargo.origin, cargo.destination)
-                if approach is None or loaded is None or max(ready + approach, cargo.ready) + loaded > cutoff:
-                    self.stats['safe_pruned'] += 1
-                    continue
-                index = self.minimum_for_type.get(cargo.type) if strategy in (SOCIAL, REPOSITION, COST) else None
+                index = self.minimum_for_type.get(cargo.type) if social else None
                 requirement = s.requirements[index] if index is not None else None
                 deficit = state.deficit[index] if index is not None else 0
                 yield tug, barge, cargo, capacity, origin, ready, requirement, deficit, approach, loaded
