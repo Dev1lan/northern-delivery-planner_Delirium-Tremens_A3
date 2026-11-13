@@ -99,6 +99,7 @@ class Scheduler:
         self.cost_start_expanded = None
         self.cost_candidates = 0
         self.cost_reassignments = 0
+        self.cost_reassignment_trials = 0
         self.stats = dict(assignments_considered=0, safe_pruned=0, heuristic_pruned=0,
                           detailed_checks=0, generated_candidates=0, generated_states=0,
                           duplicate_states=0, beam_pruned=0)
@@ -125,7 +126,8 @@ class Scheduler:
                     'cost_expanded_states': self.expanded - self.cost_start_expanded
                     if self.cost_start_expanded is not None else 0,
                     'cost_candidates': self.cost_candidates,
-                    'cost_reassignments': self.cost_reassignments} if self.active_strategy == COST else {}),
+                    'cost_reassignments': self.cost_reassignments,
+                    'cost_reassignment_trials': self.cost_reassignment_trials} if self.active_strategy == COST else {}),
                 **({'cargo_search': dict(self.cargo_search)} if self.policy.recover_undelivered else {})}
 
     def initial(self):
@@ -147,7 +149,7 @@ class Scheduler:
         bookings = dict(state.bookings)
         for berth, interval in reservations(move):
             bookings[berth] = (*bookings.get(berth, ()), interval)
-        charge = self.voyage_price(move) if self.voyage_price else Decimal(0)
+        charge = self.voyage_price(move) if self.cost_start_expanded is not None else Decimal(0)
         self.stats['generated_states'] += 1
         return State({**state.locations, move.tug_id: location, move.barge_id: location},
                      {**state.remaining, cargo.id: state.remaining[cargo.id] - move.kg}, tuple(deficits),
@@ -552,12 +554,13 @@ class Scheduler:
                 self.deadline = started + budget * 0.75
             try:
                 reference = self._plan(REPOSITION)
+                reference_state = self.best
                 limited = reference.termination_reason == 'SEARCH_LIMIT'
             except TimeLimitReached:
+                reference_state = self.best
                 limited = True
             finally:
                 self.deadline = final_deadline
-            reference_state = self.best
         else:
             reference_state = seed
             for move in initial_plan:
@@ -579,6 +582,8 @@ class Scheduler:
         self.cost_start_expanded = self.expanded
         self.active_score = score
         self.best_score = None
+        reference_state = replace(reference_state, operating_cost=sum(
+            (self.voyage_price(move) for move in reference_state.moves), Decimal(0)))
         self.record(reference_state)
         reference_state = self.reassign_terminal(seed, reference_state)
         state, _, cost_limited = self.search(seed, COST, reference_state, score=score)
@@ -593,7 +598,6 @@ class Scheduler:
         last_use = {}
         for index, move in enumerate(moves):
             last_use[move.tug_id] = last_use[move.barge_id] = index
-        trials = 0
         for index, move in enumerate(moves):
             if last_use[move.tug_id] != index or last_use[move.barge_id] != index:
                 continue
@@ -611,12 +615,12 @@ class Scheduler:
                 alternative = self.assign_pair(move, pair)
                 if self.voyage_price(alternative) >= original_price:
                     continue
-                trials += 1
+                self.cost_reassignment_trials += 1
                 revised = (*moves[:index], alternative, *moves[index + 1:])
                 try:
                     replay(self.scenario, revised)
                 except ScheduleViolation:
-                    if trials >= self.limits.repair_states:
+                    if self.cost_reassignment_trials >= self.limits.repair_states:
                         return incumbent
                     continue
                 state = seed
@@ -628,6 +632,6 @@ class Scheduler:
                 moves[index] = alternative
                 last_use[pair[0]] = last_use[pair[1]] = index
                 break
-            if trials >= self.limits.repair_states:
+            if self.cost_reassignment_trials >= self.limits.repair_states:
                 break
         return incumbent

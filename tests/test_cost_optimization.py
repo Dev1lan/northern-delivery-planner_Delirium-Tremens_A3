@@ -99,3 +99,25 @@ class CostOptimizationTests(unittest.TestCase):
         self.assertEqual(result['metrics']['delivered_on_time_t'], 200)
         self.assertEqual(len({voyage['tug_id'] for voyage in result['voyages']}), 2)
         self.assertEqual(audit_result(result)['schedule_audit']['status'], 'PASSED')
+
+    def test_cost_can_choose_a_slower_shorter_path_and_charges_empty_legs(self):
+        raw, _ = self.one_job()
+        raw['tugs'] = raw['tugs'][:1]
+        raw['barges'] = raw['barges'][:1]
+        raw['compatible_pairs'] = raw['compatible_pairs'][:1]
+        raw['cargo'][0]['due_at'] = '2026-07-01T23:00:00'
+        direct = next(edge for edge in raw['edges'] if edge['edge_id'] == 'AB')
+        raw['edges'].extend([
+            dict(direct, edge_id='AD', destination_port='D', distance_km=2, speed_limit_kmh=1),
+            dict(direct, edge_id='DB', origin_port='D', distance_km=2, speed_limit_kmh=1),
+        ])
+        raw['tugs'][0]['current_port'] = raw['barges'][0]['current_port'] = 'B'
+        prices = tariffs({'loaded_fuel': 10, 'empty_fuel': 3, 'repositioning': 2,
+                          'loading': 1, 'unloading': 2, 'port_call': 5})
+        reference = run_scenario(raw, REPOSITION, tariffs=prices)
+        result = run_scenario(raw, COST, tariffs=prices, initial_plan=reference)
+        self.assertEqual([leg['edge_id'] for leg in reference['voyages'][0]['loaded']], ['AB'])
+        self.assertEqual([leg['edge_id'] for leg in result['voyages'][0]['loaded']], ['AD', 'DB'])
+        self.assertEqual(result['financial_evaluation']['empty_transition_cost'], '50.00')
+        self.assertEqual(result['financial_evaluation']['total_cost'], '400.00')
+        self.assertEqual(audit_result(result)['schedule_audit']['status'], 'PASSED')
