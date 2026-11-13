@@ -391,6 +391,11 @@ def network_builtin() -> Dict[str, dict]:
                                    scenario=real / "yakutia_real_2026_demo.json", limits=real / "limits.json",
                                    tariffs=NET_TARIFFS, cards=real / "fleet_cards.json", geo=real / "geo.json",
                                    policy=real / "search_policy.json")
+    if (real / "yakutia_real_2026_deep.json").exists():
+        out["yakutia_real_deep"] = dict(title="Якутия 2026: реки углублены под суда река—море (допущение)",
+                                        scenario=real / "yakutia_real_2026_deep.json", limits=real / "limits.json",
+                                        tariffs=NET_TARIFFS, cards=real / "fleet_cards.json", geo=real / "geo.json",
+                                        policy=real / "search_policy.json")
     if (NET_DEMO / "yakutia_stress.json").exists():
         out["yakutia_stress"] = dict(title="Якутия, стресс-тест причала: Нижнеянск, один причал",
                                      scenario=NET_DEMO / "yakutia_stress.json", tariffs=NET_DEMO / "tariffs_base.json",
@@ -428,7 +433,7 @@ def _ru_error(msg: str) -> str:
 
 # Что показывать в выпадающем списке сайта. Остальные готовые сценарии остаются доступны через API
 # (/api/network/jobs с builtin) — на них опираются тесты и примеры.
-SHOWN_NETWORK = ("yakutia", "yakutia_real", "yakutia_stress")
+SHOWN_NETWORK = ("yakutia", "yakutia_real", "yakutia_real_deep", "yakutia_stress")
 SHOWN_LINEAR = ("r1_baseline_central_central",)
 
 

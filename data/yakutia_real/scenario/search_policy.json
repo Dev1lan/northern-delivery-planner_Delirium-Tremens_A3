@@ -1,4 +1,5 @@
 {
  "mode": "RESEARCH",
- "time_seconds": 45
+ "time_seconds": 45,
+ "recover_undelivered": true
 }
