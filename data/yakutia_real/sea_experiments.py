@@ -36,7 +36,7 @@ TARIFFS = json.loads((ROOT / "data/yakutia/tariffs_v2.json").read_text(encoding=
 BUDGET = 45
 STRATEGY = "NETWORK_REPOSITION"
 RESULTS = HERE / "sea_results"
-SAVE = ("E0", "E1", "E1P", "E2", "E2S", "E1S", "E1PS", "E0S")   # полные результаты v3 для сайта и повторного аудита
+SAVE = ("E0", "E1", "E1P", "E2", "E2S", "E1S", "E1PS", "E0S", "E0A", "E1A", "E2A", "E1AS")   # полные результаты v3 для сайта и повторного аудита
 FLEET_COST = ("UNKNOWN: подтверждённых ставок аренды или содержания судов река—море нет; "
               "в тарифах v2 только часы работы, топливо и сборы")
 
@@ -70,12 +70,20 @@ def finance(raw, result, used):
             "total_known_rub": known, "total_rub": None if added_used else known}
 
 
-def policy(seconds):
-    return SearchPolicy(mode="RESEARCH", time_seconds=seconds, recover_undelivered=True)
+def policy(seconds, sea=False):
+    """sea=True — распределение морского флота внутри ядра (SearchPolicy.sea_fleet_allocation, ветка
+    feature/sea-fleet-allocation); варианты с суффиксом A."""
+    return SearchPolicy(mode="RESEARCH", time_seconds=seconds, recover_undelivered=True, sea_fleet_allocation=sea)
 
 
-def plan(raw, seconds=BUDGET):
-    return run_scenario(raw, STRATEGY, limits=LIMITS, tariffs=TARIFFS, search_policy=policy(seconds))
+def plan(raw, seconds=BUDGET, sea=False):
+    return run_scenario(raw, STRATEGY, limits=LIMITS, tariffs=TARIFFS, search_policy=policy(seconds, sea))
+
+
+def kind(name):
+    """P — два прохода вне ядра, A — распределение морского флота в ядре, иначе обычное планирование."""
+    base = name[:-1] if name.endswith("S") else name
+    return base[-1] if base[-1] in "PA" and base not in ("R_ALL", "R_NOSEA") else ""
 
 
 def two_pass(raw, first_share=0.45):
@@ -113,7 +121,7 @@ def two_pass(raw, first_share=0.45):
 def variant(name):
     if name.endswith("S"):
         return with_social(variant(name[:-1]))
-    if name.endswith("P"):
+    if name.endswith(("P", "A")) and name not in ("R_ALL", "R_NOSEA"):
         name = name[:-1]
     s = load()
     if name == "E0":
@@ -153,6 +161,8 @@ TITLES = {
 def title(name):
     if name.endswith("S"):
         return title(name[:-1]) + "; социальные минимумы № 326-р"
+    if name.endswith("A") and name not in ("R_ALL", "R_NOSEA"):
+        return title(name[:-1]) + "; ядро: распределение морского флота"
     return TITLES[name]
 
 
@@ -206,7 +216,8 @@ def main(names):
     for name in names:
         raw = variant(name)
         t = time.time()
-        result = two_pass(raw) if name.rstrip("S").endswith("P") else plan(raw)
+        k = kind(name)
+        result = two_pass(raw) if k == "P" else plan(raw, sea=k == "A")
         row = summarize(name, raw, result, time.time() - t, base_used)
         if name in SAVE:
             RESULTS.mkdir(exist_ok=True)
@@ -228,12 +239,17 @@ def main(names):
             r["extra_t_vs_E0"] = round(dt, 3)
             r["operating_cost_per_extra_t_rub"] = round(dc / dt, 2) if dt > 0 else None
     social = all(n.endswith("S") for n in names)
-    out = HERE / ("sea_experiments_social.json" if social else "sea_experiments_report.json"
-                  if len(names) > 3 else f"sea_experiments_{'_'.join(names)}.json")
+    out = HERE / (OUT_NAME or ("sea_experiments_social.json" if social else "sea_experiments_report.json"
+                  if len(names) > 3 else f"sea_experiments_{'_'.join(names)}.json"))
     out.write_text(json.dumps({"settings": settings(), "experiments": rows}, ensure_ascii=False, indent=1) + "\n",
                    encoding="utf-8")
     print(out)
 
 
+OUT_NAME = None
+
 if __name__ == "__main__":
+    if sys.argv[1:2] == ["--allocation"]:     # сравнение с распределением морского флота в ядре
+        OUT_NAME = "sea_experiments_allocation.json"
+        sys.argv = sys.argv[:1] + (sys.argv[2:] or ["E0", "E0A", "E1", "E1P", "E1A", "E2", "E2A", "E1S", "E1PS", "E1AS"])
     main(sys.argv[1:] or ["E0", "E1", "E1P", "E2", "E2P", "E3", "R_ALL", "R_NOSEA"])

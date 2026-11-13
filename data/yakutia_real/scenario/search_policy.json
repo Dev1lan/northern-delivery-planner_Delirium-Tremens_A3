@@ -1,5 +1,6 @@
 {
  "mode": "RESEARCH",
  "time_seconds": 45,
- "recover_undelivered": true
+ "recover_undelivered": true,
+ "sea_fleet_allocation": true
 }
