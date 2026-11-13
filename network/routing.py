@@ -61,7 +61,11 @@ class Router:
         self.check_budget = check_budget or (lambda: None)
         self.calendars = {key: Calendar(edge, scenario.underkeel) for key, edge in scenario.edges.items()}
         self._paths = lru_cache(maxsize=8192)(self._search)
+        self._signatures = lru_cache(maxsize=4096)(self._signature)
         self._edges = lru_cache(maxsize=512)(self._admitted_edges)
+        self.signature_ids = {}
+        self.signature_values = []
+        self.edge_order = tuple(sorted(scenario.edges.values(), key=lambda item: item.id))
         self._distances = lru_cache(maxsize=1024)(self._lower_bounds)
         self.calendar_checks = 0
 
@@ -70,23 +74,35 @@ class Router:
         return {'route_cache_hits': info.hits, 'route_cache_misses': info.misses,
                 'route_cache_size': info.currsize, 'calendar_checks': self.calendar_checks}
 
-    def _admitted_edges(self, tug_id, barge_id, reposition):
+    def _signature(self, tug_id, barge_id, reposition):
         tug, barge = self.scenario.tugs[tug_id], self.scenario.barges[barge_id]
-        outgoing = {port: [] for port in self.scenario.ports}
-        incoming = {port: [] for port in self.scenario.ports}
-        for edge in sorted(self.scenario.edges.values(), key=lambda item: item.id):
+        result = []
+        for index, edge in enumerate(self.edge_order):
             if (reposition and edge.marine and not self.scenario.allow_marine_reposition
                     or admission_error(self.scenario, edge, tug, barge)):
                 continue
             duration = sailing_time(edge, tug)
-            if not any(b - a >= duration for a, b in edge.windows):
-                continue
+            if any(b - a >= duration for a, b in edge.windows):
+                result.append((index, duration))
+        result = tuple(result)
+        key = self.signature_ids.get(result)
+        if key is None:
+            key = len(self.signature_values)
+            self.signature_ids[result] = key
+            self.signature_values.append(result)
+        return key
+
+    def _admitted_edges(self, signature):
+        outgoing = {port: [] for port in self.scenario.ports}
+        incoming = {port: [] for port in self.scenario.ports}
+        for index, duration in self.signature_values[signature]:
+            edge = self.edge_order[index]
             outgoing[edge.origin].append((edge, duration))
             incoming[edge.destination].append((edge.origin, duration))
         return outgoing, incoming
 
-    def _lower_bounds(self, tug_id, barge_id, destination, reposition):
-        _, incoming = self._edges(tug_id, barge_id, reposition)
+    def _lower_bounds(self, signature, destination):
+        _, incoming = self._edges(signature)
         zero = timedelta()
         best = {destination: zero}
         queue = [(zero, destination)]
@@ -102,7 +118,10 @@ class Router:
         return best
 
     def lower_bound(self, tug, barge, origin, destination, *, reposition=False):
-        return self._distances(tug.id, barge.id, destination, reposition).get(origin)
+        if origin == destination:
+            return timedelta()
+        signature = self._signatures(tug.id, barge.id, reposition)
+        return self._distances(signature, destination).get(origin)
 
     def _earliest_leg(self, edge, duration, draft, ready, cutoff):
         calendar = self.calendars[edge.id]
@@ -124,17 +143,18 @@ class Router:
 
     def paths(self, tug, barge, origin, destination, ready, cutoff, draft, *, reposition=False):
         self.check_budget()
-        return self._paths(tug.id, barge.id, origin, destination, ready, cutoff, draft, reposition)
-
-    def _search(self, tug_id, barge_id, origin, destination, ready, cutoff, draft, reposition):
         if ready > cutoff:
             return ()
         if origin == destination:
             return ((),)
-        lower = self._distances(tug_id, barge_id, destination, reposition).get(origin)
+        signature = self._signatures(tug.id, barge.id, reposition)
+        return self._paths(signature, origin, destination, ready, cutoff, draft)
+
+    def _search(self, signature, origin, destination, ready, cutoff, draft):
+        lower = self._distances(signature, destination).get(origin)
         if lower is None or lower > cutoff - ready:
             return ()
-        outgoing, _ = self._edges(tug_id, barge_id, reposition)
+        outgoing, _ = self._edges(signature)
         limits = self.limits
         serial = count()
         queue = [(ready, 0.0, next(serial), origin, (origin,), ())]

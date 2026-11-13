@@ -1,5 +1,6 @@
 """Deterministic dispatch and bounded search over complete network schedules."""
 
+from collections import defaultdict
 from dataclasses import dataclass, field
 from decimal import Decimal
 from heapq import nlargest, nsmallest
@@ -73,8 +74,15 @@ class Scheduler:
         self.minimum_for_type = {category: i for i, r in enumerate(scenario.requirements) for category in r.cargo_types}
         self.cargo = tuple(sorted(scenario.cargo.values(), key=lambda c: (c.ready, c.id)))
 
-        self.cargo_by_barge = {key: tuple(c for c in self.cargo if c.type in barge.cargo_types)
-                               for key, barge in scenario.barges.items()}
+        self.cargo_by_barge = {}
+        self.cargo_by_barge_port = {}
+        for key, barge in scenario.barges.items():
+            compatible = tuple(c for c in self.cargo if c.type in barge.cargo_types)
+            by_port = defaultdict(list)
+            for cargo in compatible:
+                by_port[cargo.origin].append(cargo)
+            self.cargo_by_barge[key] = compatible
+            self.cargo_by_barge_port[key] = by_port
 
     def check_budget(self):
         if self.deadline is not None and perf_counter() >= self.deadline:
@@ -130,15 +138,17 @@ class Scheduler:
             tug, barge = s.tugs[tug_id], s.barges[barge_id]
             ready = max(tug_loc.available_at, barge_loc.available_at)
             available_to = min(s.end, tug.available_to, barge.available_to)
-            for cargo in self.cargo_by_barge[barge_id]:
+            origin = tug_loc.port
+            cargo_options = (self.cargo_by_barge[barge_id] if reposition
+                             else self.cargo_by_barge_port[barge_id].get(origin, ()))
+            for cargo in cargo_options:
                 self.check_budget()
                 self.stats['assignments_considered'] += 1
                 capacity = min(barge.capacity_kg, state.remaining[cargo.id])
-                origin = tug_loc.port
                 cutoff = min(available_to, cargo.expires_at or available_to)
                 if origin != cargo.origin:
                     cutoff = min(cutoff, cargo.due)
-                if not capacity or max(ready, cargo.ready) >= cutoff or (origin != cargo.origin and not reposition):
+                if not capacity or max(ready, cargo.ready) >= cutoff:
                     self.stats['safe_pruned'] += 1
                     continue
                 approach = self.router.lower_bound(tug, barge, origin, cargo.origin, reposition=True)
