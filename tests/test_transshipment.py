@@ -148,3 +148,23 @@ class TransshipmentTests(unittest.TestCase):
             decode_voyages(result['voyages']), legacy=True)
         self.assertEqual(result['financial_evaluation']['total_cost'], '300.00')
         self.assertEqual(audit_result(result)['schedule_audit']['status'], 'PASSED')
+
+    def test_receiving_capacity_can_split_an_unlimited_storage_batch(self):
+        raw = transfer_scenario()
+        terminal = raw['transshipment_ports']['B']
+        terminal.pop('storage_capacity_t')
+        terminal['storage_assumption'] = 'UNLIMITED'
+        result = run_scenario(raw)
+        self.assertEqual(sorted(b['volume_t'] for b in result['transshipment_batches']), [70.0, 80.0])
+        self.assertEqual(audit_result(result)['schedule_audit']['status'], 'PASSED')
+
+    def test_sea_to_river_uses_the_declared_direction(self):
+        raw = transfer_scenario()
+        raw['tugs'][0]['current_port'] = raw['barges'][0]['current_port'] = 'B'
+        raw['tugs'][1]['current_port'] = raw['barges'][1]['current_port'] = 'C'
+        raw['cargo'][0].update(origin_port='C', destination_port='A', volume_t=50)
+        raw['transshipment_ports']['B']['directions'] = ['SEA_TO_RIVER']
+        result = run_scenario(raw)
+        self.assertEqual(result['metrics']['delivered_on_time_t'], 50)
+        self.assertEqual([v['tug_id'] for v in result['voyages']], ['SEA', 'T1'])
+        self.assertEqual(audit_result(result)['schedule_audit']['status'], 'PASSED')
