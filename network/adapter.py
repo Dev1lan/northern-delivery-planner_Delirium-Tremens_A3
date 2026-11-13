@@ -33,6 +33,8 @@ def encode_voyage(move):
         row.update(loading_berth=move.loading_berth, port_ready_at=move.port_ready_at.isoformat())
     if move.unloading_berth is not None:
         row.update(unloading_berth=move.unloading_berth, unloading_start=move.unload_start.isoformat())
+    if move.batch_id is not None:
+        row.update(batch_id=move.batch_id, stage=move.stage, transfer_port=move.transfer_port)
     return row
 
 
@@ -47,7 +49,8 @@ def decode_voyages(rows):
                         timestamp(row['unloading_end'], 'unloading_end'), legs(row['return_empty']),
                         row.get('loading_berth'), row.get('unloading_berth'),
                         timestamp(row['port_ready_at'], 'port_ready_at') if 'port_ready_at' in row else None,
-                        timestamp(row['unloading_start'], 'unloading_start') if 'unloading_start' in row else None)
+                        timestamp(row['unloading_start'], 'unloading_start') if 'unloading_start' in row else None,
+                        row.get('batch_id'), row.get('stage'), row.get('transfer_port'))
                  for row in rows)
 
 
@@ -138,7 +141,7 @@ def run_scenario(raw, strategy=REPOSITION, *, limits=None, tariffs=None, search_
     if search_policy is not None:
         result['search_diagnostics'] = {
             'policy': {key: value for key, value in asdict(search_policy).items()
-                       if key not in ('recover_undelivered', 'sea_fleet_allocation') or value},
+                       if key not in ('recover_undelivered', 'sea_fleet_allocation', 'disable_transshipment') or value},
             'budget_seconds': search_policy.budget_seconds,
             'elapsed_seconds': round(perf_counter() - started, 6), **scheduler.diagnostics(),
         }
@@ -206,6 +209,7 @@ def main(argv=None):
     parser.add_argument('--time-seconds', type=float)
     parser.add_argument('--recover-undelivered', action='store_true')
     parser.add_argument('--sea-fleet-allocation', action='store_true')
+    parser.add_argument('--disable-transshipment', action='store_true')
     parser.add_argument('--top-k-pairs-per-cargo', type=int)
     parser.add_argument('--max-candidates-per-state', type=int)
     parser.add_argument('--max-detailed-checks-per-iteration', type=int)
@@ -216,7 +220,8 @@ def main(argv=None):
         return json.loads(path.read_text(encoding='utf-8-sig'))
 
     policy = SearchPolicy(args.mode, args.time_seconds, args.top_k_pairs_per_cargo, args.max_candidates_per_state,
-                          args.max_detailed_checks_per_iteration, args.recover_undelivered, args.sea_fleet_allocation)
+                          args.max_detailed_checks_per_iteration, args.recover_undelivered, args.sea_fleet_allocation,
+                          args.disable_transshipment)
     result = run_scenario(read(args.scenario), args.strategy, limits=Limits(**read(args.limits)) if args.limits else None,
                           tariffs=read(args.tariffs) if args.tariffs else None,
                           search_policy=policy if policy != SearchPolicy() else None,

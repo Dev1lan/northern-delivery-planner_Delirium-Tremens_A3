@@ -7,6 +7,7 @@ from network.models import Location, handling_time, loaded_draft, sailing_time
 from network.routing import passage_open
 from network.ports import service_duration
 from social_requirements import evaluate
+from network.transshipment import leg_cargo, verify_batches
 
 
 class ScheduleViolation(ValueError):
@@ -27,6 +28,8 @@ class Replay:
 
 
 def replay(scenario, voyages, *, allow_reposition=True, allow_return=False, initial=None):
+    voyages = tuple(voyages)
+    readiness = verify_batches(scenario, voyages, ScheduleViolation)
     locations = scenario.initial_locations() if initial is None else dict(initial.locations)
     remaining = {c.id: c.kg for c in scenario.cargo.values()} if initial is None else dict(initial.remaining)
     booked = {berth.id: list(berth.occupied) for berths in scenario.berths.values() for berth in berths}
@@ -40,7 +43,7 @@ def replay(scenario, voyages, *, allow_reposition=True, allow_return=False, init
         require(move.cargo_id in scenario.cargo, 'UNKNOWN_CARGO', move.cargo_id)
         tug = scenario.tugs[move.tug_id]
         barge = scenario.barges[move.barge_id]
-        cargo = scenario.cargo[move.cargo_id]
+        cargo = leg_cargo(scenario, move, readiness.get(move.batch_id))
         tug_state, barge_state = locations[tug.id], locations[barge.id]
         require(move.start >= max(tug_state.available_at, barge_state.available_at),
                 'RESOURCE_BUSY', str(pair))
@@ -49,7 +52,8 @@ def replay(scenario, voyages, *, allow_reposition=True, allow_return=False, init
                 'OUTSIDE_WINDOW', str(pair))
         require(cargo.type in barge.cargo_types, 'INCOMPATIBLE_CARGO', cargo.id)
         require(type(move.kg) is int and 0 < move.kg <= barge.capacity_kg, 'CAPACITY', cargo.id)
-        require(move.kg <= remaining[cargo.id], 'CARGO_BALANCE', cargo.id)
+        if move.stage != 2:
+            require(move.kg <= remaining[cargo.id], 'CARGO_BALANCE', cargo.id)
         require(move.load_start >= cargo.ready, 'CARGO_NOT_READY', cargo.id)
         require(move.loaded, 'MISSING_LOADED_PATH', cargo.id)
 
@@ -71,7 +75,7 @@ def replay(scenario, voyages, *, allow_reposition=True, allow_return=False, init
                 require(passage_open(scenario, edge, leg.depart, leg.arrive, draft), 'UNSAFE_PASSAGE', leg.edge_id)
                 current, not_before = edge.destination, leg.arrive
                 visited.add(current)
-            require(current == destination, 'WRONG_PORT', f'{current} → {destination}')
+            require(current == destination, 'WRONG_PORT', f'{current} в†’ {destination}')
             return not_before
 
         if move.empty:
@@ -114,14 +118,15 @@ def replay(scenario, voyages, *, allow_reposition=True, allow_return=False, init
             final_port = cargo.origin
         location = Location(final_port, move.end)
         locations[tug.id] = locations[barge.id] = location
-        remaining[cargo.id] -= move.kg
+        if move.stage != 2:
+            remaining[cargo.id] -= move.kg
     return Replay(locations, remaining)
 
 
 def requirement_report(scenario, voyages):
     trips = [{'cargo_type': scenario.cargo[v.cargo_id].type, 'volume_t': v.kg / 1000,
               'unloading_end': v.unloading_end.isoformat()} for v in voyages
-             if scenario.cargo[v.cargo_id].usable_at(v.unloading_end)]
+             if v.stage != 1 and scenario.cargo[v.cargo_id].usable_at(v.unloading_end)]
     return evaluate(scenario.requirements, scenario.social_input, trips)
 
 

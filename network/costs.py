@@ -4,6 +4,7 @@ from collections import defaultdict
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 from network.metrics import seconds
+from network.transshipment import leg_cargo
 from scenario_validation import ident
 
 
@@ -76,7 +77,7 @@ class CostModel:
         return sum(seconds(l.depart, l.arrive) for l in legs)
 
     def charges(self, move):
-        cargo = self.scenario.cargo[move.cargo_id]
+        cargo = leg_cargo(self.scenario, move)
         loaded, empty = move.loaded, (*move.empty, *move.return_empty)
         occupied = seconds(move.start, move.end)
         handling = seconds(move.load_start, move.departure) + seconds(move.unload_start, move.unloading_end)
@@ -103,9 +104,14 @@ class CostModel:
             ('waiting', Decimal(other_wait) / HOUR, move.barge_id, None),
             ('repositioning', self._distance(move.empty), move.tug_id, None),
         ]
-        return [(key, amount * self.port_rates.get(port, {}).get(
+        priced = [(key, amount * self.port_rates.get(port, {}).get(
             key, self.vessel_rates.get(vessel, {}).get(key, self.rates[key])), vessel, port)
                 for key, amount, vessel, port in rows]
+        if move.stage == 2:
+            terminal = self.scenario.terminals[move.transfer_port]
+            if terminal.rate_per_t is not None:
+                priced.append(('transshipment', t * terminal.rate_per_t, move.barge_id, move.transfer_port))
+        return priced
 
     def voyage_cost(self, move):
         return sum((cost for _, cost, _, _ in self.charges(move)), ZERO)
@@ -135,8 +141,8 @@ class CostModel:
                     by_port[port] += amount
             voyages.append({'voyage_id': i, 'total_cost': money(sum(charge.values(), ZERO)),
                             'cost_by_item': {k: money(v) for k, v in charge.items()}})
-            cargo = self.scenario.cargo[move.cargo_id]
-            if cargo.usable_at(move.unloading_end):
+            cargo = leg_cargo(self.scenario, move)
+            if move.stage != 1 and cargo.usable_at(move.unloading_end):
                 remaining[move.cargo_id] -= move.kg
                 delivered += move.kg
                 if move.unloading_end <= cargo.due:
@@ -156,4 +162,6 @@ class CostModel:
                    if legacy else {'cost_basis': 'PLANNED_OPERATIONS', 'estimated_undelivered_cost': money(penalty),
                                    'unpriced_undelivered_t': unpriced / 1000}),
                 'empty_transition_cost': money(by_item.get('empty_fuel', ZERO) + by_item.get('repositioning', ZERO)),
+                **({'transshipment_cost': money(by_item.get('transshipment', ZERO))}
+                   if any(move.stage == 2 for move in moves) else {}),
                 'price_status': 'PARTIAL' if legacy and unpriced else 'PRICED'}

@@ -218,6 +218,7 @@ def compare_results(base, alternative):
     delta['cost'] = None
     delta['cost_per_t_on_time'] = None
     if (a and b and a.get('price_status') == b.get('price_status') == 'PRICED'
+            and a.get('cost_basis') == b.get('cost_basis')
             and a['currency'] == b['currency'] and a.get('tariff_parameters') == b.get('tariff_parameters')):
         delta['cost'] = str(Decimal(b['total_cost']) - Decimal(a['total_cost']))
         if a.get('cost_per_t_on_time') is not None and b.get('cost_per_t_on_time') is not None:

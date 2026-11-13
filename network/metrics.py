@@ -1,6 +1,7 @@
 """Describe the audited itinerary as events and measurable work quantities."""
 
 from collections import defaultdict
+from network.transshipment import leg_cargo
 
 from network.routing import distance
 
@@ -10,7 +11,7 @@ def seconds(start, end):
 
 
 def event_rows(scenario, move, index):
-    cargo = scenario.cargo[move.cargo_id]
+    cargo = leg_cargo(scenario, move)
     rows = []
 
     def event(state, origin, destination, start, end, edge=None, kg=0, berth=None):
@@ -22,6 +23,8 @@ def event_rows(scenario, move, index):
                          'volume_t': kg / 1000})
             if berth is not None:
                 rows[-1]['berth_id'] = berth
+            if move.batch_id is not None:
+                rows[-1].update(batch_id=move.batch_id, stage=move.stage)
 
     def transit(legs, ready, kg):
         for leg in legs:
@@ -59,14 +62,14 @@ def summarize(scenario, moves, report):
     transit_seconds = loading_seconds = unloading_seconds = waiting_seconds = 0
     details = []
     for index, move in enumerate(moves, 1):
-        cargo = scenario.cargo[move.cargo_id]
-        usable = cargo.usable_at(move.unloading_end)
+        cargo = leg_cargo(scenario, move)
+        usable = move.stage != 1 and cargo.usable_at(move.unloading_end)
         if usable:
             by_cargo[cargo.id] += move.kg
             by_type[cargo.type] += move.kg
         if usable and move.unloading_end <= cargo.due:
             timely[cargo.type] += move.kg
-        late = max(0, seconds(cargo.due, move.unloading_end))
+        late = max(0, seconds(cargo.due, move.unloading_end)) if move.stage != 1 else 0
         loaded = distance(scenario, move.loaded)
         empty = distance(scenario, (*move.empty, *move.return_empty))
         loaded_km += loaded
@@ -121,7 +124,9 @@ def summarize(scenario, moves, report):
 def cargo_condition(scenario, moves):
     physical, expired = defaultdict(int), defaultdict(int)
     for move in moves:
-        cargo = scenario.cargo[move.cargo_id]
+        cargo = leg_cargo(scenario, move)
+        if move.stage == 1:
+            continue
         physical[cargo.id] += move.kg
         if not cargo.usable_at(move.unloading_end):
             expired[cargo.id] += move.kg

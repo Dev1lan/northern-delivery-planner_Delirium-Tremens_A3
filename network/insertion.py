@@ -8,6 +8,7 @@ from network.models import Location
 from network.ports import reservations
 from network.routing import Router
 from network.simulator import voyages
+from network.transshipment import leg_cargo
 from network.validator import ScheduleViolation, replay, requirement_report
 
 
@@ -21,7 +22,7 @@ class Gap:
 def free_intervals(scenario, fixed):
     timeline = defaultdict(list)
     for move in sorted(fixed, key=lambda move: move.start):
-        cargo = scenario.cargo[move.cargo_id]
+        cargo = leg_cargo(scenario, move)
         origin = scenario.edges[move.empty[0].edge_id].origin if move.empty else cargo.origin
         destination = cargo.origin if move.return_empty else cargo.destination
         for key in (move.tug_id, move.barge_id):
@@ -95,7 +96,7 @@ class FixedPlan:
 def plan_score(scenario, moves, cost_model=None):
     """Service-first score for audited local changes, with actual usable cargo."""
     report = requirement_report(scenario, moves)
-    usable = [move for move in moves if scenario.cargo[move.cargo_id].usable_at(move.unloading_end)]
+    usable = [move for move in moves if move.stage != 1 and scenario.cargo[move.cargo_id].usable_at(move.unloading_end)]
     timely = sum(move.kg for move in usable if move.unloading_end <= scenario.cargo[move.cargo_id].due)
     total = sum(move.kg for move in usable)
     cost = 0
@@ -137,7 +138,7 @@ def improve_fixed_plan(scenario, moves, limits, *, cost_model=None, max_attempts
     for move in sorted(original, key=lambda item: item.start):
         latest[move.tug_id] = latest[move.barge_id] = move
     terminals = [move for move in reversed(original)
-                 if latest[move.tug_id] == latest[move.barge_id] == move]
+                 if move.stage is None and latest[move.tug_id] == latest[move.barge_id] == move]
     for removed in terminals[:max_attempts]:
         prefix = tuple(move for move in original if move is not removed)
         fixed = FixedPlan(scenario, prefix, limits)
