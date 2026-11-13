@@ -119,13 +119,24 @@ def inspect_result(result, *, seconds_per_cargo=1):
         proven = [e['code'] for e in evidence if e['kind'] == 'PROVEN']
         if not proven and window_path and not load_draft_path:
             proven.append('DRAFT_RESTRICTION')
-        timely_reason = None if deadline_bound else 'DEADLINE_UNREACHABLE'
+        timely_reason = 'DEADLINE_UNREACHABLE' if window_path and not deadline_bound else None
+        cargo_trace = trace.get(key)
+        search_evidence = []
+        if cargo_trace and (cargo_trace.get('assignment_pruned', 0)
+                            or cargo_trace.get('feasible', 0) > cargo_trace.get('shortlisted', 0)):
+            search_evidence.append('CANDIDATE_PRUNED')
+        if result['termination_reason'] == 'TIME_LIMIT':
+            search_evidence.append('TIME_LIMIT')
+        elif result['termination_reason'] == 'SEARCH_LIMIT':
+            search_evidence.append('SEARCH_LIMIT')
         rows.append({**entry, **status, 'proven_restrictions': proven, 'evidence': evidence,
                      'timely_lower_bound_failure': timely_reason, 'topological_path': connected,
                      'compatible_tugs': sorted({t.id for t, _ in pairs}),
                      'compatible_barges': sorted({b.id for _, b in pairs}),
                      'admitted_window_path_optimistic': window_path, 'minimum_draft_path_optimistic': load_draft_path,
-                     'assignment_trace': trace.get(key),
+                     'assignment_trace': cargo_trace, 'search_evidence': search_evidence,
+                     'needs_verification': [] if proven else [
+                         'Try alternate fleet chains, later start times, or a jointly optimized plan'],
                      'search_stop': result['termination_reason'],
                      'isolated': {'delivered_t': isolated['metrics']['delivered_total_t'],
                                   'on_time_t': isolated['metrics']['delivered_on_time_t'],

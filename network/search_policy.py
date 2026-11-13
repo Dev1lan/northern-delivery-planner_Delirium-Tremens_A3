@@ -12,7 +12,11 @@ class SearchPolicy:
     max_candidates_per_state: int | None = None
     max_detailed_checks_per_iteration: int | None = None
 
+    recover_undelivered: bool = False
+
     def __post_init__(self):
+        if type(self.recover_undelivered) is not bool:
+            raise ValueError("recover_undelivered must be boolean")
         if self.mode not in (None, 'FAST', 'DEMO', 'STANDARD', 'RESEARCH'):
             raise ValueError('Unknown planning mode')
         if self.time_seconds is not None and (type(self.time_seconds) not in (int, float)

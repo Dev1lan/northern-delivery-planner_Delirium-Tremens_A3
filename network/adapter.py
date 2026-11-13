@@ -183,6 +183,7 @@ def main(argv=None):
     parser.add_argument('--tariffs', type=Path)
     parser.add_argument('--mode', choices=('FAST', 'DEMO', 'STANDARD', 'RESEARCH'))
     parser.add_argument('--time-seconds', type=float)
+    parser.add_argument('--recover-undelivered', action='store_true')
     parser.add_argument('--top-k-pairs-per-cargo', type=int)
     parser.add_argument('--max-candidates-per-state', type=int)
     parser.add_argument('--max-detailed-checks-per-iteration', type=int)
@@ -193,7 +194,7 @@ def main(argv=None):
         return json.loads(path.read_text(encoding='utf-8-sig'))
 
     policy = SearchPolicy(args.mode, args.time_seconds, args.top_k_pairs_per_cargo, args.max_candidates_per_state,
-                          args.max_detailed_checks_per_iteration)
+                          args.max_detailed_checks_per_iteration, args.recover_undelivered)
     result = run_scenario(read(args.scenario), args.strategy, limits=Limits(**read(args.limits)) if args.limits else None,
                           tariffs=read(args.tariffs) if args.tariffs else None,
                           search_policy=policy if policy != SearchPolicy() else None)

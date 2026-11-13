@@ -8,7 +8,7 @@ from network.models import Location
 from network.ports import reservations
 from network.routing import Router
 from network.simulator import voyages
-from network.validator import ScheduleViolation, replay
+from network.validator import ScheduleViolation, replay, requirement_report
 
 
 @dataclass(frozen=True)
@@ -94,8 +94,6 @@ class FixedPlan:
 
 def plan_score(scenario, moves, cost_model=None):
     """Service-first score for audited local changes, with actual usable cargo."""
-    from network.validator import requirement_report
-
     report = requirement_report(scenario, moves)
     usable = [move for move in moves if scenario.cargo[move.cargo_id].usable_at(move.unloading_end)]
     timely = sum(move.kg for move in usable if move.unloading_end <= scenario.cargo[move.cargo_id].due)
@@ -116,8 +114,6 @@ def improve_fixed_plan(scenario, moves, limits, *, cost_model=None, max_attempts
     original = tuple(moves)
     best = original
     score = plan_score(scenario, best, cost_model)
-    from network.validator import requirement_report
-
     required = {row['requirement_id'] for row in requirement_report(scenario, original)['requirements']
                 if row['satisfied']}
 
@@ -129,8 +125,10 @@ def improve_fixed_plan(scenario, moves, limits, *, cost_model=None, max_attempts
                              key=lambda c: (not bool(c.critical_category), c.due, c.id))
     base = FixedPlan(scenario, original, limits)
     tested = 0
+    generated = 0
     for cargo in remaining_cargo:
         for move in base.candidates(cargo, served.remaining[cargo.id]):
+            generated += 1
             if not base.accepts(move):
                 continue
             proposal = (*original, move)
@@ -147,10 +145,13 @@ def improve_fixed_plan(scenario, moves, limits, *, cost_model=None, max_attempts
     for removed in terminals[:max_attempts]:
         prefix = tuple(move for move in original if move is not removed)
         fixed = FixedPlan(scenario, prefix, limits)
-        for cargo in (scenario.cargo[removed.cargo_id], *remaining_cargo):
+        targets = (scenario.cargo[removed.cargo_id],
+                   *(cargo for cargo in remaining_cargo if cargo.id != removed.cargo_id))
+        for cargo in targets:
             kg = served.remaining[cargo.id] + (removed.kg if removed.cargo_id == cargo.id else 0)
-            for move in fixed.candidates(cargo, kg, pair_filter=lambda t, b: t.id == removed.tug_id
-                                         and b.id == removed.barge_id):
+            # Check the first auditable replacement across compatible pairs.
+            for move in fixed.candidates(cargo, kg):
+                generated += 1
                 if move == removed or not fixed.accepts(move):
                     continue
                 proposal = (*prefix, move)
@@ -159,4 +160,5 @@ def improve_fixed_plan(scenario, moves, limits, *, cost_model=None, max_attempts
                 if quality > score and preserves_minima(proposal):
                     best, score = proposal, quality
                 break
-    return best, {'audited_proposals': tested, 'improved': best != original}
+    return best, {'generated_proposals': generated, 'audited_proposals': tested,
+                  'terminal_voyages_checked': min(max_attempts, len(terminals)), 'improved': best != original}

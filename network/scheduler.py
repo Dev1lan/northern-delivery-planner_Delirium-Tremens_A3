@@ -1,6 +1,6 @@
 """Deterministic dispatch and bounded search over complete network schedules."""
 
-from collections import defaultdict
+from collections import Counter, defaultdict
 from dataclasses import dataclass, field, replace
 from decimal import Decimal
 from functools import lru_cache
@@ -90,6 +90,7 @@ class Scheduler:
             self.cargo_by_barge_port[key] = by_port
 
     def reset_counters(self):
+        self.cargo_search = defaultdict(Counter)
         self.stats = dict(assignments_considered=0, safe_pruned=0, heuristic_pruned=0,
                           detailed_checks=0, generated_candidates=0, generated_states=0,
                           duplicate_states=0, beam_pruned=0)
@@ -110,7 +111,8 @@ class Scheduler:
     def diagnostics(self):
         info = self.assignment_voyages.cache_info()
         return {**self.stats, **self.router.stats(), 'voyage_cache_hits': info.hits,
-                'voyage_cache_misses': info.misses}
+                'voyage_cache_misses': info.misses,
+                **({'cargo_search': dict(self.cargo_search)} if self.policy.recover_undelivered else {})}
 
     def initial(self):
         s = self.scenario
@@ -218,18 +220,38 @@ class Scheduler:
                     self.check_budget()
                     tug, barge = item[:2]
                     signature = (tug.access.vessel_class, barge.access.vessel_class)
+                    if policy.recover_undelivered:
+                        signature = (*signature, item[4])
                     (repeated if signature in classes else distinct).append(item)
                     classes.add(signature)
                 selected.extend((*distinct, *repeated)[:policy.top_k_pairs_per_cargo])
             self.stats['heuristic_pruned'] += len(ranked) - len(selected)
             kept = {(item[0].id, item[1].id, item[2].id) for item in selected}
+            if policy.recover_undelivered:
+                for item in ranked:
+                    if (item[0].id, item[1].id, item[2].id) not in kept:
+                        self.cargo_search[item[2].id]['assignment_pruned'] += 1
             ranked = [item for item in ranked if (item[0].id, item[1].id, item[2].id) in kept]
         limits = [limit for limit in (policy.max_candidates_per_state, policy.max_detailed_checks_per_iteration)
                   if limit is not None]
         if limits:
             keep = min(limits)
             self.stats['heuristic_pruned'] += max(0, len(ranked) - keep)
-            ranked = ranked[:keep]
+            if policy.recover_undelivered:
+                distinct = {}
+                for item in ranked:
+                    distinct.setdefault((item[2].id, item[4]), item)
+                # Reserve one quarter for distinct pickup assignments.
+                chosen = list(distinct.values())[:max(1, keep // 4)]
+                ids = {id(item) for item in chosen}
+                chosen.extend(item for item in ranked if id(item) not in ids)
+                ids = {id(item) for item in chosen[:keep]}
+                for item in ranked:
+                    if id(item) not in ids:
+                        self.cargo_search[item[2].id]['assignment_pruned'] += 1
+                ranked = [item for item in ranked if id(item) in ids]
+            else:
+                ranked = ranked[:keep]
         yield from ranked
 
     def _pair_representative(self, tug_id, barge_id):
@@ -253,10 +275,15 @@ class Scheduler:
     def candidates(self, state, strategy):
         s = self.scenario
         best = None
+        distinct = {}
+        traced = self.policy.recover_undelivered
+
         def ranked_moves():
             nonlocal best
             for tug, barge, cargo, capacity, origin, ready, index, _, deficit, _, _ in self.detailed_assignments(state, strategy):
                 self.stats['detailed_checks'] += 1
+                if traced:
+                    self.cargo_search[cargo.id]['detailed'] += 1
                 relevant_berths = (*self.berth_ids.get(cargo.origin, ()), *self.berth_ids.get(cargo.destination, ()))
                 bookings = tuple((key, tuple(sorted(state.bookings[key]))) for key in relevant_berths
                                  if key in state.bookings)
@@ -282,6 +309,12 @@ class Scheduler:
                     if self.deadline is not None and (best is None or rank < best[0]):
                         best = item
                     self.stats['generated_candidates'] += 1
+                    if traced:
+                        self.cargo_search[cargo.id]['feasible'] += 1
+                        key = (cargo.id, origin)
+                        previous = distinct.get(key)
+                        if previous is None or rank < previous[0]:
+                            distinct[key] = item
                     yield item
 
         try:
@@ -291,6 +324,19 @@ class Scheduler:
                 _, move, pair = best
                 self.record(self.append(state, self.assign_pair(move, pair), strategy == RETURN_EMPTY))
             raise
+        if traced:
+            if strategy in (REPOSITION, COST) and self.limits.candidate_limit > 1:
+                count = max(1, self.limits.candidate_limit // 4)
+                leaders = selected[:self.limits.candidate_limit - count]
+                represented = {(move.cargo_id, state.locations[pair[0]].port) for _, move, pair in leaders}
+                reserve = nsmallest(count, (item for key, item in distinct.items() if key not in represented),
+                                    key=lambda item: item[0])
+                seen = {id(item) for item in reserve}
+                selected = reserve + [item for item in selected if id(item) not in seen][
+                    :self.limits.candidate_limit - len(reserve)]
+                selected.sort(key=lambda item: item[0])
+            for _, move, _ in selected:
+                self.cargo_search[move.cargo_id]['shortlisted'] += 1
         return [self.assign_pair(move, pair) for _, move, pair in selected]
 
     @staticmethod
@@ -385,7 +431,7 @@ class Scheduler:
             state = self.best
             baseline = self.local_baseline
             if strategy == REPOSITION:
-                baseline = baseline or state
+                baseline = baseline or self.initial()
             replay(self.scenario, state.moves, allow_reposition=strategy in (REPOSITION, COST),
                    allow_return=strategy == RETURN_EMPTY)
             return Plan(strategy, state.moves, 'TIME_LIMIT', self.expanded,
@@ -404,6 +450,8 @@ class Scheduler:
         if strategy in (FCFS, GREEDY, RETURN_EMPTY):
             state, expanded, truncated = self.dispatch(seed, strategy)
         else:
+            if self.policy.recover_undelivered and strategy in (REPOSITION, COST):
+                return self._recover_plan(seed, strategy)
             simple = [self.dispatch(seed, name) for name in (FCFS, GREEDY, SOCIAL)]
             start = max((state for state, _, _ in simple), key=lambda item: item.score(True))
             baseline, expanded, truncated = self.search(seed, SOCIAL, start)
@@ -446,3 +494,32 @@ class Scheduler:
                allow_return=strategy == RETURN_EMPTY)
         return Plan(strategy, state.moves, 'SEARCH_LIMIT' if truncated else 'SEARCH_FINISHED', expanded,
                     baseline.moves if strategy == REPOSITION else None, reposition_selected, floor)
+
+    def _recover_plan(self, seed, strategy):
+        # Build a local reference quickly, then use the budget for service
+        # before optimizing cost. Avoid spending it in three local passes.
+        local, _, local_limited = self.dispatch(seed, SOCIAL)
+        self.local_baseline = local
+        greedy, _, greedy_limited = self.dispatch(seed, REPOSITION)
+        state, _, limited = self.search(seed, REPOSITION, max((local, greedy), key=lambda item: item.score(True)))
+        limited = limited or greedy_limited
+        state, _, repaired = self.repair(seed, state, REPOSITION)
+        floor = None
+        if strategy == COST:
+            floor = self.service_floor = (state.on_time, state.delivered)
+
+            def score(item):
+                penalty, _ = self.cost_model.residual(item.remaining)
+                meets_floor = item.on_time >= floor[0] and item.delivered >= floor[1]
+                return (meets_floor, *item.score(True)[:4], -(item.operating_cost + penalty),
+                        *item.score(False)[2:])
+
+            self.active_score = score
+            self.best_score = None
+            self.record(state)
+            state, _, cost_limited = self.search(seed, COST, state, score=score)
+            limited = limited or cost_limited
+        replay(self.scenario, state.moves)
+        return Plan(strategy, state.moves, 'SEARCH_LIMIT' if limited or local_limited or repaired
+                    else 'SEARCH_FINISHED', self.expanded, local.moves if strategy == REPOSITION else None,
+                    any(move.empty for move in state.moves), floor)
