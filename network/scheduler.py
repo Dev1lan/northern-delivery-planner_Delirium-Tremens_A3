@@ -34,7 +34,7 @@ class State:
     empty_km: float = 0
     moves: tuple = ()
     bookings: dict = field(default_factory=dict)
-    operating_cost: Decimal = Decimal(0)
+    net_cost: Decimal = Decimal(0)
 
     def score(self, social):
         minimums = (-sum(x > 0 for x in self.deficit), -sum(self.deficit)) if social else ()
@@ -159,7 +159,7 @@ class Scheduler:
                      {**state.remaining, cargo.id: state.remaining[cargo.id] - move.kg}, tuple(deficits),
                      state.on_time + (move.kg if move.unloading_end <= cargo.due else 0),
                      state.delivered + move.kg, state.empty_km + empty, (*state.moves, move), bookings,
-                     state.operating_cost + charge)
+                     state.net_cost + charge)
 
     def _assignment_options(self, tug_id, barge_id, origin, reposition):
         s = self.scenario
@@ -459,6 +459,7 @@ class Scheduler:
         budget = self.policy.budget_seconds
         self.deadline = started + budget if budget is not None else None
         self.active_strategy = strategy
+        self.sea_allocation = None
         self.best = self.initial()
         self.best_score = None
         self.active_score = self.local_baseline = self.service_floor = None
@@ -576,7 +577,7 @@ class Scheduler:
         def score(item):
             meets_service = (item.on_time >= floor[0] and item.delivered >= floor[1]
                              and all(left <= right for left, right in zip(item.deficit, required)))
-            price = item.operating_cost
+            price = item.net_cost
             if meets_service:
                 return True, -price, *item.score(True)
             return (False, *item.score(True)[:2], min(item.on_time, floor[0]),
@@ -585,7 +586,7 @@ class Scheduler:
         self.cost_start_expanded = self.expanded
         self.active_score = score
         self.best_score = None
-        reference_state = replace(reference_state, operating_cost=sum(
+        reference_state = replace(reference_state, net_cost=sum(
             (self.voyage_price(move) - self.cost_model.alternative_credit(
                 self.scenario.cargo[move.cargo_id].type, move.kg) for move in reference_state.moves), Decimal(0)))
         self.record(reference_state)
@@ -610,7 +611,8 @@ class Scheduler:
             for pair in self.scenario.pairs:
                 self.check_budget()
                 tug, barge = self.scenario.tugs[pair[0]], self.scenario.barges[pair[1]]
-                if cargo.type not in barge.cargo_types or move.kg > barge.capacity_kg:
+                if (cargo.type not in barge.cargo_types or move.kg > barge.capacity_kg
+                        or min(tug.available_to, barge.available_to) < move.end):
                     continue
                 # An unused resource or one released by an earlier voyage
                 # can take over without changing a subsequent voyage.
