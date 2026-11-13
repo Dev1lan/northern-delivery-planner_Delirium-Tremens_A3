@@ -120,3 +120,31 @@ class TransshipmentTests(unittest.TestCase):
         self.assertEqual(plan['metrics']['delivered_on_time_t'], 80)
         self.assertTrue(all('stage' not in v for v in plan['voyages']))
         self.assertEqual(audit_result(plan)['schedule_audit']['status'], 'PASSED')
+
+
+    def test_storage_capacity_and_transfer_currency_are_explicit(self):
+        raw = transfer_scenario()
+        raw['transshipment_ports']['B']['currency'] = 'RUB'
+        with self.assertRaisesRegex(ValueError, 'currency'):
+            run_scenario(raw, COST, tariffs=tariffs())
+        raw = transfer_scenario()
+        raw['transshipment_ports']['B'].pop('storage_capacity_t')
+        with self.assertRaisesRegex(ValueError, 'UNLIMITED'):
+            run_scenario(raw)
+
+    def test_history_with_alternative_charge_remains_auditable(self):
+        from network.adapter import decode_voyages
+        from network.costs import CostModel
+        from network.models import parse_scenario
+
+        raw = transfer_scenario()
+        prices = tariffs({'loaded_fuel': 1})
+        prices['alternative_delivery'] = {'coal': {'unit': 'tonne', 'value': 2, 'source': 'fixture',
+                                                   'source_status': 'SYNTHETIC'}}
+        result = run_scenario(raw, tariffs=prices, search_policy=SearchPolicy(disable_transshipment=True))
+        self.assertEqual(result['financial_evaluation']['total_cost'], '0.00')
+        self.assertEqual(result['financial_evaluation']['estimated_undelivered_cost'], '300.00')
+        result['financial_evaluation'] = CostModel(parse_scenario(raw), prices).breakdown(
+            decode_voyages(result['voyages']), legacy=True)
+        self.assertEqual(result['financial_evaluation']['total_cost'], '300.00')
+        self.assertEqual(audit_result(result)['schedule_audit']['status'], 'PASSED')

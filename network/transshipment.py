@@ -22,6 +22,8 @@ class Terminal:
 
 def parse_terminals(raw, ports, berths, data_status):
     terminals = {}
+    if not isinstance(raw, dict):
+        raise ValueError('transshipment_ports must be an object')
     for port, row in raw.items():
         if port not in ports or not berths.get(port):
             raise ValueError(f'Transshipment requires explicit berths at {port}')

@@ -45,6 +45,9 @@ def _chains(scheduler, state):
             capacity = min(remaining, terminal.capacity_kg) if terminal.capacity_kg is not None else remaining
             batch_id = f'{cargo.id}:{len(state.moves) + 1}'
             first_cargo = replace(cargo, destination=port)
+            second_cargo = replace(cargo, origin=port)
+            if not _may_reach(scheduler, second_cargo):
+                continue
             for first in _options(scheduler, state, first_cargo, capacity):
                 first = replace(first, batch_id=batch_id, stage=1, transfer_port=port)
                 proposal, smaller = _finish(scheduler, state, cargo, first, terminal)
@@ -87,6 +90,18 @@ def _finish(scheduler, state, cargo, first, terminal):
             continue
         return proposal, 0
     return None, smaller
+
+
+def _may_reach(scheduler, cargo):
+    scenario = scheduler.scenario
+    for tug_id, barge_id in scenario.pairs:
+        scheduler.check_budget()
+        tug, barge = scenario.tugs[tug_id], scenario.barges[barge_id]
+        if cargo.type in barge.cargo_types:
+            travel = scheduler.router.lower_bound(tug, barge, cargo.origin, cargo.destination)
+            if travel is not None and cargo.ready + travel < min(cargo.due, tug.available_to, barge.available_to):
+                return True
+    return False
 
 
 def _options(scheduler, state, cargo, capacity, *, pairs=None):
