@@ -1,0 +1,70 @@
+{
+  "scenario_id": "stress_navigation_demo",
+  "description": "Синтетический демонстрационный сценарий: конкуренция массового угля, срочного продовольствия и нефтепродуктов при сезонном снижении глубин и временных закрытиях участков.",
+  "data_status": "SYNTHETIC",
+  "time_basis": "Europe/Moscow; naive ISO timestamps",
+  "start": "2026-06-10",
+  "end": "2026-09-30",
+  "origin": "Нижнеянск",
+  "destination": "Усть-Куйга",
+  "underkeel_m": 0.15,
+  "handling_fixed_hours": 2,
+  "segments": [
+    {
+      "segment_id": "S1",
+      "from_node": "Нижнеянск",
+      "to_node": "Северный",
+      "distance_km": 198,
+      "width_m": 60,
+      "turn_radius_m": 200,
+      "guaranteed_depth_m": 1.6,
+      "guaranteed_after_dredging_m": 1.7
+    },
+    {
+      "segment_id": "S2",
+      "from_node": "Северный",
+      "to_node": "Усть-Куйга",
+      "distance_km": 126,
+      "width_m": 50,
+      "turn_radius_m": 200,
+      "guaranteed_depth_m": 1.6,
+      "guaranteed_after_dredging_m": 1.7
+    }
+  ],
+  "plans": [
+    {
+      "plan_id": "P_COAL",
+      "cargo_type": "coal",
+      "volume_t": 8100,
+      "beneficiary_district": "Верхоянский",
+      "data_status": "SYNTHETIC"
+    },
+    {
+      "plan_id": "P_FOOD",
+      "cargo_type": "food",
+      "volume_t": 360,
+      "beneficiary_district": "Усть-Янский",
+      "data_status": "SYNTHETIC"
+    },
+    {
+      "plan_id": "P_FOOD_EXT",
+      "cargo_type": "food_extended",
+      "volume_t": 180,
+      "beneficiary_district": "Усть-Янский",
+      "data_status": "SYNTHETIC"
+    },
+    {
+      "plan_id": "P_OIL",
+      "cargo_type": "crude_oil",
+      "volume_t": 2700,
+      "beneficiary_district": "Эвено-Бытантайский",
+      "data_status": "SYNTHETIC"
+    }
+  ],
+  "notes": [
+    "Сценарий полностью синтетический и создан для демонстрации различий стратегий, а не как прогноз навигации или реального грузопотока.",
+    "Параметры флота основаны на демонстрационной структуре проекта; сроки готовности, сроки доставки, распределение партий, глубины и закрытия заданы искусственно.",
+    "Глубины являются календарным профилем сценария, не фактическими промерами.",
+    "Временные закрытия участков — искусственные ограничения для тестирования планировщика."
+  ]
+}

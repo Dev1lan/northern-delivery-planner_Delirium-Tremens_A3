@@ -1,0 +1,22 @@
+[
+  {
+    "requirement_id": "FOOD_MIN_BY_JUNE_22",
+    "cargo_types": [
+      "food"
+    ],
+    "required_t": 180.0,
+    "deadline": "2026-06-22T00:00:00",
+    "basis": "delivered_by_deadline",
+    "source_status": "SCENARIO_ASSUMPTION"
+  },
+  {
+    "requirement_id": "EXTENDED_FOOD_MIN_BY_JULY_25",
+    "cargo_types": [
+      "food_extended"
+    ],
+    "required_t": 90.0,
+    "deadline": "2026-07-25T00:00:00",
+    "basis": "delivered_by_deadline",
+    "source_status": "SCENARIO_ASSUMPTION"
+  }
+]
