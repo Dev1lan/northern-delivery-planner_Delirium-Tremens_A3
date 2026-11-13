@@ -43,3 +43,4 @@ venv*/
 *.tmp
 *.bak
 *~
+other_data/
