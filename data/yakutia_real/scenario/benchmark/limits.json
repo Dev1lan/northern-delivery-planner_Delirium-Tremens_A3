@@ -1,0 +1,12 @@
+{
+ "beam_width": 4,
+ "candidate_limit": 8,
+ "max_actions": 80,
+ "max_states": 120,
+ "max_route_expansions": 150,
+ "max_hops": 14,
+ "max_wait_days": 14,
+ "route_options": 2,
+ "repair_attempts": 1,
+ "repair_states": 10
+}

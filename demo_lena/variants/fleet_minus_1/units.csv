@@ -1,0 +1,7 @@
+unit_id,barge_id,tug_id,project,capacity_t,cargo_type_allowed,draft_empty_m,draft_full_m,tug_draft_m,speed_upstream_kmh,speed_downstream_kmh,handling_tph,reference_capacity_t,available_from,available_to,data_status
+U_DRY_1,B_DRY_1,T_DRY_1,SYNTHETIC,1800,coal|food|general,0.5,2.2,1.1,11.0,8.0,60,1800,2026-06-01T00:00:00,2026-10-01T00:00:00,SYNTHETIC
+U_DRY_2,B_DRY_2,T_DRY_2,SYNTHETIC,1800,coal|food|general,0.5,2.2,1.1,11.88,8.64,60,1800,2026-06-01T00:00:00,2026-10-01T00:00:00,SYNTHETIC
+U_DRY_3,B_DRY_3,T_DRY_3,SYNTHETIC,1800,coal|food|general,0.5,2.2,1.1,10.56,7.68,60,1800,2026-06-01T00:00:00,2026-10-01T00:00:00,SYNTHETIC
+U_OIL_1,B_OIL_1,T_OIL_1,SYNTHETIC,1500,diesel,0.5,2.1,1.1,11.0,8.0,90,1500,2026-06-01T00:00:00,2026-10-01T00:00:00,SYNTHETIC
+U_OIL_2,B_OIL_2,T_OIL_2,SYNTHETIC,1500,diesel,0.5,2.1,1.1,11.88,8.64,90,1500,2026-06-01T00:00:00,2026-10-01T00:00:00,SYNTHETIC
+U_MINI_1,B_MINI_1,T_MINI_1,SYNTHETIC,600,food|general,0.5,1.3,1.1,13.0,10.0,40,600,2026-06-01T00:00:00,2026-10-01T00:00:00,SYNTHETIC

@@ -17,7 +17,6 @@ import json
 import math
 import sys
 import time
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
 
@@ -26,6 +25,8 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from network.adapter import run_scenario  # noqa: E402
+from network.batch import PlanningJob, run_jobs  # noqa: E402
+from network.search_policy import SearchPolicy  # noqa: E402
 from network.models import Limits  # noqa: E402
 
 GEO = ROOT / 'yakutia' / 'geo' / 'yakutia_geo.json'
@@ -44,7 +45,7 @@ def default_strategies(tariffs):
     """Четыре базовые стратегии; с тарифами v2 — ещё поиск по цене."""
     return STRATEGIES + ([COST] if tariffs and tariffs.get('tariff_version') == 2 else [])
 STATE = {'LOADING': 'load', 'LOADED_TRANSIT': 'sail', 'UNLOADING': 'unload', 'EMPTY_TRANSIT': 'empty',
-         'WAITING': 'wait'}
+         'WAITING': 'wait', 'PORT_QUEUE': 'queue'}
 
 
 def _dt(s):
@@ -148,10 +149,8 @@ def _strategy_view(result, t0, link_index, sea_links, cards):
             'resources': fi['resources'], 'voyages': voyages, 'events': ev, 'warnings': uniq}
 
 
-def build_payload(raw, *, geo=None, limits=None, tariffs=None, cards=None, strategies=None, title=None,
-                  workers=4, keep_results=None):
-    geo = geo if geo is not None else json.loads(GEO.read_text(encoding='utf-8'))
-    strategies = strategies or default_strategies(tariffs)
+def _context(raw, geo):
+    """Геометрия сценария: порты на карте, участки, морские участки (общая для всех планов)."""
     t0 = _dt(raw['start'])
     geo_ports = {p['id']: p for p in geo.get('ports', [])}
     missing = [p for p in raw['ports'] if p not in geo_ports]
@@ -169,6 +168,24 @@ def build_payload(raw, *, geo=None, limits=None, tariffs=None, cards=None, strat
                       'kind': g['kind'] if g else 'port', 'known': bool(g)})
     links, index = _links(raw, geo if not schematic or len(missing) < len(raw['ports']) else None)
     sea_links = {l['id'] for l in links if l['kind'] == 'sea'}
+    return t0, ports, links, index, sea_links, schematic, missing
+
+
+def view_for(raw, result, *, cards=None, geo=None, label=None, hint=''):
+    """Данные страницы для одного дополнительного плана (например, «Что, если?») того же сценария."""
+    geo = geo if geo is not None else json.loads(GEO.read_text(encoding='utf-8'))
+    t0, _ports, _links_, index, sea_links, _s, _m = _context(raw, geo)
+    card_map = {c['vessel_id']: c for c in (cards or {}).get('vessels', [])}
+    view = _strategy_view(result, t0, index, sea_links, card_map)
+    view.update(label=label or result['strategy'], hint=hint, seconds=None)
+    return view
+
+
+def build_payload(raw, *, geo=None, limits=None, tariffs=None, cards=None, strategies=None, title=None,
+                  workers=4, keep_results=None, search_policy=None):
+    geo = geo if geo is not None else json.loads(GEO.read_text(encoding='utf-8'))
+    strategies = strategies or default_strategies(tariffs)
+    t0, ports, links, index, sea_links, schematic, missing = _context(raw, geo)
     card_map = {c['vessel_id']: c for c in (cards or {}).get('vessels', [])}
     fleet = []
     for kind, rows in (('tug', raw['tugs']), ('barge', raw['barges'])):
@@ -177,13 +194,11 @@ def build_payload(raw, *, geo=None, limits=None, tariffs=None, cards=None, strat
             fleet.append({**{k: v for k, v in r.items() if k not in ('available_at', 'available_to')},
                           'kind': kind, 'card': card or None})
 
-    def run(strategy):
-        t = time.time()
-        result = run_scenario(raw, strategy, limits=limits, tariffs=tariffs)
-        return strategy, result, round(time.time() - t, 2)
-
-    with ThreadPoolExecutor(max_workers=max(1, workers)) as pool:
-        runs = list(pool.map(run, strategies))
+    # Стратегии независимы: считаются в отдельных процессах (network.batch), чтобы не делить одно ядро
+    # процессора. search_policy — бюджет времени и отбор кандидатов нового ядра (network.search_policy).
+    jobs = [PlanningJob(raw, s, limits=limits, tariffs=tariffs, search_policy=search_policy) for s in strategies]
+    runs = [(s, run.result, round(run.compute_seconds, 2))
+            for s, run in zip(strategies, run_jobs(jobs, workers=max(1, min(workers, len(jobs)))))]
     views, results = {}, {}
     for strategy, result, seconds in runs:
         view = _strategy_view(result, t0, index, sea_links, card_map)
@@ -234,6 +249,8 @@ def main():
     ap.add_argument('--limits', default=str(ROOT / 'data' / 'yakutia' / 'limits.json'))
     ap.add_argument('--tariffs', default=str(ROOT / 'data' / 'yakutia' / 'tariffs_v2.json'))
     ap.add_argument('--cards', default=str(ROOT / 'data' / 'yakutia' / 'fleet_cards.json'))
+    ap.add_argument('--geo', help='геооснова карты (по умолчанию yakutia/geo/yakutia_geo.json)')
+    ap.add_argument('--policy', help='JSON с SearchPolicy нового ядра: mode, time_seconds, top_k_pairs_per_cargo, ...')
     ap.add_argument('--title', default='Северный завоз · Якутия')
     ap.add_argument('--out', default=str(ROOT / 'yakutia' / 'build' / 'yakutia.json'))
     ap.add_argument('--html', help='дополнительно собрать автономную страницу с данными внутри')
@@ -246,8 +263,10 @@ def main():
     lim = read(a.limits)
     t = time.time()
     kept = {}
-    payload = build_payload(read(a.scenario), limits=Limits(**lim) if lim else None, tariffs=read(a.tariffs),
-                            cards=read(a.cards), title=a.title, keep_results=kept)
+    policy = read(a.policy)
+    payload = build_payload(read(a.scenario), geo=read(a.geo), limits=Limits(**lim) if lim else None,
+                            tariffs=read(a.tariffs), cards=read(a.cards), title=a.title, keep_results=kept,
+                            search_policy=SearchPolicy(**policy) if policy else None)
     if a.results_dir:
         out_dir = Path(a.results_dir)
         out_dir.mkdir(parents=True, exist_ok=True)

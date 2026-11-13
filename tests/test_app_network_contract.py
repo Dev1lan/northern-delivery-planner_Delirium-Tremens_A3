@@ -94,13 +94,20 @@ class NetworkContractEndpoints(unittest.TestCase):
         r = self.client.post(self.base + "/what-if", json={"preset": 0, "base": "NETWORK_REPOSITION"})
         self.assertEqual(r.status_code, 200, r.text)
         report = r.json()
-        self.assertEqual(set(report) - {"variant", "base"}, {"baseline_fingerprint", "improvement_found", "alternatives"})
+        self.assertEqual(set(report) - {"variant", "base", "view"}, {"baseline_fingerprint", "improvement_found", "alternatives"})
         item = report["alternatives"][0]
         self.assertEqual(set(item), {"change", "delta", "diagnosis", "result", "improved", "explanation"})
         key = report["variant"]
         self.assertIn(key, [w["variant"] for w in self.get("/plans").json()["whatif"]])
         self.assertEqual(self.get("/compare", **{"from": "NETWORK_REPOSITION", "to": key}).json(), item["delta"])
         self.assertEqual(self.get("/state", moment=self.scenario["start"], variant=key).status_code, 200)
+        view = report["view"]
+        self.assertEqual(len(view["voyages"]), item["result"]["metrics"]["completed_voyages"])
+        self.assertEqual(view["metrics"], item["result"]["metrics"])
+        self.assertEqual(view["extra_fleet"], [])
+
+    def test_scenario_is_job_input(self):
+        self.assertEqual(self.get("/scenario").json(), self.scenario)
 
     def test_what_if_rejects_bad_change(self):
         for body in ({"preset": 99}, {"change": "x"}, {"change": {"kind": "nope"}}):

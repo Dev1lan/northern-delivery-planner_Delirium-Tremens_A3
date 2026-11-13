@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Варианты интерфейса</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Токены: «лоцманская карта» — холодная бумага, тёмная хвоя, вода, песчаная мель, бакен */
+:root{
+  color-scheme:light;
+  --paper:#E7ECEA; --surface:#F6F8F7; --sunk:#DDE4E1; --line:#C9D3D0; --hair:#D8E0DD;
+  --ink:#15232B; --ink2:#46565E; --mute:#7C8A90;
+  --water:#2F6F8F; --water-soft:#CFE0E8; --shoal:#B9821F; --shoal-soft:#F0E0BC;
+  --buoy:#B23A2C; --buoy-soft:#F2D9D4; --taiga:#2E7552; --taiga-soft:#D3E8DC;
+  --ice:#AEB9BC; --land:#EEF1EF; --sea:#D6E3E6;
+  --ui:"Golos Text",system-ui,sans-serif; --num:"IBM Plex Sans Condensed","Arial Narrow",sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#0E161A; --surface:#141E23; --sunk:#0A1114; --line:#2A3A41; --hair:#1F2C32;
+    --ink:#E3EBEE; --ink2:#A7B6BC; --mute:#71838A;
+    --water:#5FA3C4; --water-soft:#183341; --shoal:#D9A441; --shoal-soft:#3A2F17;
+    --buoy:#E06A5A; --buoy-soft:#3B1D19; --taiga:#5CB386; --taiga-soft:#16332A;
+    --ice:#4A585D; --land:#121B20; --sea:#0C1E27;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#0E161A; --surface:#141E23; --sunk:#0A1114; --line:#2A3A41; --hair:#1F2C32;
+  --ink:#E3EBEE; --ink2:#A7B6BC; --mute:#71838A;
+  --water:#5FA3C4; --water-soft:#183341; --shoal:#D9A441; --shoal-soft:#3A2F17;
+  --buoy:#E06A5A; --buoy-soft:#3B1D19; --taiga:#5CB386; --taiga-soft:#16332A;
+  --ice:#4A585D; --land:#121B20; --sea:#0C1E27;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 var(--ui);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
+.n{font-family:var(--num);font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--water);outline-offset:2px;border-radius:4px}
+
+/* обвязка документа с макетами */
+.doc{max-width:1360px;margin:0 auto;padding:28px 16px 64px}
+.doc>h1{font-size:30px;line-height:1.15;font-weight:650;margin:0 0 6px;letter-spacing:-.01em}
+.doc>p.lead{color:var(--ink2);max-width:68ch;margin:0 0 22px}
+.switch{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--line);margin-bottom:26px}
+.switch button{border:0;background:none;padding:10px 14px;cursor:pointer;color:var(--ink2);border-bottom:2px solid transparent;margin-bottom:-1px}
+.switch button[aria-selected="true"]{color:var(--ink);border-color:var(--ink);font-weight:600}
+.view{display:none}.view.on{display:block}
+.view>h2{font-size:21px;font-weight:650;margin:0 0 4px}
+.view>p{color:var(--ink2);max-width:72ch;margin:0 0 18px}
+.frame{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface);box-shadow:0 1px 0 var(--hair),0 18px 40px -24px rgba(21,35,43,.35)}
+.scroller{overflow-x:auto}
+.why{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px 28px;margin-top:22px}
+.why div{border-top:2px solid var(--ink);padding-top:10px}
+.why b{display:block;margin-bottom:4px}
+.why p{margin:0;color:var(--ink2);font-size:14px}
+
+/* разбор */
+.audit{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:32px;align-items:start}
+.audit img{width:100%;border-radius:10px;border:1px solid var(--line)}
+.prob{list-style:none;margin:0;padding:0;counter-reset:p}
+.prob li{display:grid;grid-template-columns:34px 1fr;gap:4px 10px;padding:14px 0;border-bottom:1px solid var(--line)}
+.prob li::before{counter-increment:p;content:counter(p);font:600 15px var(--num);width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--ink);color:var(--surface);grid-row:span 2}
+.prob b{font-weight:600}
+.prob span{color:var(--ink2);font-size:14px}
+.prio{display:inline-block;font-size:12px;padding:1px 8px;border-radius:10px;margin-left:6px;vertical-align:2px;font-weight:500}
+.prio.hi{background:var(--buoy-soft);color:var(--buoy)}
+.prio.md{background:var(--shoal-soft);color:color-mix(in srgb,var(--shoal) 75%,var(--ink))}
+.prio.lo{background:var(--sunk);color:var(--ink2)}
+.palette{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.sw{width:120px;font-size:12.5px;color:var(--ink2)}
+.sw i{display:block;height:44px;border-radius:8px;border:1px solid var(--line);margin-bottom:6px}
+.sw b{display:block;color:var(--ink);font-weight:600}
+
+/* ===== общие детали приложения ===== */
+.appx{font-size:14px;background:var(--surface)}
+.bar{display:flex;align-items:center;gap:16px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--surface)}
+.mark{width:30px;height:30px;border-radius:7px;background:var(--ink);color:var(--surface);display:grid;place-items:center;flex:none}
+.scn{display:flex;flex-direction:column;line-height:1.2}
+.scn b{font-size:15px;font-weight:600;display:flex;align-items:center;gap:6px}
+.scn span{font-size:12.5px;color:var(--mute)}
+.grow{flex:1}
+.b{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 12px;cursor:pointer;white-space:nowrap;font-size:13.5px}
+.b:hover{border-color:var(--ink2)}
+.b.dark{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.b.ghost{border-color:transparent}
+.state{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--taiga)}
+.state i{width:7px;height:7px;border-radius:50%;background:var(--taiga)}
+
+/* карта */
+.map{position:relative;background:var(--land);overflow:hidden}
+.map svg{display:block;width:100%;height:100%}
+.ml{font:500 12px var(--num);fill:var(--ink);paint-order:stroke;stroke:var(--land);stroke-width:3.5px;stroke-linejoin:round}
+.ml.hub{font-weight:600;font-size:13px}
+.rl{font:italic 400 12px var(--ui);fill:var(--water);opacity:.85}
+.sl{font:400 13px var(--ui);fill:var(--mute);letter-spacing:.3em}
+.mapkey{position:absolute;left:14px;bottom:12px;display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--ink2);background:color-mix(in srgb,var(--surface) 88%,transparent);backdrop-filter:blur(6px);padding:6px 10px;border-radius:8px;border:1px solid var(--line)}
+.mapkey i{display:inline-block;width:18px;height:4px;border-radius:2px;vertical-align:middle;margin-right:5px}
+.zoomc{position:absolute;right:12px;top:12px;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.zoomc button{border:0;background:none;width:32px;height:32px;cursor:pointer;color:var(--ink2);font-size:16px}
+.zoomc button+button{border-top:1px solid var(--line)}
+
+/* сезонная лента — главный элемент */
+.season{background:var(--surface);border-top:1px solid var(--line);padding:10px 16px 12px}
+.season .head{display:flex;align-items:center;gap:14px;margin-bottom:8px}
+.play{width:34px;height:34px;border-radius:50%;border:0;background:var(--ink);color:var(--surface);cursor:pointer;display:grid;place-items:center;flex:none}
+.now{line-height:1.15}
+.now b{font:600 17px var(--num)}
+.now span{display:block;font-size:12px;color:var(--mute)}
+.skey{display:flex;gap:14px;font-size:12px;color:var(--ink2);margin-left:auto}
+.skey i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:5px}
+.lanes{display:grid;grid-template-columns:92px minmax(0,1fr);row-gap:3px;position:relative}
+.lanes .rn{font-size:12.5px;color:var(--ink2);align-self:center}
+.lane{height:14px;display:flex;border-radius:3px;overflow:hidden}
+.lane i{display:block;height:100%}
+.wo{background:var(--water)} .ws{background:var(--shoal)} .wc{background:repeating-linear-gradient(135deg,var(--ice) 0 3px,transparent 3px 6px);opacity:.75}
+.axis{grid-column:2;display:flex;justify-content:space-between;font:12px var(--num);color:var(--mute);margin-top:4px}
+.ph{position:absolute;top:-4px;bottom:16px;width:2px;background:var(--buoy);pointer-events:none}
+.ph::before{content:"";position:absolute;top:-4px;left:-5px;width:12px;height:12px;border-radius:50%;background:var(--buoy);border:2px solid var(--surface)}
+
+/* ===== Вариант A ===== */
+.va{display:grid;grid-template-columns:minmax(0,1fr) 420px;min-width:1100px}
+.va .map{min-height:560px;border-right:1px solid var(--line)}
+.va .map svg{position:absolute;inset:0}
+.kstrip{position:absolute;left:14px;top:14px;display:flex;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:10px}
+.kstrip div{padding:9px 16px;border-right:1px solid var(--line)}
+.kstrip div:last-child{border:0}
+.kstrip b{display:block;font:600 21px/1.15 var(--num)}
+.kstrip span{font-size:12px;color:var(--ink2)}
+.side{display:flex;flex-direction:column;min-height:0}
+.plan{padding:16px 18px 12px;border-bottom:1px solid var(--line)}
+.plan h3{font-size:13px;font-weight:500;color:var(--mute);margin:0 0 8px}
+.strat{display:grid;grid-template-columns:18px minmax(0,1fr) 84px 42px;align-items:center;gap:10px;padding:7px 8px;border-radius:8px;cursor:pointer;margin:0 -8px}
+.strat:hover{background:var(--sunk)}
+.strat.on{background:var(--water-soft)}
+.strat .r{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--ink2)}
+.strat.on .r{border:4px solid var(--water)}
+.strat .nm{font-weight:500}
+.strat .nm small{display:block;font-size:12px;color:var(--mute);font-weight:400}
+.meter{height:8px;border-radius:4px;background:var(--sunk);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--water)}
+.strat .v{font:600 14px var(--num);text-align:right}
+.issues{padding:14px 18px;border-bottom:1px solid var(--line)}
+.issue{display:grid;grid-template-columns:22px 1fr;gap:8px;padding:6px 0;font-size:13.5px}
+.issue svg{margin-top:2px}
+.issue b{font-weight:600}
+.issue span{color:var(--ink2)}
+.tabs2{display:flex;gap:2px;padding:0 12px;border-bottom:1px solid var(--line)}
+.tabs2 button{border:0;background:none;padding:10px 8px;cursor:pointer;color:var(--ink2);border-bottom:2px solid transparent;margin-bottom:-1px;font-size:13.5px}
+.tabs2 button[aria-selected="true"]{color:var(--ink);border-color:var(--ink);font-weight:600}
+.tabs2 .c2{font:12px var(--num);color:var(--mute);margin-left:3px}
+.vessels{padding:8px 10px}
+.ves{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px;border-radius:8px}
+.ves:hover{background:var(--sunk)}
+.tag{font:600 12px var(--num);padding:2px 6px;border-radius:5px;background:var(--sunk);border:1px solid var(--line)}
+.ves .t{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ves .d{font-size:12.5px;color:var(--mute)}
+.st{font-size:12px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.st i{width:8px;height:8px;border-radius:2px}
+
+/* ===== Вариант B ===== */
+.vb{padding:28px 32px 32px;min-width:1000px}
+.vb .verdict{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:40px;align-items:end;padding-bottom:22px;border-bottom:1px solid var(--line)}
+.vb .verdict h3{font-size:27px;line-height:1.2;font-weight:650;margin:6px 0 8px;max-width:30ch;letter-spacing:-.01em}
+.vb .verdict p{color:var(--ink2);margin:0;max-width:62ch}
+.vb .crumb{font-size:13px;color:var(--mute)}
+.vb .act{display:flex;flex-direction:column;gap:8px}
+.vb .act .b{padding:10px 14px;text-align:center;font-size:14px}
+.ctable{width:100%;border-collapse:collapse;margin-top:8px}
+.ctable th{font-weight:500;text-align:left;font-size:13px;color:var(--mute);padding:14px 12px 10px}
+.ctable th.s{font-size:15px;color:var(--ink);font-weight:600}
+.ctable th.s small{display:block;font-size:12.5px;color:var(--mute);font-weight:400}
+.ctable td{padding:12px;border-top:1px solid var(--hair);vertical-align:middle}
+.ctable td:first-child{color:var(--ink2);font-size:13.5px;width:210px}
+.ctable .best{background:var(--water-soft)}
+.ctable th.best{border-radius:10px 10px 0 0}
+.ctable tr:last-child td.best{border-radius:0 0 10px 10px}
+.cell b{font:600 19px var(--num)}
+.cell .meter{margin-top:6px;width:100%}
+.cell small{color:var(--mute);font-size:12.5px;margin-left:4px}
+.good{color:var(--taiga)} .bad{color:var(--buoy)}
+.mini-map{height:110px;border-radius:8px;background:var(--land);border:1px solid var(--hair);overflow:hidden}
+.mini-map svg{width:100%;height:100%;display:block}
+.vb .notes{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:26px}
+.vb .notes h4{font-size:15px;margin:0 0 8px;font-weight:600}
+.vb .notes ul{margin:0;padding-left:18px;color:var(--ink2)}
+.vb .notes li{margin:4px 0}
+
+/* ===== Вариант C (телефон) ===== */
+.phones{display:flex;gap:36px;flex-wrap:wrap;justify-content:center;padding:28px 16px;background:var(--sunk)}
+.phone{width:360px;height:740px;border-radius:38px;border:10px solid var(--ink);background:var(--surface);overflow:hidden;position:relative;display:flex;flex-direction:column;flex:none}
+.phone .pbar{display:flex;align-items:center;gap:10px;padding:14px 14px 10px}
+.phone .map{flex:1}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:18px 18px 0 0;box-shadow:0 -10px 30px -12px rgba(21,35,43,.4);padding:8px 16px 16px}
+.grab{width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 10px}
+.sheet .big{font:600 30px/1.1 var(--num)}
+.sheet .sub{color:var(--ink2);font-size:13.5px}
+.chips{scrollbar-width:none;display:flex;gap:6px;overflow-x:auto;margin:12px -16px 0;padding:0 16px 2px}
+.chip{border:1px solid var(--line);border-radius:16px;padding:5px 12px;font-size:13px;white-space:nowrap;background:var(--surface)}
+.chip.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.kgrid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:12px}
+.kgrid div{background:var(--surface);padding:8px 10px}
+.kgrid b{font:600 17px var(--num);display:block}
+.kgrid span{font-size:12px;color:var(--mute)}
+.tabbar{display:flex;justify-content:space-around;border-top:1px solid var(--line);padding:8px 0 4px;margin:14px -16px -8px;font-size:11.5px;color:var(--mute)}
+.tabbar span{display:flex;flex-direction:column;align-items:center;gap:3px}
+.tabbar span.on{color:var(--ink);font-weight:600}
+.pseason{padding:4px 14px 10px}
+.pseason .lanes{grid-template-columns:64px minmax(0,1fr)}
+.pseason .lane{height:10px}
+
+@media (max-width:860px){
+  .audit{grid-template-columns:1fr}
+  .vb .notes{grid-template-columns:1fr}
+}
+.themebtn{float:right;margin-top:6px}
+</style>
+</head>
+<body>
+<main class="doc">
+  <button class="b themebtn" id="themeT">Тёмная тема</button>
+  <h1>Северный завоз: как сделать интерфейс понятнее</h1>
+  <p class="lead">Разбор текущей страницы сети Якутии и три направления. Цифры взяты из реального расчёта «Якутия: 6 рек», стратегия «С перегоном».</p>
+
+  <div class="switch" role="tablist">
+    <button role="tab" aria-selected="true" data-v="v0">Что мешает сейчас</button>
+    <button role="tab" aria-selected="false" data-v="v1">Рабочее место</button>
+    <button role="tab" aria-selected="false" data-v="v2">Выбор стратегии</button>
+    <button role="tab" aria-selected="false" data-v="v3">Телефон</button>
+  </div>
+
+  <!-- ================= РАЗБОР ================= -->
+  <section class="view on" id="v0">
+    <div class="audit">
+      <div>
+        <h2 style="font-size:21px;margin:0 0 12px">Главные проблемы</h2>
+        <ol class="prob">
+          <li><b>Стратегия выбирается в двух местах <em class="prio hi" style="font-style:normal">сразу</em></b><span>Переключатель в шапке и список «Стратегии» в «Обзоре» делают одно и то же. Оставить один выбор — в боковой панели, рядом с цифрами, по которым выбирают.</span></li>
+          <li><b>Шапка перегружена <em class="prio hi" style="font-style:normal">сразу</em></b><span>Название сценария обрезается, подписи «100% в срок» мелкие, «Яна · ML» выглядит как ссылка внутри кнопки, «Скачать v3» — внутренний термин. Шапке хватит: сценарий, статус расчёта, «Загрузить», «Экспорт».</span></li>
+          <li><b>Не видно, когда реки открыты <em class="prio hi" style="font-style:normal">сразу</em></b><span>Короткая навигация — суть задачи, но шкала времени сейчас тонкий ползунок с едва заметным графиком. Сезонная лента по рекам показывает окна воды и где сейчас «ползунок».</span></li>
+          <li><b>Язык разработчика <em class="prio md" style="font-style:normal">важно</em></b><span>«Ядро 3.0.0», «Аудит ядра PASSED», «контракт v3», «19 · 6». Пользователю нужно: «План проверен», «19 рейсов, из них 6 перегонов».</span></li>
+          <li><b>Предупреждения теряются в тексте <em class="prio md" style="font-style:normal">важно</em></b><span>Красный блок «Требует проверки» — абзац на шесть строк в середине вкладки. Вынести в отдельный список «Внимание» со счётчиком: одна строка — одна проблема, клик ведёт к судну на карте.</span></li>
+          <li><b>Заголовки КАПСОМ и мелкий текст <em class="prio lo" style="font-style:normal">потом</em></b><span>13 px и серые капс-заголовки читаются тяжело на большом экране. Базовый размер 14–15 px, заголовки обычным регистром.</span></li>
+          <li><b>Легенда в две строки внизу <em class="prio lo" style="font-style:normal">потом</em></b><span>Смешаны состояния рек и судов. Состояния рек — на карте, состояния судов — в списке судов, где они и нужны.</span></li>
+        </ol>
+      </div>
+      <div>
+        <h2 style="font-size:21px;margin:0 0 12px">Визуальное направление</h2>
+        <p style="color:var(--ink2);margin:0 0 6px">Вместо «тёмного дашборда» — лоцманская карта: холодная бумага, тёмная хвоя для текста, цвета взяты из самой реки. Каждый цвет что-то значит, декоративных нет.</p>
+        <div class="palette">
+          <div class="sw"><i style="background:var(--paper)"></i><b>Лёд</b>фон</div>
+          <div class="sw"><i style="background:var(--ink)"></i><b>Хвоя</b>текст, акценты</div>
+          <div class="sw"><i style="background:var(--water)"></i><b>Вода</b>река открыта, выбор</div>
+          <div class="sw"><i style="background:var(--shoal)"></i><b>Мель</b>с недогрузом</div>
+          <div class="sw"><i style="background:var(--buoy)"></i><b>Бакен</b>риск, «сейчас»</div>
+          <div class="sw"><i style="background:var(--taiga)"></i><b>Тайга</b>доставлено</div>
+        </div>
+        <p style="color:var(--ink2);margin:22px 0 0"><b style="color:var(--ink)">Шрифты.</b> Golos Text — интерфейс, хорошо сделанная кириллица. IBM Plex Sans Condensed — цифры и подписи на карте: узкие, моноширинные цифры, как на навигационных картах.</p>
+        <p style="color:var(--ink2);margin:12px 0 0"><b style="color:var(--ink)">Тёмная тема</b> сохраняется — «полярная ночь» с теми же значениями цветов. Переключите тему системы, чтобы посмотреть.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ВАРИАНТ A ================= -->
+  <section class="view" id="v1">
+    <h2>Рабочее место</h2>
+    <p>Та же раскладка, что сейчас, но с одним выбором стратегии, отдельным списком предупреждений и сезонной лентой вместо ползунка. Для того, кто каждый день смотрит на план.</p>
+    <div class="frame scroller"><div class="appx">
+      <div class="bar" style="min-width:1100px">
+        <div class="mark"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 17c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 3 2"/><path d="M5 13l2-6h10l2 6"/></svg></div>
+        <div class="scn"><b>Якутия, 6 рек <svg width="12" height="12" viewBox="0 0 12 12"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></b><span>Лена, Алдан, Вилюй, Яна, Индигирка, Колыма</span></div>
+        <span class="state"><i></i>План рассчитан и проверен</span>
+        <div class="grow"></div>
+        <button class="b ghost">Одна река (Яна)</button>
+        <button class="b">Загрузить свой сценарий</button>
+        <button class="b dark">Экспорт плана</button>
+        <button class="b" aria-label="Тема" style="padding:7px 9px">◐</button>
+      </div>
+      <div class="va">
+        <div class="map" id="mapA"></div>
+        <aside class="side">
+          <div class="plan">
+            <h3>План завоза</h3>
+            <div class="strat on"><span class="r"></span><span class="nm">С перегоном<small>суда переходят к заявкам на других реках</small></span><span class="meter"><i style="width:100%"></i></span><span class="v">100%</span></div>
+            <div class="strat"><span class="r"></span><span class="nm">Соцминимум первым<small>сначала продукты и топливо посёлкам</small></span><span class="meter"><i style="width:58%"></i></span><span class="v">58%</span></div>
+            <div class="strat"><span class="r"></span><span class="nm">По очереди<small>заявки в порядке поступления</small></span><span class="meter"><i style="width:50%"></i></span><span class="v">50%</span></div>
+            <div class="strat"><span class="r"></span><span class="nm">Жадная<small>самые крупные заявки первыми</small></span><span class="meter"><i style="width:48%"></i></span><span class="v">48%</span></div>
+            <p style="font-size:12.5px;color:var(--mute);margin:8px 0 0">Доля спроса, доставленная в срок</p>
+          </div>
+          <div class="issues">
+            <h3 style="font-size:13px;font-weight:500;color:var(--mute);margin:0 0 4px">Внимание <span class="tag" style="color:var(--buoy);border-color:currentColor">2</span></h3>
+            <div class="issue"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M8 1.5l6.5 12h-13z" fill="var(--buoy)"/><path d="M8 6v3.5M8 11.3v.2" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg><div><b>Речные суда на морском участке</b><br><span>Т-201, Б-23, Б-51 · Тикси → Нижнеянск</span></div></div>
+            <div class="issue"><svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" fill="var(--shoal)"/><path d="M8 4.5v4M8 10.8v.2" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg><div><b>Стоимость условная</b><br><span>Ставки демонстрационные, не для бюджета</span></div></div>
+          </div>
+          <div class="tabs2" role="tablist">
+            <button aria-selected="true">Суда<span class="c2">20</span></button>
+            <button aria-selected="false">Заявки<span class="c2">17</span></button>
+            <button aria-selected="false">Реки</button>
+            <button aria-selected="false">Деньги</button>
+          </div>
+          <div class="vessels">
+            <div class="ves"><span class="tag">Т-103</span><div><div class="t">Якутск → Вилюйск</div><div class="d">топливо 1 200 т · до 18 июл</div></div><span class="st"><i style="background:var(--water)"></i>идёт с грузом</span></div>
+            <div class="ves"><span class="tag">Т-201</span><div><div class="t">Тикси</div><div class="d">выгрузка до 15 июл, 06:00</div></div><span class="st"><i style="background:var(--taiga)"></i>выгрузка</span></div>
+            <div class="ves"><span class="tag">Т-101</span><div><div class="t">Жиганск → Якутск</div><div class="d">порожним, 640 км</div></div><span class="st"><i style="background:var(--ice)"></i>перегон</span></div>
+            <div class="ves"><span class="tag">Т-207</span><div><div class="t">Осетрово</div><div class="d">генгруз 900 т</div></div><span class="st"><i style="background:var(--shoal)"></i>погрузка</span></div>
+          </div>
+        </aside>
+      </div>
+      <div class="season" style="min-width:1100px" id="seasonA"></div>
+    </div></div>
+    <div class="why">
+      <div><b>Один выбор стратегии</b><p>Список с объяснением и полосой «в срок» заменяет переключатель в шапке. Выбирают, видя причину.</p></div>
+      <div><b>«Внимание» над вкладками</b><p>Риски не прячутся внутри «Обзора»: число в заголовке, одна строка на проблему.</p></div>
+      <div><b>Сезонная лента</b><p>Строка на реку: когда вода открыта, когда мель, когда лёд. Красная линия — выбранный день, её можно тянуть.</p></div>
+    </div>
+  </section>
+
+  <!-- ================= ВАРИАНТ B ================= -->
+  <section class="view" id="v2">
+    <h2>Выбор стратегии</h2>
+    <p>Экран-вывод, который открывается после расчёта: сначала ответ «какой план лучше и почему», карта — по кнопке. Для руководителя и для показа жюри.</p>
+    <div class="frame scroller"><div class="appx vb">
+      <div class="verdict">
+        <div>
+          <span class="crumb">Якутия, 6 рек · рассчитано 4 стратегии за 7 секунд</span>
+          <h3>План с перегоном довозит все 20 400 т в срок</h3>
+          <p>Порожние суда уходят к заявкам в других портах и на другие реки. Это даёт +8 500 т в срок против плана без перегона ценой 7 886 км порожнего хода.</p>
+        </div>
+        <div class="act">
+          <button class="b dark">Открыть план на карте</button>
+          <button class="b">Экспорт в JSON</button>
+        </div>
+      </div>
+      <table class="ctable">
+        <thead><tr><th></th>
+          <th class="s best">С перегоном<small>рекомендуем</small></th>
+          <th class="s">Соцминимум первым<small>&nbsp;</small></th>
+          <th class="s">По очереди<small>&nbsp;</small></th>
+          <th class="s">Жадная<small>&nbsp;</small></th></tr></thead>
+        <tbody>
+          <tr><td>Доставлено в срок</td>
+            <td class="best cell"><b class="n">20 400</b><small>т · 100%</small><div class="meter"><i style="width:100%"></i></div></td>
+            <td class="cell"><b class="n">11 830</b><small>т · 58%</small><div class="meter"><i style="width:58%"></i></div></td>
+            <td class="cell"><b class="n">10 200</b><small>т · 50%</small><div class="meter"><i style="width:50%"></i></div></td>
+            <td class="cell"><b class="n">9 790</b><small>т · 48%</small><div class="meter"><i style="width:48%"></i></div></td></tr>
+          <tr><td>Не доставлено</td>
+            <td class="best cell"><b class="n good">0</b><small>т</small></td>
+            <td class="cell"><b class="n bad">8 570</b><small>т</small></td>
+            <td class="cell"><b class="n bad">10 200</b><small>т</small></td>
+            <td class="cell"><b class="n bad">10 610</b><small>т</small></td></tr>
+          <tr><td>Рейсов, из них перегонов</td>
+            <td class="best cell"><b class="n">19</b><small>6 перегонов</small></td>
+            <td class="cell"><b class="n">14</b><small>0</small></td>
+            <td class="cell"><b class="n">13</b><small>0</small></td>
+            <td class="cell"><b class="n">12</b><small>0</small></td></tr>
+          <tr><td>Стоимость, млн ₽<br><span style="font-size:12px;color:var(--mute)">условные ставки</span></td>
+            <td class="best cell"><b class="n">38,3</b><small>1 875 ₽/т</small></td>
+            <td class="cell"><b class="n">29,1</b><small>2 460 ₽/т</small></td>
+            <td class="cell"><b class="n">27,4</b><small>2 690 ₽/т</small></td>
+            <td class="cell"><b class="n">26,8</b><small>2 740 ₽/т</small></td></tr>
+          <tr><td>Маршруты</td>
+            <td class="best"><div class="mini-map" data-mini="all"></div></td>
+            <td><div class="mini-map" data-mini="lena"></div></td>
+            <td><div class="mini-map" data-mini="lena"></div></td>
+            <td><div class="mini-map" data-mini="few"></div></td></tr>
+        </tbody>
+      </table>
+      <div class="notes">
+        <div><h4>Почему не остальные</h4><ul>
+          <li>Без перегона суда стоят там, где выгрузились, и Яна с Колымой остаются без рейсов.</li>
+          <li>«Соцминимум первым» закрывает посёлки, но крупные заявки на уголь не успевают до мелководья в августе.</li>
+        </ul></div>
+        <div><h4>Проверить перед утверждением</h4><ul>
+          <li><b>Т-201, Б-23, Б-51</b> — речные суда в плане идут морем Тикси → Нижнеянск. Расчёт это допускает, на практике нужен класс «М-СП».</li>
+          <li>Стоимость посчитана по демонстрационным ставкам.</li>
+        </ul></div>
+      </div>
+    </div></div>
+    <div class="why">
+      <div><b>Ответ в первой строке</b><p>Заголовок — вывод расчёта, а не название сервиса. Сравнение не нужно собирать по вкладкам.</p></div>
+      <div><b>Цена решения рядом с выгодой</b><p>«+8 500 т ценой 7 886 км» — одна фраза вместо зелёного блока внутри вкладки.</p></div>
+      <div><b>Мини-карты</b><p>Сразу видно, что «жадная» стратегия не заходит на северные реки.</p></div>
+    </div>
+  </section>
+
+  <!-- ================= ВАРИАНТ C ================= -->
+  <section class="view" id="v3">
+    <h2>Телефон</h2>
+    <p>Сейчас на узком экране легенда скрыта, а цифры уезжают в горизонтальную прокрутку. Предлагается карта во весь экран и выдвижная шторка с итогом и выбором стратегии.</p>
+    <div class="frame phones">
+      <div class="phone">
+        <div class="pbar"><div class="mark"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 17c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 3 2"/><path d="M5 13l2-6h10l2 6"/></svg></div><div class="scn"><b>Якутия, 6 рек</b><span>14 июля · день 51</span></div><div class="grow"></div><button class="b" style="padding:6px 10px">▶</button></div>
+        <div class="map" data-map="phone"></div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <div class="big">20 400 т в срок</div>
+          <div class="sub">100% спроса · план «С перегоном»</div>
+          <div class="chips"><span class="chip on">С перегоном 100%</span><span class="chip">Соцминимум 58%</span><span class="chip">По очереди 50%</span><span class="chip">Жадная 48%</span></div>
+          <div class="kgrid"><div><b>19</b><span>рейсов, 6 перегонов</span></div><div><b>38,3 млн ₽</b><span>условно</span></div></div>
+          <div class="tabbar"><span class="on">● Карта</span><span>Суда</span><span>Заявки</span><span style="color:var(--buoy)">Внимание 2</span></div>
+        </div>
+      </div>
+      <div class="phone">
+        <div class="pbar"><div class="scn"><b>Сезон навигации</b><span>тяните ленту, чтобы выбрать день</span></div></div>
+        <div class="pseason" id="seasonC"></div>
+        <div style="padding:6px 14px 0;border-top:1px solid var(--line)">
+          <div style="font-size:13px;color:var(--mute);margin:8px 0 4px">14 июля, суда в движении</div>
+          <div class="ves" style="padding:8px 0"><span class="tag">Т-103</span><div><div class="t">Якутск → Вилюйск</div><div class="d">топливо 1 200 т</div></div><span class="st"><i style="background:var(--water)"></i>с грузом</span></div>
+          <div class="ves" style="padding:8px 0"><span class="tag">Т-201</span><div><div class="t">Тикси</div><div class="d">до 15 июл, 06:00</div></div><span class="st"><i style="background:var(--taiga)"></i>выгрузка</span></div>
+          <div class="ves" style="padding:8px 0"><span class="tag">Т-101</span><div><div class="t">Жиганск → Якутск</div><div class="d">640 км</div></div><span class="st"><i style="background:var(--ice)"></i>перегон</span></div>
+          <div class="ves" style="padding:8px 0"><span class="tag">Т-207</span><div><div class="t">Осетрово</div><div class="d">генгруз 900 т</div></div><span class="st"><i style="background:var(--shoal)"></i>погрузка</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+/* Схематичная карта сети: не география, а узнаваемый рисунок рек */
+const RIVERS = {
+  lena:  {name:'Лена', st:'o', d:'M60 470 C120 440 160 430 210 410 S300 380 330 330 S360 270 330 230 S280 160 300 110 S330 70 330 60'},
+  aldan: {name:'Алдан', st:'s', d:'M330 330 C370 320 400 330 420 360 S450 400 470 420'},
+  vil:   {name:'Вилюй', st:'s', d:'M325 300 C290 295 250 300 225 305 S180 312 160 312'},
+  yana:  {name:'Яна', st:'s', d:'M410 70 C400 110 395 150 405 180 S410 210 400 230'},
+  indi:  {name:'Индигирка', st:'s', d:'M520 70 C515 110 520 150 545 180'},
+  kol:   {name:'Колыма', st:'s', d:'M660 65 C640 110 620 160 625 200 S640 240 660 270'},
+};
+const PORTS = [
+  ['Тикси',330,58,1],['Якутск',335,345,1],['Осетрово',60,470,1],['Нижнеянск',410,70],['Батагай',400,232],
+  ['Чокурдах',520,70],['Белая Гора',545,182],['Зелёный Мыс',662,63],['Среднеколымск',625,200],['Зырянка',660,272],
+  ['Жиганск',318,190],['Вилюйск',160,312],['Хандыга',470,420],['Ленск',200,413]
+];
+function mapSVG(opts={}){
+  const w=opts.w||760,h=opts.h||520;
+  const col={o:'var(--water)',s:'var(--shoal)'};
+  const top=opts.mini?0:-70;
+  let s=`<svg viewBox="0 ${top} ${w} ${h-top}" preserveAspectRatio="${opts.align||'xMidYMid'} meet" aria-label="Схема сети рек Якутии">`;
+  s+=`<path d="M0 ${top}H${w}V38 C620 46 520 30 420 44 S250 40 160 34 S40 42 0 36Z" fill="var(--sea)"/>`;
+  if(!opts.mini) s+=`<text class="sl" x="300" y="22">ВОСТОЧНО-СИБИРСКОЕ МОРЕ</text>`;
+  s+=`<path d="M330 60 C370 52 390 64 410 70 S480 62 520 70 S600 58 660 65" fill="none" stroke="var(--water)" stroke-width="${opts.mini?1.5:2}" stroke-dasharray="5 5" opacity=".7"/>`;
+  const only=opts.only;
+  for(const [k,r] of Object.entries(RIVERS)){
+    const dim = only && !only.includes(k);
+    s+=`<path d="${r.d}" fill="none" stroke="var(--water-soft)" stroke-width="${opts.mini?5:11}" stroke-linecap="round"/>`;
+    s+=`<path d="${r.d}" fill="none" stroke="${dim?'var(--ice)':col[r.st]}" stroke-width="${opts.mini?2:3.5}" stroke-linecap="round" ${dim?'stroke-dasharray="2 4"':''}/>`;
+  }
+  if(!opts.mini){
+    s+=`<text class="rl" x="250" y="398">Лена</text><text class="rl" x="425" y="345">Алдан</text><text class="rl" x="200" y="296">Вилюй</text><text class="rl" x="414" y="150">Яна</text><text class="rl" x="528" y="130">Индигирка</text><text class="rl" x="640" y="140">Колыма</text>`;
+    for(const [n,x,y,hub] of PORTS){
+      s+=`<circle cx="${x}" cy="${y}" r="${hub?5:3.5}" fill="var(--surface)" stroke="var(--ink)" stroke-width="${hub?2:1.5}"/>`;
+      if(!opts.small||hub) s+=`<text class="ml${hub?' hub':''}" x="${x+9}" y="${y+4}">${n}</text>`;
+    }
+    /* суда */
+    const V=[[300,250,'Т-103','var(--water)'],[350,92,'Т-201','var(--taiga)'],[334,160,'Т-101','var(--ice)'],[80,462,'Т-207','var(--shoal)'],[452,404,'Т-114','var(--water)'],[630,170,'Т-305','var(--water)']];
+    for(const [x,y,id,c] of V){
+      s+=`<g transform="translate(${x} ${y})"><rect x="-8" y="-5" width="16" height="10" rx="3" fill="${c}" stroke="var(--surface)" stroke-width="1.5"/>${opts.small?'':`<text class="ml" x="11" y="-6" style="font-size:11px;font-weight:600">${id}</text>`}</g>`;
+    }
+    if(opts.focus){ s+=`<circle cx="350" cy="92" r="16" fill="none" stroke="var(--buoy)" stroke-width="2" stroke-dasharray="3 3"/>`; }
+  }
+  return s+'</svg>';
+}
+document.getElementById('mapA').innerHTML = mapSVG({focus:true}) +
+  `<div class="mapkey"><span><i style="background:var(--water)"></i>полная загрузка</span><span><i style="background:var(--shoal)"></i>с недогрузом</span><span><i style="background:repeating-linear-gradient(90deg,var(--water) 0 4px,transparent 4px 7px)"></i>море</span><span><i style="background:var(--ice)"></i>закрыто</span></div>
+   <div class="zoomc"><button aria-label="Приблизить">+</button><button aria-label="Отдалить">−</button></div>
+   <div class="kstrip"><div><b>20 400 т</b><span>в срок, 100% спроса</span></div><div><b>0 т</b><span>не доставлено</span></div><div><b>19 рейсов</b><span>из них 6 перегонов</span></div><div><b>38,3 млн ₽</b><span>условная стоимость</span></div></div>`;
+document.querySelector('[data-map="phone"]').innerHTML = mapSVG({small:true,align:'xMidYMin'});
+const MINI={all:null,lena:['lena','aldan','vil'],few:['lena']};
+document.querySelectorAll('[data-mini]').forEach(el=>el.innerHTML=mapSVG({mini:true,only:MINI[el.dataset.mini]}));
+
+/* Сезонная лента: состояние воды по рекам, 1 мая — 31 окт (184 дня) */
+const LANES=[
+  ['Лена',   [['c',14],['o',96],['s',30],['o',30],['c',14]]],
+  ['Алдан',  [['c',20],['o',40],['s',60],['o',40],['c',24]]],
+  ['Вилюй',  [['c',22],['o',34],['s',70],['c',58]]],
+  ['Яна',    [['c',40],['o',30],['s',46],['o',20],['c',48]]],
+  ['Индигирка',[['c',38],['o',44],['s',40],['o',18],['c',44]]],
+  ['Колыма', [['c',34],['o',60],['s',30],['o',26],['c',34]]],
+];
+function season(el,compact){
+  const total=184, day=74; /* 14 июля */
+  let h='';
+  if(!compact) h+=`<div class="head"><button class="play" aria-label="Запустить">▶</button><div class="now"><b>14 июля</b><span>день 51 навигации</span></div>
+    <div class="skey"><span><i class="wo"></i>вода открыта</span><span><i class="ws"></i>мель, недогруз</span><span><i class="wc" style="opacity:1"></i>лёд, закрыто</span></div></div>`;
+  h+=`<div class="lanes">`;
+  for(const [n,segs] of LANES){
+    h+=`<span class="rn">${n}</span><div class="lane">${segs.map(([k,d])=>`<i class="w${k}" style="width:${100*d/total}%"></i>`).join('')}</div>`;
+  }
+  h+=`<div class="axis"><span>май</span><span>июнь</span><span>июль</span><span>авг</span><span>сен</span><span>окт</span></div>`;
+  h+=`<div class="ph" style="left:calc(${compact?64:92}px + (100% - ${compact?64:92}px) * ${day/total})"></div></div>`;
+  el.innerHTML=h;
+}
+season(document.getElementById('seasonA'));
+season(document.getElementById('seasonC'),true);
+
+/* тема: по умолчанию светлая «бумага» */
+const root=document.documentElement, tb=document.getElementById('themeT');
+function setTheme(t){root.dataset.theme=t;tb.textContent=t==='dark'?'Светлая тема':'Тёмная тема';}
+setTheme('light');
+tb.addEventListener('click',()=>setTheme(root.dataset.theme==='dark'?'light':'dark'));
+/* переключение вариантов */
+document.querySelectorAll('.switch button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.switch button').forEach(x=>x.setAttribute('aria-selected',x===b));
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id===b.dataset.v));
+}));
+</script>
+</body>
+</html>

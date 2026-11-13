@@ -1,0 +1,97 @@
+appendix,cargo_type,origin,waterway,destination,district,volume_t,origin_total_complete,source,data_status
+№3,coal,Угольный разрез Джебарики-Хая,река Амга,Амга,Амгинский,10000.0,yes,https://base.garant.ru/414273300/3e22e51c74db8e0b182fad67b502e640/,REAL
+№3,coal,Угольный разрез Джебарики-Хая,река Алдан,Кюпцы,Усть-Майский,3600.0,yes,https://base.garant.ru/414273300/3e22e51c74db8e0b182fad67b502e640/,REAL
+№3,coal,Угольный разрез Джебарики-Хая,река Алдан,Усть-Миль,Усть-Майский,1123.0,yes,https://base.garant.ru/414273300/3e22e51c74db8e0b182fad67b502e640/,REAL
+№3,coal,Угольный разрез Джебарики-Хая,река Алдан,Эжанцы,Усть-Майский,1409.0,yes,https://base.garant.ru/414273300/3e22e51c74db8e0b182fad67b502e640/,REAL
+№3,coal,Угольный разрез Джебарики-Хая,река Алдан,Белькачи,Усть-Майский,576.0,yes,https://base.garant.ru/414273300/3e22e51c74db8e0b182fad67b502e640/,REAL
+№3,coal,Угольный разрез Джебарики-Хая,река Алдан,Эльдикан,Усть-Майский,26071.0,yes,https://base.garant.ru/414273300/3e22e51c74db8e0b182fad67b502e640/,REAL
+№3,coal,Угольный разрез Джебарики-Хая,река Алдан,Хандыга,Томпонский,40000.0,yes,https://base.garant.ru/414273300/3e22e51c74db8e0b182fad67b502e640/,REAL
+№3,coal,Угольный разрез Джебарики-Хая,река Алдан,Кутана,Алданский,1000.0,yes,https://base.garant.ru/414273300/3e22e51c74db8e0b182fad67b502e640/,REAL
+№3,coal,Угольный разрез Джебарики-Хая,река Алдан,Чагда,Алданский,1000.0,yes,https://base.garant.ru/414273300/3e22e51c74db8e0b182fad67b502e640/,REAL
+№3,coal,Угольный разрез Джебарики-Хая,река Вилюй,Верхневилюйск,Верхневилюйский,6053.0,yes,https://base.garant.ru/414273300/3e22e51c74db8e0b182fad67b502e640/,REAL
+№3,coal,Угольный разрез Джебарики-Хая,река Вилюй,Хоринцы,Верхневилюйский,1500.0,yes,https://base.garant.ru/414273300/3e22e51c74db8e0b182fad67b502e640/,REAL
+№3,coal,Угольный разрез Джебарики-Хая,река Яна,Нижнеянск,Верхоянский,22500.0,yes,https://base.garant.ru/414273300/3e22e51c74db8e0b182fad67b502e640/,REAL
+№3,coal,Угольный разрез Джебарики-Хая,река Яна,Усть-Куйга,Верхоянский,30000.0,yes,https://base.garant.ru/414273300/3e22e51c74db8e0b182fad67b502e640/,REAL
+№3,coal,Зырянский угольный разрез,река Индигирка,Белая Гора,Абыйский,17471.0,yes,https://base.garant.ru/414273300/3e22e51c74db8e0b182fad67b502e640/,REAL
+№3,coal,Зырянский угольный разрез,река Индигирка,Куберганя,Абыйский,3222.0,yes,https://base.garant.ru/414273300/3e22e51c74db8e0b182fad67b502e640/,REAL
+№3,coal,Зырянский угольный разрез,река Колыма,Колымское,Нижнеколымский,3274.0,yes,https://base.garant.ru/414273300/3e22e51c74db8e0b182fad67b502e640/,REAL
+№3,coal,Зырянский угольный разрез,река Колыма,Черский,Нижнеколымский,12500.0,yes,https://base.garant.ru/414273300/3e22e51c74db8e0b182fad67b502e640/,REAL
+№3,coal,Зырянский угольный разрез,река Колыма,Среднеколымск,Среднеколымский,30000.0,yes,https://base.garant.ru/414273300/3e22e51c74db8e0b182fad67b502e640/,REAL
+№3,coal,Зырянский угольный разрез,река Яна,Нижнеянск,Верхоянский,20000.0,yes,https://base.garant.ru/414273300/3e22e51c74db8e0b182fad67b502e640/,REAL
+№3,coal,Сангарский угольный разрез,река Лена,Жиганск,Жиганский,21706.0,no,https://base.garant.ru/414273300/3e22e51c74db8e0b182fad67b502e640/,REAL
+№3,coal,Сангарский угольный разрез,река Лена,Кыстатыам,Жиганский,1902.0,no,https://base.garant.ru/414273300/3e22e51c74db8e0b182fad67b502e640/,REAL
+№3,coal,Сангарский угольный разрез,река Лена,Бестях,Жиганский,1200.0,no,https://base.garant.ru/414273300/3e22e51c74db8e0b182fad67b502e640/,REAL
+№3,coal,Сангарский угольный разрез,река Лена,Олекминск,Олекминский,9351.0,no,https://base.garant.ru/414273300/3e22e51c74db8e0b182fad67b502e640/,REAL
+№3,coal,Сангарский угольный разрез,река Лена,Пеледуй,Ленский,8000.0,no,https://base.garant.ru/414273300/3e22e51c74db8e0b182fad67b502e640/,REAL
+№3,coal,Сангарский угольный разрез,река Лена,Дыгдал,Усть-Алданский,1.0,no,https://base.garant.ru/414273300/3e22e51c74db8e0b182fad67b502e640/,REAL
+№4,crude_oil,Олекминск/Ленск/Жатай,река Индигирка,Белая Гора,Абыйский,3242.0,no,https://base.garant.ru/414273300/172a6d689833ce3e42dc0a8a7b3cddf9/,REAL
+№4,crude_oil,Олекминск/Ленск/Жатай,река Индигирка,Белая Гора,Момский,8072.0,no,https://base.garant.ru/414273300/172a6d689833ce3e42dc0a8a7b3cddf9/,REAL
+№4,crude_oil,Олекминск/Ленск/Жатай,река Индигирка,Чокурдах,Аллаиховский,6519.0,no,https://base.garant.ru/414273300/172a6d689833ce3e42dc0a8a7b3cddf9/,REAL
+№4,crude_oil,Олекминск/Ленск/Жатай,река Индигирка,Оленегорск,Аллаиховский,530.0,no,https://base.garant.ru/414273300/172a6d689833ce3e42dc0a8a7b3cddf9/,REAL
+№4,crude_oil,Олекминск/Ленск/Жатай,река Индигирка,Русское Устье,Аллаиховский,565.0,no,https://base.garant.ru/414273300/172a6d689833ce3e42dc0a8a7b3cddf9/,REAL
+№4,crude_oil,Олекминск/Ленск/Жатай,река Колыма,Среднеколымск,Среднеколымский,1349.0,no,https://base.garant.ru/414273300/172a6d689833ce3e42dc0a8a7b3cddf9/,REAL
+№4,crude_oil,Олекминск/Ленск/Жатай,река Колыма,Среднеколымск,Нижнеколымский,1752.0,no,https://base.garant.ru/414273300/172a6d689833ce3e42dc0a8a7b3cddf9/,REAL
+№4,crude_oil,Олекминск/Ленск/Жатай,река Яна,Усть-Куйга,Эвено-Бытантайский,4500.0,no,https://base.garant.ru/414273300/172a6d689833ce3e42dc0a8a7b3cddf9/,REAL
+№4,crude_oil,Олекминск/Ленск/Жатай,река Яна,Нижнеянск,Эвено-Бытантайский,300.0,no,https://base.garant.ru/414273300/172a6d689833ce3e42dc0a8a7b3cddf9/,REAL
+№4,crude_oil,Олекминск/Ленск/Жатай,река Яна,Нижнеянск,Усть-Янский,1550.0,no,https://base.garant.ru/414273300/172a6d689833ce3e42dc0a8a7b3cddf9/,REAL
+№4,crude_oil,Олекминск/Ленск/Жатай,река Яна,Кресты,Усть-Янский,1800.0,no,https://base.garant.ru/414273300/172a6d689833ce3e42dc0a8a7b3cddf9/,REAL
+№5,gas_condensate,Кысыл-Сыр,река Лена,Батамай,Кобяйский,400.0,yes,https://base.garant.ru/414273300/c9c989f1e999992b41b30686f0032f7d/,REAL
+№5,gas_condensate,Кысыл-Сыр,река Лена,Кюсюр,Булунский,152.0,yes,https://base.garant.ru/414273300/c9c989f1e999992b41b30686f0032f7d/,REAL
+№5,gas_condensate,Кысыл-Сыр,река Лена,Найба,Булунский,1669.0,yes,https://base.garant.ru/414273300/c9c989f1e999992b41b30686f0032f7d/,REAL
+№5,gas_condensate,Кысыл-Сыр,река Лена,Таймылыр,Булунский,1979.0,yes,https://base.garant.ru/414273300/c9c989f1e999992b41b30686f0032f7d/,REAL
+№5,gas_condensate,Кысыл-Сыр,река Анабар,Юрюнг-Хая,Анабарский,7300.0,yes,https://base.garant.ru/414273300/c9c989f1e999992b41b30686f0032f7d/,REAL
+№6,fuel,Усть-Кут,река Алдан,Хандыга,Томпонский,10300.0,yes,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,Усть-Кут,река Алдан,Чагда,Алданский,110.0,yes,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,Усть-Кут,река Алдан,Усть-Миль,Усть-Майский,130.0,yes,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,Усть-Кут,река Алдан,Эльдикан,Усть-Майский,1010.0,yes,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,Усть-Кут,река Вилюй,Нюрба,Нюрбинский,22550.0,yes,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,Усть-Кут,река Вилюй,Сунтар,Сунтарский,2400.0,yes,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,Усть-Кут,река Лена,Олекминск,Олекминский,6000.0,yes,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,Усть-Кут,река Лена,Саныяхтах,Олекминский,350.0,yes,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,Усть-Кут,река Лена,Мача,Олекминский,500.0,yes,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,Усть-Кут,река Лена,Чапаево,Олекминский,650.0,yes,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,Усть-Кут,река Лена,Токко,Олекминский,380.0,yes,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,Усть-Кут,река Лена,"Сангар, Батамай",Кобяйский,5000.0,yes,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,Усть-Кут,река Лена,Жиганск,Жиганский,3420.0,yes,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,Усть-Кут,река Лена,Бестях,Жиганский,90.0,yes,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,Усть-Кут,река Лена,Кыстатыам,Жиганский,180.0,yes,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,Усть-Кут,река Лена,Витим,Ленский,30700.0,yes,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,Усть-Кут,река Лена,Якутск,Якутск,22948.0,yes,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,Усть-Кут,река Лена,Ленск,"Ленский, Мирнинский",147174.0,yes,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,Усть-Кут,река Лена,Пеледуй,Ленский,3040.0,yes,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,Усть-Кут,река Индигирка,Белая Гора,Абыйский,650.0,yes,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,Усть-Кут,река Колыма,Черский,Нижнеколымский,1500.0,yes,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,Усть-Кут,море Лаптевых,Тикси,Булунский,500.0,yes,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,"Нижний Бестях, Ленск",река Лена,Сангар,Кобяйский,200.0,no,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,"Нижний Бестях, Ленск",река Лена,Жиганск,Жиганский,250.0,no,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,"Нижний Бестях, Ленск",река Лена,Ленск,Ленский,200.0,no,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,"Нижний Бестях, Ленск",река Лена,Ленск,Анабарский,100.0,no,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,"Нижний Бестях, Ленск",река Лена,Ленск,Оленекский,35.0,no,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,"Нижний Бестях, Ленск",река Лена,Ленск,Мирнинский,35.0,no,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,"Нижний Бестях, Ленск",река Лена,Олекминск,Олекминский,150.0,no,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,"Нижний Бестях, Ленск",река Вилюй,Нюрба,Нюрбинский,2000.0,no,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,"Нижний Бестях, Ленск",река Алдан,Хандыга,Томпонский,3200.0,no,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,"Нижний Бестях, Ленск",море Лаптевых,Тикси,Булунский,1000.0,no,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,"Нижний Бестях, Ленск",река Яна,Усть-Куйга,Верхоянский,600.0,no,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,"Нижний Бестях, Ленск",река Яна,Усть-Куйга,Усть-Янский,4150.0,no,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,"Нижний Бестях, Ленск",река Яна,Усть-Куйга,Эвено-Бытантайский,200.0,no,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,"Нижний Бестях, Ленск",река Индигирка,Чокурдах,Аллаиховский,1800.0,no,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№6,fuel,"Нижний Бестях, Ленск",река Индигирка,Белая Гора,"Абыйский, Момский",2680.0,no,https://base.garant.ru/414273300/7dede6ac8f25be619ed07c17ed1c62c9/,REAL
+№8,general,Усть-Кут,река Лена,Ленск,Мирнинский,48334.0,yes,https://base.garant.ru/414273300/38d0e20d10a9099ed1e190abf152a12a/,REAL
+№8,general,Усть-Кут,река Лена,"Витим, Ленск",Ленский,103800.0,yes,https://base.garant.ru/414273300/38d0e20d10a9099ed1e190abf152a12a/,REAL
+№8,general,Усть-Кут,река Алдан,Крест-Хальджай,Томпонский,20.0,yes,https://base.garant.ru/414273300/38d0e20d10a9099ed1e190abf152a12a/,REAL
+№9,fuel,Черский,река Колыма,Зырянка,Верхнеколымский,3300.0,yes,https://base.garant.ru/414273300/dbddb101044a4418ba9fcf35194e29d2/,REAL
+№9,fuel,Черский,река Колыма,Колымское,Нижнеколымский,450.0,yes,https://base.garant.ru/414273300/dbddb101044a4418ba9fcf35194e29d2/,REAL
+№9,fuel,Черский,река Колыма,Среднеколымск,Среднеколымский,450.0,yes,https://base.garant.ru/414273300/dbddb101044a4418ba9fcf35194e29d2/,REAL
+№7,food,,река Яна,Нижнеянск,Усть-Янский,20.0,yes,https://base.garant.ru/414273300/1a3794674ba91fb6f13d1885dca9f9e1/,REAL
+№7,food,,река Яна,Усть-Куйга,Усть-Янский,150.0,yes,https://base.garant.ru/414273300/1a3794674ba91fb6f13d1885dca9f9e1/,REAL
+№7,food,,река Индигирка,Белая Гора,Абыйский,130.0,yes,https://base.garant.ru/414273300/1a3794674ba91fb6f13d1885dca9f9e1/,REAL
+№7,food,,река Индигирка,Чокурдах,Аллаиховский,100.0,yes,https://base.garant.ru/414273300/1a3794674ba91fb6f13d1885dca9f9e1/,REAL
+№7,food,,река Колыма,Черский,Нижнеколымский,140.0,yes,https://base.garant.ru/414273300/1a3794674ba91fb6f13d1885dca9f9e1/,REAL
+№7,food,,река Колыма,Среднеколымск,Среднеколымский,160.0,yes,https://base.garant.ru/414273300/1a3794674ba91fb6f13d1885dca9f9e1/,REAL
+№7,food,,река Колыма,Зырянка,Верхнеколымский,140.0,yes,https://base.garant.ru/414273300/1a3794674ba91fb6f13d1885dca9f9e1/,REAL
+№7,food,,река Алдан,Хандыга,Томпонский,30.0,yes,https://base.garant.ru/414273300/1a3794674ba91fb6f13d1885dca9f9e1/,REAL
+№7,food,,река Вилюй,Нюрба,Нюрбинский,380.0,yes,https://base.garant.ru/414273300/1a3794674ba91fb6f13d1885dca9f9e1/,REAL
+№7,food,,море Лаптевых,Тикси,Булунский,140.0,yes,https://base.garant.ru/414273300/1a3794674ba91fb6f13d1885dca9f9e1/,REAL
+№7,food,,река Лена,Жиганск,Жиганский,80.0,yes,https://base.garant.ru/414273300/1a3794674ba91fb6f13d1885dca9f9e1/,REAL
+№7,food,,река Лена,"Кюсюр, Сиктях",Булунский,30.0,yes,https://base.garant.ru/414273300/1a3794674ba91fb6f13d1885dca9f9e1/,REAL

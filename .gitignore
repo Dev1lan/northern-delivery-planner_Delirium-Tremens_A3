@@ -29,6 +29,8 @@
 !/data/yakutia_demo/**
 !/data/yakutia/
 !/data/yakutia/**
+!/data/yakutia_real/
+!/data/yakutia_real/**
 !/results/
 /results/*
 !/results/demo/

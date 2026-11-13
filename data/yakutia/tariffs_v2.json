@@ -89,6 +89,18 @@
    "unit": "tonne",
    "source": "Условная демо-ставка (пересчёт tariffs_demo.json); рыночных данных нет",
    "source_status": "SYNTHETIC"
+  },
+  "crude_oil": {
+   "value": 25000,
+   "unit": "tonne",
+   "source": "Условная демо-ставка (пересчёт tariffs_demo.json); рыночных данных нет",
+   "source_status": "SYNTHETIC"
+  },
+  "gas_condensate": {
+   "value": 25000,
+   "unit": "tonne",
+   "source": "Условная демо-ставка (пересчёт tariffs_demo.json); рыночных данных нет",
+   "source_status": "SYNTHETIC"
   }
  }
 }

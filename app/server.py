@@ -224,11 +224,20 @@ def index():
     return html.replace("/*__APP__*/false", "true")
 
 
-@app.get("/v2", response_class=HTMLResponse, include_in_schema=False)
+@app.get("/v2", include_in_schema=False)
 def index_v2():
-    """Черновик нового оформления главной (та же логика и карта, другой стиль и панель)."""
-    html = (ROOT / "yakutia/network_v2.html").read_text(encoding="utf-8")
-    return html.replace("/*__APP__*/false", "true")
+    """Старый адрес черновика нового оформления: оно теперь на главной."""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse("/")
+
+
+@app.get("/api/geo/context", include_in_schema=False)
+def geo_context():
+    """Фоновая география вокруг сети (yakutia/geo_context.py) — только для отрисовки карты."""
+    path = ROOT / "yakutia/geo/context_geo.json"
+    if not path.exists():
+        raise HTTPException(404, "Нет yakutia/geo/context_geo.json: соберите его yakutia/geo_context.py")
+    return FileResponse(path, media_type="application/json", headers={"Cache-Control": "max-age=86400"})
 
 
 @app.get("/yana", include_in_schema=False)
@@ -376,6 +385,12 @@ def network_builtin() -> Dict[str, dict]:
         out["yakutia"] = dict(title="Якутия: Лена, Алдан, Вилюй, Яна, Индигирка, Колыма",
                               scenario=NET_DATA / "yakutia_network.json", limits=NET_DATA / "limits.json",
                               tariffs=NET_TARIFFS, cards=NET_DATA / "fleet_cards.json")
+    real = ROOT / "data/yakutia_real/scenario"
+    if (real / "yakutia_real_2026_demo.json").exists():
+        out["yakutia_real"] = dict(title="Якутия: реальные реки и план завоза 2026 (флот — допущение)",
+                                   scenario=real / "yakutia_real_2026_demo.json", limits=real / "limits.json",
+                                   tariffs=NET_TARIFFS, cards=real / "fleet_cards.json", geo=real / "geo.json",
+                                   policy=real / "search_policy.json")
     if (NET_DEMO / "yakutia_stress.json").exists():
         out["yakutia_stress"] = dict(title="Якутия, стресс-тест причала: Нижнеянск, один причал",
                                      scenario=NET_DEMO / "yakutia_stress.json", tariffs=NET_DEMO / "tariffs_base.json",
@@ -411,10 +426,17 @@ def _ru_error(msg: str) -> str:
     return msg
 
 
+# Что показывать в выпадающем списке сайта. Остальные готовые сценарии остаются доступны через API
+# (/api/network/jobs с builtin) — на них опираются тесты и примеры.
+SHOWN_NETWORK = ("yakutia", "yakutia_real", "yakutia_stress")
+SHOWN_LINEAR = ("r1_baseline_central_central",)
+
+
 @app.get("/api/network/scenarios")
 def network_scenarios():
-    linear = [dict(name=k, title=v["title"], kind="linear") for k, v in builtin_scenarios().items()]
-    return dict(builtin=[dict(name=k, title=v["title"], kind="network") for k, v in network_builtin().items()] + linear,
+    net, lin = network_builtin(), builtin_scenarios()
+    linear = [dict(name=k, title=lin[k]["title"], kind="linear") for k in SHOWN_LINEAR if k in lin]
+    return dict(builtin=[dict(name=k, title=net[k]["title"], kind="network") for k in SHOWN_NETWORK if k in net] + linear,
                 strategies=list(NET_STRATEGIES), job_timeout_s=JOB_TIMEOUT_S,
                 max_upload_mb=MAX_BODY_BYTES // 1024 // 1024)
 
@@ -455,10 +477,11 @@ def network_job(req: NetworkRequest):
             tariffs = json.loads(Path(b["tariffs"]).read_text(encoding="utf-8-sig")) if b.get("tariffs") else None
             presets = json.loads(Path(b["presets"]).read_text(encoding="utf-8-sig")) if b.get("presets") else None
             cards, title = b.get("cards"), b["title"].split(":")[0] if req.builtin == "yakutia" else b["title"]
+            geo, policy = b.get("geo"), b.get("policy")
             if req.builtin == "yakutia":
                 title = "Северный завоз · Якутия"
         elif req.scenario:
-            raw, limits, cards, presets = req.scenario, req.limits, None, req.presets
+            raw, limits, cards, presets, geo, policy = req.scenario, req.limits, None, req.presets, None, None
             tariffs = req.tariffs or json.loads(NET_TARIFFS.read_text(encoding="utf-8"))
             title = str(raw.get("scenario_id", "Свой сценарий"))[:80]
         else:
@@ -470,9 +493,14 @@ def network_job(req: NetworkRequest):
         except (KeyError, TypeError, ValueError) as e:
             raise HTTPException(422, "Проверка сетевого ядра: " + _ru_error(f"{type(e).__name__}: {e}"))
         (job_dir / "scenario.json").write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+        if cards:
+            shutil.copyfile(cards, job_dir / "cards.json")
+        if geo:
+            shutil.copyfile(geo, job_dir / "geo.json")
         cmd = [sys.executable, str(ROOT / "yakutia/payload.py"), "--scenario", str(job_dir / "scenario.json"),
                "--title", title, "--out", str(job_dir / "payload.json"), "--results-dir", str(job_dir / "results"),
-               "--limits", "none", "--tariffs", "none", "--cards", str(cards) if cards else "none"]
+               "--limits", "none", "--tariffs", "none", "--cards", str(cards) if cards else "none",
+               "--geo", str(geo) if geo else "none", "--policy", str(policy) if policy else "none"]
         if presets:
             (job_dir / "presets.json").write_text(json.dumps(presets, ensure_ascii=False), encoding="utf-8")
         for name, data in (("limits", limits), ("tariffs", tariffs)):
@@ -626,6 +654,12 @@ def network_compare(job_id: str, to: str, from_: str = Query(..., alias="from"))
     return _core_call(compare_results, _plan(j, from_), _plan(j, to))
 
 
+@app.get("/api/network/jobs/{job_id}/scenario")
+def network_scenario(job_id: str):
+    """Входной сценарий задания (порты, рёбра, флот, заявки, причалы) — для конструктора изменений."""
+    return Response((_net_job(job_id).dir / "scenario.json").read_text(encoding="utf-8"), media_type="application/json")
+
+
 @app.get("/api/network/jobs/{job_id}/presets")
 def network_presets(job_id: str):
     """Готовые изменения для «Что, если?»: индекс в массиве — значение preset."""
@@ -639,7 +673,8 @@ def network_what_if(job_id: str, request: Request, body: dict = Body(...)):
     Тело: {"preset": 0} или {"change": {...}}; опционально "base" — вариант-основа (по умолчанию
     лучшая стратегия задания). Ответ — {baseline_fingerprint, improvement_found, alternatives}
     по контракту и дополнительно "variant": ключ, под которым изменённый план сохранён в задании —
-    его можно передать в state/port-load/explain/diagnose/compare.
+    его можно передать в state/port-load/explain/diagnose/compare, и "view" — тот же план в формате
+    страницы (network-view/1, как strategies[*] в /data), чтобы показать его на карте.
     """
     from network.analysis import find_improvements
     from network.models import Limits
@@ -675,7 +710,16 @@ def network_what_if(job_id: str, request: Request, body: dict = Body(...)):
         j.whatif.append(dict(variant=key, base=base_key, change=option))
         j.results[key] = result
     (j.dir / "results" / f"result_{key}.json").write_text(json.dumps(result, ensure_ascii=False), encoding="utf-8")
-    return dict(variant=key, base=base_key, **report)
+    import payload as net_view
+    view = net_view.view_for(result["scenario"], result, cards=_read_opt(j.dir / "cards.json"),
+                             geo=_read_opt(j.dir / "geo.json"),
+                             label=f"Что, если {key[1:]}", hint=f"Изменение относительно «{base_key}»")
+    known = {v["vessel_id"] for fleet in ("tugs", "barges") for v in raw[fleet]}
+    view["extra_fleet"] = [{**{k: v for k, v in r.items() if k not in ("available_at", "available_to")},
+                            "kind": kind, "card": None}
+                           for kind, fleet in (("tug", "tugs"), ("barge", "barges"))
+                           for r in result["scenario"][fleet] if r["vessel_id"] not in known]
+    return dict(variant=key, base=base_key, view=view, **report)
 
 
 @app.on_event("startup")

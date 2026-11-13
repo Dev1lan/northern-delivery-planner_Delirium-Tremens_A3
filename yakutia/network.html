@@ -7,55 +7,66 @@
 <style>
 :root{
   color-scheme:light;
-  --page:#eef0f2; --surface:#ffffff; --surface2:#f6f7f8; --border:#dfe2e6; --grid:#eceef1;
-  --text:#0f1720; --text2:#4b5563; --muted:#8a919b;
-  --land:#f7f6f2; --sea:#dfe9f2; --coast:#b9c9d8; --river:#a9c3dc; --river-bg:#c7d6e4;
-  --accent:#1f6fd1; --accent-soft:#e3eefb; --accent-ink:#fff;
-  --ok:#12955f; --limit:#e19a00; --closed:#9aa1aa; --bad:#d23f3f; --seaway:#3a7fc4;
-  --load:#e19a00; --sail:#1f6fd1; --unload:#12955f; --empty:#7b5cd6; --wait:#8a919b; --idle:#b4bac2;
-  --shadow:0 1px 2px rgba(16,24,40,.06),0 4px 14px rgba(16,24,40,.06);
+  --page:#eef1f4; --surface:#ffffff; --surface2:#f4f6f8; --border:#dde2e7; --grid:#e8ecf0;
+  --text:#18212b; --text2:#4d5967; --muted:#87929e;
+  --land:#f4f5f6; --sea:#dde5ec; --coast:#b8c4cf; --river:#9fb8cf; --river-bg:#c9d6e2;
+  --accent:#1d6fd8; --accent-soft:#e4eefb; --accent-ink:#fff; --signal:#c7860c; --signal-soft:#fbf1dc;
+  --ok:var(--accent); --limit:var(--signal); --closed:#a3acb6; --bad:var(--signal); --seaway:var(--accent);
+  --load:var(--text2); --sail:var(--accent); --unload:var(--text2); --empty:var(--accent); --wait:var(--signal); --idle:#a3acb6;
+  --shadow:0 1px 2px rgba(16,24,40,.06),0 6px 18px rgba(16,24,40,.08);
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
-    color-scheme:dark;
-    --page:#0d1117; --surface:#151b23; --surface2:#1b222c; --border:#2a323d; --grid:#222a34;
-    --text:#e8edf2; --text2:#aab4bf; --muted:#7d8792;
-    --land:#161b21; --sea:#0b1e33; --coast:#2c4a66; --river:#3d6a96; --river-bg:#25425f;
-    --accent:#4c93ea; --accent-soft:#16273d; --accent-ink:#06101c;
-    --ok:#2bb47a; --limit:#e0a520; --closed:#5d6670; --bad:#e46161; --seaway:#5aa0e6;
-    --load:#e0a520; --sail:#4c93ea; --unload:#2bb47a; --empty:#9a83ec; --wait:#7d8792; --idle:#4b545e;
-    --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.3);
+  color-scheme:dark;
+  --page:#0e1318; --surface:#151b21; --surface2:#1b2229; --border:#29323b; --grid:#212931;
+  --text:#e7ebef; --text2:#a4aeb9; --muted:#6f7a86;
+  --land:#1a2027; --sea:#11161b; --coast:#2f3943; --river:#3c5872; --river-bg:#26374a;
+  --accent:#4f9cf0; --accent-soft:#172a40; --accent-ink:#07111d; --signal:#e8a93a; --signal-soft:#33280f;
+  --ok:var(--accent); --limit:var(--signal); --closed:#525d69; --bad:var(--signal); --seaway:var(--accent);
+  --load:var(--text2); --sail:var(--accent); --unload:var(--text2); --empty:var(--accent); --wait:var(--signal); --idle:#525d69;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 8px 22px rgba(0,0,0,.35);
   }
 }
 :root[data-theme="dark"]{
   color-scheme:dark;
-  --page:#0d1117; --surface:#151b23; --surface2:#1b222c; --border:#2a323d; --grid:#222a34;
-  --text:#e8edf2; --text2:#aab4bf; --muted:#7d8792;
-  --land:#161b21; --sea:#0b1e33; --coast:#2c4a66; --river:#3d6a96; --river-bg:#25425f;
-  --accent:#4c93ea; --accent-soft:#16273d; --accent-ink:#06101c;
-  --ok:#2bb47a; --limit:#e0a520; --closed:#5d6670; --bad:#e46161; --seaway:#5aa0e6;
-  --load:#e0a520; --sail:#4c93ea; --unload:#2bb47a; --empty:#9a83ec; --wait:#7d8792; --idle:#4b545e;
-  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.3);
+  --page:#0e1318; --surface:#151b21; --surface2:#1b2229; --border:#29323b; --grid:#212931;
+  --text:#e7ebef; --text2:#a4aeb9; --muted:#6f7a86;
+  --land:#1a2027; --sea:#11161b; --coast:#2f3943; --river:#3c5872; --river-bg:#26374a;
+  --accent:#4f9cf0; --accent-soft:#172a40; --accent-ink:#07111d; --signal:#e8a93a; --signal-soft:#33280f;
+  --ok:var(--accent); --limit:var(--signal); --closed:#525d69; --bad:var(--signal); --seaway:var(--accent);
+  --load:var(--text2); --sail:var(--accent); --unload:var(--text2); --empty:var(--accent); --wait:var(--signal); --idle:#525d69;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 8px 22px rgba(0,0,0,.35);
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{height:100%}
-body{margin:0;background:var(--page);color:var(--text);font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+body{margin:0;background:var(--page);color:var(--text);font:13.5px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
 button,select,input{font:inherit;color:inherit}
 .num{font-variant-numeric:tabular-nums}
 .app{display:grid;grid-template-rows:auto minmax(0,1fr);height:100vh}
 /* верхняя панель */
-.top{display:flex;align-items:center;gap:14px;padding:8px 14px;background:var(--surface);border-bottom:1px solid var(--border);min-width:0}
+.top{display:flex;align-items:center;gap:12px;padding:0 12px;height:56px;background:var(--surface);border-bottom:1px solid var(--border);min-width:0}
 .brand{display:flex;align-items:center;gap:10px;min-width:0}
-.logo{width:30px;height:30px;border-radius:8px;background:var(--accent);display:grid;place-items:center;flex:none}
+.logo{width:30px;height:30px;border-radius:8px;background:var(--text);color:var(--surface);display:grid;place-items:center;flex:none}
 .brand b{display:block;font-size:14px;line-height:1.15;white-space:nowrap}
-.brand span{display:block;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:280px}
+.brand span{display:block;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px}
 .spacer{flex:1}
-.seg{display:inline-flex;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:2px;gap:2px}
-.seg button{border:0;background:transparent;border-radius:7px;padding:5px 10px;cursor:pointer;color:var(--text2);white-space:nowrap;line-height:1.2;text-align:left}
-.seg button small{display:block;font-size:11px;color:var(--muted)}
+.vsep{width:1px;align-self:stretch;margin:12px 2px;background:var(--border);flex:none}
+.field{display:flex;align-items:center;gap:8px;min-width:0;flex:none}
+.field.plan{flex:0 1 auto}
+.field>.fl{font-size:12px;color:var(--muted);white-space:nowrap}
+.field select.btn{max-width:230px;text-overflow:ellipsis;overflow:hidden;font-weight:500}
+.btn{display:inline-flex;align-items:center;gap:6px;text-decoration:none;height:34px}
+.btn svg{flex:none}
+.btn.quiet{border-color:transparent;background:transparent;color:var(--text2)}
+.btn.quiet:hover{background:var(--surface2);color:var(--text)}
+.seg{display:inline-flex;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:2px;gap:2px;min-width:0;max-width:100%;overflow-x:auto;scrollbar-width:none}
+.seg::-webkit-scrollbar{display:none}
+.seg button{flex:none;border:0;background:transparent;border-radius:7px;padding:0 11px;height:28px;cursor:pointer;color:var(--text2);white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.seg button small{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
 .seg button[aria-pressed="true"] small{color:var(--accent)}
-.seg button .star{color:var(--ok);font-size:11px;margin-left:3px}
+.seg button .star{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block}
 .btn{border:1px solid var(--border);background:var(--surface);border-radius:8px;padding:6px 11px;cursor:pointer;white-space:nowrap}
 .btn:hover{border-color:var(--muted)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
@@ -72,45 +83,70 @@ select.btn{appearance:none;-webkit-appearance:none;padding-right:26px;background
 .kpi{padding:8px 14px;border-right:1px solid var(--border);min-width:0}
 .kpi:last-child{border-right:0}
 .kpi .l{font-size:11px;color:var(--muted);white-space:nowrap}
-.kpi .v{font-size:18px;font-weight:650;line-height:1.2;white-space:nowrap}
+.kpi .v{font-size:19px;font-weight:650;line-height:1.2;white-space:nowrap}
 .kpi .v small{font-size:12px;font-weight:500;color:var(--text2)}
 .kpi .s{font-size:11px;color:var(--text2);white-space:nowrap}
 .zoom{top:12px;right:12px;display:flex;flex-direction:column;padding:3px;gap:2px}
+.zoom hr{border:0;border-top:1px solid var(--border);margin:2px 4px}
+.zoom button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent)}
+.zoom button{display:grid;place-items:center}
 .zoom button{border:0;background:transparent;width:30px;height:30px;border-radius:7px;cursor:pointer;font-size:16px;color:var(--text2)}
 .zoom button:hover{background:var(--surface2)}
-.legend{display:flex;flex-wrap:wrap;gap:4px 18px;align-items:center;padding:6px 14px;font-size:12px;color:var(--text2);background:var(--surface);border-top:1px solid var(--border)}
-.legend .row{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center}
-.legend i{display:inline-block;vertical-align:middle;margin-right:5px}
-.legend .ln{width:22px;height:4px;border-radius:2px}
-.legend b{font-weight:600;color:var(--text);margin-right:2px}
-.legend .toggle{border:0;background:none;padding:0;color:var(--accent);cursor:pointer;font-size:12px;justify-self:start}
+.legend{right:12px;bottom:34px;padding:10px 12px;font-size:12px;color:var(--text2);display:grid;gap:8px;max-width:300px}
+.legend[hidden]{display:none}
+.legend .hd{font-weight:600;color:var(--text);font-size:12.5px}
+.legend .row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 12px}
+.legend .row>span{white-space:nowrap}
+.legend .grp{color:var(--muted);font-size:11.5px;grid-column:1/-1;margin-top:2px}
+.legend i{display:inline-block;vertical-align:middle;margin-right:6px}
+.legend .ln{width:20px;height:3px;border-radius:2px}
 .attrib{right:12px;bottom:8px;padding:3px 8px;font-size:11px;color:var(--muted);max-width:50%;border-radius:6px}
 .tip{position:absolute;pointer-events:none;z-index:20;padding:8px 10px;font-size:12px;max-width:280px;display:none}
 .tip b{display:block;font-size:13px;margin-bottom:2px}
 .tip .k{color:var(--muted)}
 /* шкала времени */
-.timeline{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;align-items:center;gap:10px;padding:8px 14px 10px;background:var(--surface);border-top:1px solid var(--border)}
+.timeline{position:relative;display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;align-items:center;gap:10px;padding:8px 14px 10px;background:var(--surface);border-top:1px solid var(--border)}
 .date{font-weight:650;font-size:14px;min-width:120px}
 .date small{display:block;font-weight:500;color:var(--muted);font-size:11px}
+/* дата на шкале — кнопка с календарём: щелчок открывает выбор дня */
+.datepick{display:flex;align-items:center;gap:8px;padding:3px 10px 3px 8px;border:1px solid transparent;border-radius:8px;cursor:pointer;background:none;text-align:left}
+.datepick:hover,.datepick[aria-expanded="true"]{border-color:var(--border);background:var(--surface2)}
+.datepick svg{flex:none;color:var(--muted)}
+.datepick:hover svg,.datepick[aria-expanded="true"] svg{color:var(--accent)}
+/* свой календарь: открывается над шкалой (системный уходит вниз за край окна) */
+.cal{position:absolute;left:56px;bottom:calc(100% + 6px);z-index:30;width:252px;padding:10px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.28)}
+.cal-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;font-weight:600}
+.cal-h button{border:0;background:none;width:28px;height:28px;border-radius:6px;cursor:pointer;color:var(--text2);font-size:16px}
+.cal-h button:hover:not(:disabled){background:var(--surface2);color:var(--text)}
+.cal-h button:disabled{opacity:.3;cursor:default}
+.cal-g{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
+.cal-g .wd{font-size:11px;color:var(--muted);padding:2px 0}
+.cal-g button{border:0;background:none;height:30px;border-radius:6px;cursor:pointer;color:var(--text);font-variant-numeric:tabular-nums}
+.cal-g button:hover:not(:disabled){background:var(--surface2)}
+.cal-g button:disabled{color:var(--muted);opacity:.4;cursor:default}
+.cal-g button.today{box-shadow:inset 0 0 0 1px var(--border)}
+.cal-g button[aria-current="date"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.cal-g button:focus-visible,.cal-h button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .track{position:relative;height:42px}
 #spark{position:absolute;inset:0 0 14px 0;width:100%;height:28px}
 #slider{position:absolute;left:0;right:0;bottom:0;width:100%;margin:0;accent-color:var(--accent)}
 .months{position:absolute;left:0;right:0;top:28px;height:0;font-size:10px;color:var(--muted)}
 .months span{position:absolute;transform:translateX(-50%);top:-2px;pointer-events:none}
 /* боковая панель */
-.side{display:grid;grid-template-rows:auto minmax(0,1fr);background:var(--surface);border-left:1px solid var(--border);min-height:0}
-.tabs{display:flex;gap:2px;padding:8px 10px 0;border-bottom:1px solid var(--border)}
-.tabs button{border:0;background:none;padding:8px 9px;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.side{display:grid;grid-template-rows:auto minmax(0,1fr);grid-template-columns:minmax(0,1fr);background:var(--surface);border-left:1px solid var(--border);min-height:0;min-width:0}
+.tabs{display:flex;gap:0;padding:8px 6px 0;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:none;border:0;background:none;padding:8px 5px;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
 .tabs button[aria-selected="true"]{color:var(--text);border-bottom-color:var(--accent);font-weight:600}
 .tabs button .cnt{color:var(--muted);font-size:11px;margin-left:3px}
 .pane{overflow:auto;padding:12px 14px 18px;min-height:0}
-.pane h3{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600;margin:16px 0 8px}
+.pane h3{font-size:13px;color:var(--text);font-weight:600;margin:20px 0 8px}
 .pane h3:first-child{margin-top:2px}
 .note{color:var(--muted);font-size:12px}
 .callout{border:1px solid var(--border);background:var(--surface2);border-radius:9px;padding:10px 12px;font-size:12.5px;color:var(--text2)}
 .callout b{color:var(--text)}
-.callout.warn{border-color:color-mix(in srgb,var(--bad) 45%,var(--border));background:color-mix(in srgb,var(--bad) 7%,var(--surface))}
-.callout.good{border-color:color-mix(in srgb,var(--ok) 45%,var(--border));background:color-mix(in srgb,var(--ok) 7%,var(--surface))}
+.callout.warn{border-color:var(--border);border-left:3px solid var(--signal);background:var(--signal-soft)}
+.callout.good{border-color:var(--border);border-left:3px solid var(--accent);background:var(--surface2)}
 .badge{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.02em;padding:1px 6px;border-radius:5px;background:var(--surface2);border:1px solid var(--border);color:var(--text2);vertical-align:middle}
 .badge.stub{background:color-mix(in srgb,var(--limit) 14%,var(--surface));border-color:color-mix(in srgb,var(--limit) 45%,var(--border));color:var(--text)}
 .badge.ok{color:var(--ok)} .badge.bad{color:var(--bad)}
@@ -136,7 +172,7 @@ select.btn{appearance:none;-webkit-appearance:none;padding-right:26px;background
 .prog i{display:block;height:100%}
 .filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
 .chip{border:1px solid var(--border);background:var(--surface);border-radius:14px;padding:3px 10px;font-size:12px;cursor:pointer;color:var(--text2)}
-.chip[aria-pressed="true"]{background:var(--text);color:var(--surface);border-color:var(--text)}
+.chip[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
 .card{border:1px solid var(--border);border-radius:10px;padding:12px;background:var(--surface)}
 .card+.card{margin-top:10px}
 .card .hd{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px}
@@ -172,7 +208,9 @@ table.t td.n,table.t th.n{text-align:right}
 .lbl.river{fill:var(--river);stroke:var(--land);font-style:italic;font-size:12px}
 .lbl.sea{fill:color-mix(in srgb,var(--seaway) 65%,var(--muted));stroke:none;font-style:italic;letter-spacing:.12em;font-size:13px}
 .vlbl{font-size:10.5px;font-weight:600;fill:var(--text);paint-order:stroke;stroke:var(--surface);stroke-width:3px;pointer-events:none}
-@media (max-width:1100px){.main{grid-template-columns:minmax(0,1fr) 340px}.seg button small{display:none}}
+@media (max-width:1380px){.brand>div:last-child,.vsep:first-of-type{display:none}.btn.quiet#uploadBtn{font-size:0;gap:0;padding:0 9px}}
+@media (max-width:1540px){.seg button small{display:none}}
+@media (max-width:1100px){.main{grid-template-columns:minmax(0,1fr) 340px}.tabs button{font-size:12.5px;padding:8px 4px}}
 @media (max-width:820px){
   .app{height:auto;min-height:100vh}
   .main{grid-template-columns:1fr}
@@ -184,44 +222,64 @@ table.t td.n,table.t th.n{text-align:right}
   .seg{max-width:100%;overflow-x:auto}
   .mapwrap{display:flex;flex-direction:column}
   #map{flex:1 1 0;min-height:0;height:auto}
-  .legend{display:none}
-  .timeline{grid-template-columns:auto minmax(0,1fr) auto}.timeline .date{display:none}
+  .legend{max-width:calc(100% - 70px)}
+  .timeline{grid-template-columns:auto minmax(0,1fr) auto}.timeline .date{display:none}.datepick{padding:6px;gap:0}.cal{left:8px}
 }
+.wiform{display:grid;gap:8px;margin-top:10px}
+.wi{display:grid;grid-template-columns:110px 1fr;gap:8px;align-items:center;font-size:12.5px}
+.wi>span{color:var(--muted)}
+.wi.wide{grid-template-columns:1fr}
+.wi input,.wi select,.wi textarea{width:100%;min-width:0;white-space:normal}
+.wi textarea{font-family:ui-monospace,Menlo,monospace;font-size:12px;resize:vertical}
+.wiform button[type=submit]{justify-self:start}
+.lnk{color:var(--accent);cursor:pointer}
+.item.wp{grid-template-columns:minmax(0,1fr) auto}
+.item.wp .t{white-space:normal;font-weight:500}
+.item .ev{font-size:11.5px;color:var(--text2);white-space:normal;margin-top:3px}
+tr.xv{cursor:pointer} tr.xv:hover td{background:var(--surface2)}
+@media (max-width:520px){.wi{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="app">
   <header class="top">
     <div class="brand">
-      <div class="logo" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 3 2"/><path d="M5 13l2-6h10l2 6"/><path d="M12 3v4"/></svg></div>
+      <div class="logo" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 3 2"/><path d="M5 13l2-6h10l2 6"/><path d="M12 3v4"/></svg></div>
       <div><b>Северный завоз</b><span id="subtitle">—</span></div>
     </div>
-    <select id="scenarioSel" class="btn" aria-label="Сценарий" hidden></select>
+    <div class="vsep"></div>
+    <label class="field"><span class="fl">Сценарий</span><select id="scenarioSel" class="btn" hidden></select></label>
+    <div class="vsep"></div>
+    <div class="field plan"><span class="fl">План</span><div class="seg" id="strategies" role="group" aria-label="План"></div></div>
     <div class="spacer"></div>
-    <div class="seg" id="strategies" role="group" aria-label="Стратегия"></div>
-    <div class="spacer"></div>
-    <button class="btn" id="uploadBtn" hidden>Свой сценарий</button>
-    <a class="btn" id="dlBtn" hidden download>Скачать v3</a>
-    <button class="btn icon" id="themeBtn" title="Тема" aria-label="Переключить тему">◐</button>
+    <a id="yanaBtn" hidden></a>
+    <button class="btn quiet" id="uploadBtn" hidden title="Загрузить свои файлы сценария"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 10.5V2.5M5 5.5l3-3 3 3M2.5 10v2.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V10"/></svg>Загрузить данные</button>
+    <a class="btn primary" id="dlBtn" hidden download title="Скачать расписание выбранного плана в JSON"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5v8M5 7.5l3 3 3-3M2.5 10v2.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V10"/></svg>Скачать план</a>
+    <button class="btn icon quiet" id="themeBtn" title="Светлая / тёмная тема" aria-label="Переключить тему"><svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 2a6 6 0 0 1 0 12z" fill="currentColor"/></svg></button>
   </header>
   <div class="main">
     <div class="stage">
       <div class="mapwrap" id="mapwrap">
         <svg id="map" aria-label="Карта сети"></svg>
         <div class="float kpis" id="kpis"></div>
-        <div class="float zoom">
-          <button id="zin" title="Приблизить">+</button><button id="zout" title="Отдалить">−</button><button id="zfit" title="Вся сеть" style="font-size:13px">⤢</button>
+        <div class="float zoom" role="toolbar" aria-label="Карта">
+          <button id="zin" title="Приблизить" aria-label="Приблизить"><svg width="16" height="16" viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg></button>
+          <button id="zout" title="Отдалить" aria-label="Отдалить"><svg width="16" height="16" viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 8h10"/></svg></button>
+          <button id="zfit" title="Показать всю сеть" aria-label="Показать всю сеть"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10"/></svg></button>
+          <hr>
+          <button id="legBtn" title="Обозначения" aria-label="Обозначения" aria-pressed="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 4h7.5M6 8h7.5M6 12h7.5"/><circle cx="3" cy="4" r=".9" fill="currentColor"/><circle cx="3" cy="8" r=".9" fill="currentColor"/><circle cx="3" cy="12" r=".9" fill="currentColor"/></svg></button>
         </div>
+        <div class="float legend" id="legend"></div>
         <div class="float attrib" id="attrib"></div>
         <div class="float tip" id="tip"></div>
         <div class="overlay" id="overlay"><div class="float box" style="position:static"><div class="spin"></div><div id="overlayText">Считаем…</div></div></div>
       </div>
-      <div class="legend" id="legend"></div>
-      <div class="timeline">
+            <div class="timeline">
         <button class="btn icon" id="play" title="Пуск / пауза" aria-label="Пуск">▶</button>
-        <div class="date num" id="date">—</div>
+        <button type="button" class="datepick" id="dateBtn" title="Выбрать дату" aria-haspopup="dialog" aria-expanded="false" aria-controls="cal"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="2.5" y="3.5" width="11" height="10" rx="1.5"/><path d="M2.5 6.5h11M5.5 2v3M10.5 2v3"/></svg><div class="date num" id="date">—</div></button>
+        <div class="cal" id="cal" role="dialog" aria-label="Выбор даты" hidden></div>
         <div class="track"><svg id="spark" preserveAspectRatio="none"></svg><div class="months" id="months"></div><input type="range" id="slider" min="0" max="100" step="1" value="0" aria-label="Момент времени"></div>
-        <select id="speed" class="btn" aria-label="Скорость"><option value="2">2 дня/с</option><option value="5" selected>5 дней/с</option><option value="12">12 дней/с</option></select>
+        <select id="speed" class="btn" aria-label="Скорость"><option value="1" selected>1 день/с</option><option value="2">2 дня/с</option><option value="5">5 дней/с</option><option value="12">12 дней/с</option></select>
       </div>
     </div>
     <aside class="side">
@@ -242,7 +300,7 @@ const pct = (a, b) => b ? Math.round(100 * a / b) : 0;
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
 const STATUS = {
   load: {ru: 'Погрузка', c: '--load'}, sail: {ru: 'Идёт с грузом', c: '--sail'}, unload: {ru: 'Выгрузка', c: '--unload'},
-  empty: {ru: 'Перегон порожним', c: '--empty'}, back: {ru: 'Возвращается порожним', c: '--empty'}, wait: {ru: 'Ждёт воды/окна', c: '--wait'}, idle: {ru: 'Стоит в порту', c: '--idle'}
+  empty: {ru: 'Перегон порожним', c: '--empty'}, back: {ru: 'Возвращается порожним', c: '--empty'}, wait: {ru: 'Ждёт воды/окна', c: '--wait'}, queue: {ru: 'В очереди к причалу', c: '--bad'}, idle: {ru: 'Стоит в порту', c: '--idle'}
 };
 const CT = {fuel: 'топливо', coal: 'уголь', general: 'генгруз', food: 'продовольствие', concentrate: 'концентрат'};
 const MONTHS = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
@@ -256,6 +314,7 @@ const ui = {fleetFilter: 'all', cargoFilter: 'all'};
 /* ---------- время ---------- */
 function t0() { return new Date(D.start); }
 function at(h) { return new Date(t0().getTime() + h * 3600e3); }
+function isoDay(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
 function dstr(h, withTime) {
   const d = at(h);
   const s = d.getDate() + ' ' + MONTHS[d.getMonth()];
@@ -287,6 +346,7 @@ function prepare() {
     const s = D.strategies[k];
     s._byVessel = {};
     for (const e of s.events) {
+      if (!STATUS[e[4]]) e[4] = 'wait';   // неизвестное состояние ядра — показываем как ожидание
       for (const v of [e[1], e[2]]) if (v) (s._byVessel[v] = s._byVessel[v] || []).push(e);
     }
     for (const v in s._byVessel) s._byVessel[v].sort((a, b) => a[7] - b[7]);
@@ -354,8 +414,13 @@ function buildMap() {
   fitBox = [Math.min(...xs) - pad, Math.min(...ys) - pad * 1.6, Math.max(...xs) - Math.min(...xs) + 2 * pad, Math.max(...ys) - Math.min(...ys) + pad * 2.6];
   want = fitBox.slice();
   const land = el('rect', {x: -1e5, y: -1e5, width: 2e5, height: 2e5, fill: 'var(--land)'}, map);
+  L.ctx = el('g', {}, map);
   L.base = el('g', {}, map);
-  if ((D.geo.land || []).length) {
+  L.veil = el('g', {'pointer-events': 'none'}, map);
+  if (CTX && (D.geo.land || []).length) {
+    land.setAttribute('fill', 'var(--sea)');
+    drawCtx();
+  } else if ((D.geo.land || []).length) {
     // фон — море, поверх — суша (полигоны Natural Earth, обрезанные по рамке региона)
     land.setAttribute('fill', 'var(--sea)');
     for (const poly of D.geo.land) el('path', {d: pathOf(poly) + 'Z', fill: 'var(--land)', stroke: 'none'}, L.base);
@@ -364,6 +429,7 @@ function buildMap() {
     land.setAttribute('fill', 'var(--land)');
   }
   for (const r of D.geo.rivers) {
+    if (CTX && !r.navigable) continue;
     el('path', {d: pathOf(r.xy), fill: 'none', stroke: r.navigable ? 'var(--river)' : 'var(--river-bg)', 'stroke-width': r.weight >= 3 ? 2.2 : r.weight == 2 ? 1.6 : 1, 'stroke-linejoin': 'round', 'vector-effect': 'non-scaling-stroke'}, L.base);
   }
   L.glabels = el('g', {}, map);
@@ -393,9 +459,71 @@ function buildMap() {
     p._t.textContent = p.id;
     g.addEventListener('mousemove', ev => showTip(ev, portTip(p)));
     g.addEventListener('mouseleave', hideTip);
-    g.addEventListener('click', () => { tab = 'cargo'; ui.cargoFilter = 'port:' + p.id; sel = null; renderSide(); });
+    g.addEventListener('click', () => { if (NET.on) { sel = {type: 'port', id: p.id}; renderSide(); return; } tab = 'cargo'; ui.cargoFilter = 'port:' + p.id; sel = null; renderSide(); });
   }
   applyView();
+}
+/* фон: суша и реки за пределами региона; всё дальше ~300 км от сети приглушено вуалью */
+let CTX = null;
+function drawCtx() {
+  if (!L.ctx || !CTX) return;
+  L.ctx.innerHTML = ''; L.veil.innerHTML = '';
+  for (const poly of CTX.land) el('path', {d: pathOf(poly) + 'Z', fill: 'var(--land)', stroke: 'none'}, L.ctx);
+  for (const poly of CTX.lakes) el('path', {d: pathOf(poly) + 'Z', fill: 'var(--sea)', stroke: 'var(--coast)', 'stroke-width': .8, 'vector-effect': 'non-scaling-stroke'}, L.ctx);
+  for (const c of CTX.coast) el('path', {d: pathOf(c), fill: 'none', stroke: 'var(--coast)', 'stroke-width': 1.1, 'vector-effect': 'non-scaling-stroke'}, L.ctx);
+  for (const r of CTX.rivers) el('path', {d: pathOf(r.xy), fill: 'none', stroke: 'var(--river-bg)', 'stroke-width': r.w > 1 ? 1.4 : .9, 'stroke-linejoin': 'round', 'vector-effect': 'non-scaling-stroke'}, L.ctx);
+  drawVeil();
+}
+/* Вуаль рисуется один раз в картинку: при перемещении браузер только сдвигает её.
+   Раньше это была SVG-маска из ~260 толстых линий, которая пересчитывалась на каждом кадре. */
+function drawVeil() {
+  if (!L.veil || !CTX || !fitBox) return;
+  L.veil.innerHTML = '';
+  const [fx, fy, fw, fh] = fitBox;
+  const m = 1.4 * Math.max(fw, fh * 2.2);          // запас под предельное отдаление и сдвиг
+  const B = [fx - m, fy - m, fw + 2 * m, fh + 2 * m];
+  const W = 1600, H = Math.round(W * B[3] / B[2]), k = W / B[2];
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const c = cv.getContext('2d');
+  c.fillStyle = css('--page'); c.globalAlpha = .62; c.fillRect(0, 0, W, H);
+  const lines = D.links.map(l => linkXY(l)).concat(D.geo.rivers.filter(r => r.navigable).map(r => r.xy))
+    .map(xy => xy.map(p => [(p[0] - B[0]) * k, (-p[1] - B[1]) * k]));
+  const step = document.createElement('canvas'); step.width = W; step.height = H;
+  const sc = step.getContext('2d');
+  sc.lineCap = sc.lineJoin = 'round'; sc.strokeStyle = '#000';
+  const span = Math.max(fw, fh), steps = 9;
+  c.globalCompositeOperation = 'destination-out';
+  for (let i = 0; i < steps; i++) {
+    // кольцо i: всё внутри него стирается на долю 1/(steps−i) — к центру вуаль убывает линейно до нуля
+    sc.clearRect(0, 0, W, H);
+    sc.lineWidth = span * (0.34 - 0.3 * i / (steps - 1)) * k;
+    sc.beginPath();
+    for (const xy of lines) xy.forEach((p, j) => j ? sc.lineTo(p[0], p[1]) : sc.moveTo(p[0], p[1]));
+    sc.stroke();
+    c.globalAlpha = i === steps - 1 ? 1 : 1 / (steps - i);
+    c.drawImage(step, 0, 0);
+  }
+  el('image', {href: cv.toDataURL('image/png'), x: B[0], y: B[1], width: B[2], height: B[3], preserveAspectRatio: 'none'}, L.veil);
+  // за пределами картинки — сплошная вуаль (рамка с дыркой), на случай очень широкого окна
+  const o = 1e5;
+  el('path', {d: `M${-o} ${-o}H${o}V${o}H${-o}Z M${B[0]} ${B[1]}V${B[1] + B[3]}H${B[0] + B[2]}V${B[1]}Z`, 'fill-rule': 'evenodd', fill: 'var(--page)', opacity: .62}, L.veil);
+}
+// цвет вуали берётся из темы — перерисовать при её смене
+new MutationObserver(() => drawVeil()).observe(document.documentElement, {attributes: true, attributeFilter: ['data-theme']});
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => drawVeil());
+fetch('/api/geo/context').then(r => r.ok ? r.json() : null).then(j => {
+  if (!j || !j.land) return;
+  CTX = j;
+  if (D && (D.geo.land || []).length) { L.base.innerHTML = ''; buildMap(); }
+}).catch(() => {});
+
+/* ограничение: отдалять не дальше полутора «всей сети», уводить центр не дальше её края */
+function clampView(v) {
+  if (!fitBox) return v;
+  const cx = v[0] + v[2] / 2, cy = v[1] + v[3] / 2;
+  const nx = Math.min(fitBox[0] + fitBox[2] * 1.15, Math.max(fitBox[0] - fitBox[2] * .15, cx));
+  const ny = Math.min(fitBox[1] + fitBox[3] * 1.15, Math.max(fitBox[1] - fitBox[3] * .15, cy));
+  return [nx - v[2] / 2, ny - v[3] / 2, v[2], v[3]];
 }
 function scale() { const r = map.getBoundingClientRect(); return view[2] / Math.max(1, r.width); }
 function applyView() {
@@ -610,8 +738,8 @@ function renderKpis() {
   $('#kpis').innerHTML = `
   <div class="kpi"><div class="l">Довезено в срок за сезон</div><div class="v num">${fmt(m.delivered_on_time_t)} <small>т · ${pct(m.delivered_on_time_t, m.demand_t)}%</small></div><div class="s">к ${dstr(T)}: ${fmt(now.on)} т</div></div>
   <div class="kpi"><div class="l">Не довезено</div><div class="v num" style="color:${m.undelivered_t > 0 ? 'var(--bad)' : 'var(--ok)'}">${fmt(m.undelivered_t)} <small>т</small></div><div class="s">из ${fmt(m.demand_t)} т спроса</div></div>
-  ${D._linear ? `<div class="kpi"><div class="l">Рейсов · составов</div><div class="v num">${m.completed_voyages} <small>· ${D.fleet.length}</small></div><div class="s">загрузка флота ${m.fleet_utilization != null ? Math.round(m.fleet_utilization * 100) + '%' : '—'}</div></div>` : `<div class="kpi"><div class="l">Рейсов · перегонов</div><div class="v num">${m.completed_voyages} <small>· ${m.repositioning_voyages}</small></div><div class="s">порожний ход ${fmt(m.empty_km)} км</div></div>`}
-  ${cost != null ? `<div class="kpi"><div class="l">Стоимость <span class="badge stub">демо</span></div><div class="v num">${moneyFmt(cost)}</div><div class="s">${fmt(cost / Math.max(1, m.delivered_total_t))} ${curSign()}/т</div></div>` : ''}`;
+  ${D._linear ? `<div class="kpi"><div class="l">Рейсов · составов</div><div class="v num">${m.completed_voyages} <small>· ${D.fleet.length}</small></div><div class="s">загрузка флота ${m.fleet_utilization != null ? Math.round(m.fleet_utilization * 100) + '%' : '—'}</div></div>` : `<div class="kpi"><div class="l">Рейсов</div><div class="v num">${m.completed_voyages} <small>из них ${m.repositioning_voyages} перегонов</small></div><div class="s">порожний ход ${fmt(m.empty_km)} км</div></div>`}
+  ${cost != null ? `<div class="kpi"><div class="l">Стоимость, условно</div><div class="v num">${moneyFmt(cost)}</div><div class="s">${fmt(cost / Math.max(1, m.delivered_total_t))} ${curSign()}/т</div></div>` : ''}`;
 }
 function renderSpark() {
   const svg = $('#spark'); const W = svg.clientWidth || 600, H = 28;
@@ -655,33 +783,46 @@ function setT(h) {
 /* ---------- боковая панель ---------- */
 const TABS = [['overview', 'Обзор'], ['fleet', 'Суда'], ['cargo', 'Заявки'], ['rivers', 'Реки'], ['finance', 'Финансы']];
 function renderTabs() {
-  $('#tabs').innerHTML = TABS.map(([k, n]) => {
+  const tabs = NET.on ? [...TABS, ['whatif', 'Что, если?']] : TABS;
+  if (!tabs.some(t => t[0] === tab)) tab = 'overview';
+  const html = tabs.map(([k, n]) => {
     const cnt = k === 'fleet' ? D.fleet.length : k === 'cargo' ? D.cargo.length : k === 'overview' && S().warnings.length ? '⚠' : '';
     return `<button role="tab" aria-selected="${tab === k}" data-t="${k}">${n}${cnt !== '' ? `<span class="cnt">${cnt}</span>` : ''}</button>`;
   }).join('');
-  for (const b of $('#tabs').children) b.onclick = () => { tab = b.dataset.t; if (sel && sel.type === 'vessel' && tab !== 'fleet') sel = null; renderSide(); renderMap(); };
+  // во время проигрывания панель перерисовывается каждый кадр: пересоздавать кнопки только при изменении,
+  // иначе кнопка меняется между нажатием и отпусканием и клик теряется
+  if (html === tabsHTML) return;
+  tabsHTML = html; $('#tabs').innerHTML = html;
+  for (const b of $('#tabs').children) b.onclick = () => { tab = b.dataset.t; if (sel && (sel.type === 'vessel' && tab !== 'fleet' || sel.type === 'port')) sel = null; renderSide(); renderMap(); };
 }
-let sideKey = '';
+let sideKey = '', tabsHTML = '', sideHeld = false;
+// пока кнопка мыши зажата в боковой панели, мягкую перерисовку (от шкалы времени) пропускаем, чтобы клик дошёл
+$('.side').addEventListener('pointerdown', () => { sideHeld = true; });
+window.addEventListener('pointerup', () => setTimeout(() => { sideHeld = false; }, 0));
+window.addEventListener('pointercancel', () => { sideHeld = false; });
 function renderSide(soft) {
+  if (soft && sideHeld) return;
   renderTabs();
   const pane = $('#pane');
   const key = tab + '|' + cur + '|' + JSON.stringify(sel) + '|' + ui.fleetFilter + '|' + ui.cargoFilter + '|' + (soft ? Math.floor(T / 12) : Math.random());
   if (soft && key === sideKey) return;
+  if (soft && tab === 'whatif') return;   // не сбрасывать форму изменения при движении шкалы
   sideKey = key;
   const top = pane.scrollTop;
-  pane.innerHTML = tab === 'overview' ? overviewHTML() : tab === 'fleet' ? fleetHTML() : tab === 'cargo' ? cargoHTML() : tab === 'rivers' ? riversHTML() : financeHTML();
+  pane.innerHTML = sel && sel.type === 'port' ? portCardHTML(sel.id) : tab === 'whatif' ? whatifHTML() : tab === 'overview' ? overviewHTML() : tab === 'fleet' ? fleetHTML() : tab === 'cargo' ? cargoHTML() : tab === 'rivers' ? riversHTML() : financeHTML();
   if (soft) pane.scrollTop = top;
-  bindSide();
+  bindSide(); bindContract();
 }
 function overviewHTML() {
   const s = S(), m = s.metrics, maxD = D._demand;
   const rc = s.reposition_comparison;
   let h = `<h3>Стратегии</h3><div class="cmp">` + D.order.map(k => {
     const q = D.strategies[k].metrics;
-    return `<div class="r ${k === cur ? 'on' : ''}" data-s="${k}" title="${esc(D.strategies[k].hint)}"><div class="name">${esc(D.strategies[k].label)}${k === D.best ? ' <span style="color:var(--ok)">★</span>' : ''}</div>
+    return `<div class="r ${k === cur ? 'on' : ''}" data-s="${k}" title="${esc(D.strategies[k].hint)}"><div class="name">${esc(D.strategies[k].label)}${k === D.best ? ' <span class="badge" style="color:var(--accent)">лучший</span>' : ''}</div>
     <div class="bar"><i class="tot" style="width:${100 * q.delivered_total_t / maxD}%"></i><i style="width:${100 * q.delivered_on_time_t / maxD}%"></i></div><div class="val num">${pct(q.delivered_on_time_t, maxD)}%</div></div>`;
-  }).join('') + `</div><p class="note" style="margin:6px 0 0">Доля спроса, довезённая в срок. ★ — лучшая по целям ядра: тонны в срок, тонны всего, меньше порожнего хода, меньше рейсов.</p>`;
+  }).join('') + `</div><p class="note" style="margin:6px 0 0">Доля спроса, довезённая в срок. «Лучший» — по целям расчёта: тонны в срок, тонны всего, меньше порожнего хода, меньше рейсов.</p>`;
   if (D.ml) h += mlHTML();
+  h += compareHTML();
   if (D._linear) h += `<h3>Как считает</h3><div class="callout">Одна река, линейная матмодель: состав грузится в ${esc(D.ports[0].id)}, идёт вверх до ${esc(D.ports[D.ports.length - 1].id)}, выгружается и возвращается порожним. Расписание каждой стратегии проверено по контракту 1.0.0.</div>`;
   if (rc && rc.selected_repositioning) {
     h += `<h3>Зачем перегон</h3><div class="callout good">Без перегона судно остаётся там, где выгрузилось, и ${fmt(rc.baseline_metrics.delivered_on_time_t)} т успевают в срок. С перегоном порожние суда идут к заявкам в других портах и даже на другие реки: <b>+${fmt(rc.delta_on_time_t)} т в срок</b> ценой ${fmt(m.empty_km)} км порожнего хода.</div>`;
@@ -697,7 +838,7 @@ function overviewHTML() {
     h += `<h3>Требует проверки</h3><div class="callout warn"><b>Речные суда на морском участке: ${vs.map(esc).join(', ')}.</b> Ядро 3.0.0 не ограничивает класс судна на ребре, поэтому план формально допустим, но так ходить нельзя. Кандидат в доработку ядра: допуск классов «М-СП» / «О-ПР» на морские рёбра.</div>`;
   }
   h += `<h3>Проверка расписания</h3><div class="kv"><dt>Аудит ядра</dt><dd><span class="badge ${s.audit.status === 'PASSED' ? 'ok' : 'bad'}">${esc(s.audit.status)}</span></dd>
-  <dt>Поиск</dt><dd>${s.termination_reason === 'SEARCH_LIMIT' ? 'остановлен по лимиту' : 'завершён'}</dd>
+  <dt>Поиск</dt><dd>${s.termination_reason === 'SEARCH_LIMIT' ? 'остановлен по лимиту поиска' : s.termination_reason === 'TIME_LIMIT' ? 'остановлен по бюджету времени' : 'завершён'}</dd>
   ${s.seconds != null ? `<dt>Время расчёта</dt><dd class="num">${fmt(s.seconds, 1)} с</dd>` : ''}
   <dt>Модель</dt><dd>${D._linear ? 'матмодель ' : 'сетевое ядро '}${esc(D.core.algorithm_version)} · контракт ${esc(D.core.schema_version)}</dd>
   <dt>Данные</dt><dd>${D.data_status === 'SYNTHETIC' ? 'синтетические' : esc(D.data_status)}</dd></div>`;
@@ -760,7 +901,7 @@ function vesselCard(id) {
   <div class="card"><div class="grid2"><div class="mini"><div class="l">Занятость за сезон</div><div class="v num">${Math.round(busy * 100)}%</div></div><div class="mini"><div class="l">Конец сезона</div><div class="v" style="font-size:13px">${esc(fin ? fin.current_port : '—')}</div></div></div>
   <h3>Рейсы (${voy.length})</h3>`;
   if (!voy.length) h += '<p class="note">В этой стратегии не задействован.</p>';
-  else h += `<table class="t"><tr><th>Рейс</th><th>Груз</th><th class="n">т</th><th class="n">${D._linear ? '' : 'порожн.'}</th></tr>` + voy.map(v => `<tr${s._warnVoy.has(v.voyage_id) ? ' style="color:var(--bad)"' : ''}><td>${esc(v.origin_port)} → ${esc(v.destination_port)}<div class="note">${D._linear ? '' : f.kind === 'tug' ? 'баржа ' + esc(v.barge_id) : 'буксир ' + esc(v.tug_id)}</div></td><td>${cargoRu(v.cargo_type)}${v.on_time ? '' : ' <span class="badge bad">поздно</span>'}</td><td class="n num">${fmt(v.volume_t)}</td><td class="n num">${D._linear ? '' : v.empty_km ? fmt(v.empty_km) + ' км' : '—'}</td></tr>`).join('') + '</table>';
+  else h += `<table class="t"><tr><th>Рейс</th><th>Груз</th><th class="n">т</th><th class="n">${D._linear ? '' : 'порожн.'}</th></tr>` + voy.map(v => `<tr${s._warnVoy.has(v.voyage_id) ? ' style="color:var(--bad)"' : ''}${NET.on ? ` class="xv" data-xv="${v.voyage_id}" title="Подробности рейса"` : ''}><td>${esc(v.origin_port)} → ${esc(v.destination_port)}<div class="note">${D._linear ? '' : f.kind === 'tug' ? 'баржа ' + esc(v.barge_id) : 'буксир ' + esc(v.tug_id)}</div></td><td>${cargoRu(v.cargo_type)}${v.on_time ? '' : ' <span class="badge bad">поздно</span>'}</td><td class="n num">${fmt(v.volume_t)}</td><td class="n num">${D._linear ? '' : v.empty_km ? fmt(v.empty_km) + ' км' : '—'}</td></tr>${NET.on && ui.explainVoy === v.voyage_id ? `<tr><td colspan="4">${explainHTML(v.voyage_id)}</td></tr>` : ''}`).join('') + '</table>' + (NET.on ? '<p class="note">Клик по рейсу — маршрут, проверки ядра и стоимость.</p>' : '');
   return h + '</div>';
 }
 function cargoHTML() {
@@ -771,7 +912,8 @@ function cargoHTML() {
   if (f.startsWith('port:')) { const p = f.slice(5); rows = rows.filter(c => c.origin_port === p || c.destination_port === p); }
   else if (f !== 'all') rows = rows.filter(c => c.cargo_type === f);
   const types = [...new Set(D.cargo.map(c => c.cargo_type))];
-  let h = `<div class="filters"><button class="chip" data-cf="all" aria-pressed="${f === 'all'}">Все</button>${types.map(t => `<button class="chip" data-cf="${t}" aria-pressed="${f === t}">${cargoRu(t)}</button>`).join('')}${f.startsWith('port:') ? `<button class="chip" data-cf="${esc(f)}" aria-pressed="true">${esc(f.slice(5))} ✕</button>` : ''}</div><div class="list">`;
+  const dg = diagFor(cur), why = dg ? Object.fromEntries(dg.cargo.map(x => [x.cargo_id, x])) : {};
+  let h = queuesHTML(dg) + `<div class="filters"><button class="chip" data-cf="all" aria-pressed="${f === 'all'}">Все</button>${types.map(t => `<button class="chip" data-cf="${t}" aria-pressed="${f === t}">${cargoRu(t)}</button>`).join('')}${f.startsWith('port:') ? `<button class="chip" data-cf="${esc(f)}" aria-pressed="true">${esc(f.slice(5))} ✕</button>` : ''}</div><div class="list">`;
   for (const c of rows) {
     const vs = s.voyages.filter(v => v.cargo_id === c.cargo_id);
     const done = vs.filter(v => delivEnd(v) <= T).reduce((a, v) => a + v.volume_t, 0);
@@ -781,10 +923,10 @@ function cargoHTML() {
     const on = sel && sel.type === 'cargo' && sel.id === c.cargo_id;
     h += `<div class="item ${on ? 'on' : ''}" data-c="${esc(c.cargo_id)}"><svg width="18" height="18" viewBox="0 0 18 18"><circle cx="9" cy="9" r="6" fill="none" stroke="${plan < c.volume_t ? 'var(--bad)' : 'var(--ok)'}" stroke-width="2"/>${c.critical_category ? '<circle cx="9" cy="9" r="2.4" fill="var(--bad)"/>' : ''}</svg>
     <div><div class="t">${esc(c.origin_port)} → ${esc(c.destination_port)}</div><div class="d">${cargoRu(c.cargo_type)}${c.critical_category ? ' · критичный' : ''} · срок ${dstr(c.due_h)}</div>
-    <div class="prog"><i style="width:${100 * done / c.volume_t}%;background:var(--ok)"></i><i style="width:${100 * Math.max(0, plan - done) / c.volume_t}%;background:color-mix(in srgb,var(--ok) 30%,transparent)"></i></div></div>
+    <div class="prog"><i style="width:${100 * done / c.volume_t}%;background:var(--ok)"></i><i style="width:${100 * Math.max(0, plan - done) / c.volume_t}%;background:color-mix(in srgb,var(--ok) 30%,transparent)"></i></div>${why[c.cargo_id] ? evidenceHTML(why[c.cargo_id]) : ''}</div>
     <div class="r num">${fmt(done)} / ${fmt(c.volume_t)} т<div class="note" style="color:${plan < c.volume_t ? 'var(--bad)' : late ? 'var(--limit)' : 'var(--muted)'}">${plan < c.volume_t ? 'не довезут ' + fmt(c.volume_t - plan) : onTime < plan ? 'часть поздно' : 'в срок'}</div></div></div>`;
   }
-  return h + `</div><p class="note">Светлая полоса — запланировано, тёмная — уже выгружено к ${dstr(T)}. Клик по заявке — её путь на карте.</p>`;
+  return h + `</div><p class="note">Светлая полоса — запланировано, тёмная — уже выгружено к ${dstr(T)}. Клик по заявке — её путь на карте.${NET.on ? ' Причины недовоза и опоздания — от ядра: «доказано» — проверено по графу и флоту, «наблюдение» — видно в плане, «не установлено» — доказательства нет.' : ''}</p>`;
 }
 function riversHTML() {
   const groups = {};
@@ -831,8 +973,7 @@ function financeHTML() {
   const s = S();
   if (!s.financial) return `<div class="callout">Тарифы не заданы, денежная оценка не считалась. Ядро выдаёт натуральные показатели для финансового расчёта: км в грузу и порожнём, часы работы, простоя и ожидания.</div>` + finInputs(s);
   const f = s.financial, tot = Number(f.total_cost), m = s.metrics;
-  const NAMES = {loaded_km: 'Ход с грузом', empty_km: 'Порожний ход', loading_hour: 'Погрузка', unloading_hour: 'Выгрузка', waiting_hour: 'Ожидание', tug_busy_hour: 'Работа буксиров', barge_busy_hour: 'Работа барж',
-    loaded_fuel: 'Топливо с грузом', empty_fuel: 'Топливо порожнём', tug_operation: 'Работа буксиров', barge_operation: 'Работа барж', loading: 'Погрузка', unloading: 'Выгрузка', port_call: 'Портовые сборы', waiting: 'Ожидание', repositioning: 'Перегон', alternative_delivery: 'Недовоз: альтернативная доставка'};
+  const NAMES = COST_NAMES;
   const items = Object.entries(f.cost_by_unit).map(([k, v]) => [k, Number(v)]).sort((a, b) => b[1] - a[1]);
   const mx = Math.max(...items.map(i => i[1]), 1);
   let h = `<div class="callout" style="margin-bottom:10px"><span class="badge stub">заглушка</span> Ставки условные (${esc(f.source_status)}). Когда появится финансовое ядро, сюда придут его ставки и статьи; расчёт и формат не поменяются.</div>
@@ -880,16 +1021,261 @@ function zoomTo(links) {
   applyView();
 }
 
-/* ---------- легенда ---------- */
-let legendOpen = true;
-function renderLegend() {
-  $('#legend').innerHTML = legendOpen ? `
-  <div class="row"><b>Участок:</b><span><i class="ln" style="background:var(--ok)"></i>полная загрузка</span><span><i class="ln" style="background:var(--limit)"></i>с недогрузом</span><span><i class="ln" style="background:repeating-linear-gradient(90deg,var(--closed) 0 4px,transparent 4px 7px)"></i>закрыт</span><span><i class="ln" style="background:repeating-linear-gradient(90deg,var(--seaway) 0 7px,transparent 7px 10px)"></i>море</span></div>
-  <div class="row"><b>Подложка:</b><span><i class="ln" style="height:7px;background:color-mix(in srgb,var(--accent) 35%,transparent)"></i>чем толще, тем больше тонн провезено</span></div>
-  <div class="row"><b>${D && D._linear ? 'Состав' : 'Буксир'}:</b>${Object.entries(STATUS).filter(([k]) => !D || D._states.has(k)).map(([k, s]) => `<span><i style="width:9px;height:9px;border-radius:${k === 'sail' || k === 'empty' || k === 'back' ? '50%' : '2px'};background:${k === 'empty' || k === 'back' || k === 'idle' ? 'transparent' : `var(${s.c})`};border:1.6px solid var(${s.c})"></i>${s.ru.toLowerCase()}</span>`).join('')}</div>
-  <button class="toggle" id="legT" title="Скрыть">✕</button>` : `<button class="toggle" id="legT">Показать легенду</button>`;
-  $('#legT').onclick = () => { legendOpen = !legendOpen; renderLegend(); };
+/* ---------- ручки контракта ядра v3: «Что, если?», сравнение, причины, рейс, порт ---------- */
+const NET = {on: false, scenario: null, presets: [], diag: {}, explain: {}, cmp: {}, whatif: [], port: {}, portLoad: {}, busy: false};
+function netReset() {
+  Object.assign(NET, {on: !!(jobId && D && !D._linear), scenario: null, presets: [], diag: {}, explain: {}, cmp: {}, whatif: [], port: {}, portLoad: {}, busy: false});
+  if (!NET.on) return;
+  const id = jobId;
+  Promise.all([api(`/api/network/jobs/${id}/scenario`), api(`/api/network/jobs/${id}/presets`)])
+    .then(([sc, pr]) => { if (id !== jobId) return; NET.scenario = sc; NET.presets = pr; if (tab === 'whatif') renderSide(); })
+    .catch(() => {});
 }
+const J = p => `/api/network/jobs/${jobId}/${p}`;
+function qs(o) { return new URLSearchParams(o).toString(); }
+function isoAt(h) {
+  const d = at(Math.max(0, Math.min(D.horizon_h, h))), p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+function hOf(iso) { return (new Date(iso) - t0()) / 3600e3; }
+function dIso(iso) { return iso ? dstr(hOf(iso), true) : '—'; }
+function baseVariant() { return cur && cur.startsWith('NETWORK_') ? cur : D.best; }
+const COST_NAMES = {loaded_km: 'Ход с грузом', empty_km: 'Порожний ход', loading_hour: 'Погрузка', unloading_hour: 'Выгрузка', waiting_hour: 'Ожидание', tug_busy_hour: 'Работа буксиров', barge_busy_hour: 'Работа барж',
+  loaded_fuel: 'Топливо с грузом', empty_fuel: 'Топливо порожнём', tug_operation: 'Работа буксиров', barge_operation: 'Работа барж', loading: 'Погрузка', unloading: 'Выгрузка', port_call: 'Портовые сборы', waiting: 'Ожидание', repositioning: 'Перегон', alternative_delivery: 'Недовоз: альтернативная доставка'};
+const V3_STATE = {IDLE: 'стоит', UNAVAILABLE: 'недоступно', WAITING: 'ждёт', PORT_QUEUE: 'в очереди к причалу', LOADING: 'погрузка', UNLOADING: 'выгрузка', EMPTY_TRANSIT: 'идёт порожним', LOADED_TRANSIT: 'идёт с грузом'};
+const BERTH = {OPEN: ['свободен', 'ok'], OCCUPIED: ['занят', 'bad'], CLOSED: ['закрыт', '']};
+const EVIDENCE = {
+  NO_DIRECTED_PATH: 'нет пути по направлениям участков', NO_COMPATIBLE_PAIR: 'нет совместимой пары буксир + баржа для этого груза',
+  NO_ADMITTED_PATH: 'нет пути с допуском судов на морские участки', NO_PATH_WITH_NAVIGATION_WINDOWS: 'нет пути в окна навигации',
+  READY_AFTER_SEASON: 'груз готов после конца сезона', EXPIRED_BEFORE_DISPATCH: 'срок годности истёк до отправки',
+  LATE_UNLOADING: 'выгрузка позже срока', EXPIRED_BY_UNLOADING: 'срок годности истёк к выгрузке',
+  RESIDUAL_WITHOUT_PROVEN_CAUSE: 'остаток без доказанной причины: не хватило флота или времени в найденном плане'};
+const EV_KIND = {PROVEN: ['доказано', 'bad'], OBSERVED: ['наблюдение', 'stub'], UNDETERMINED: ['не установлено', '']};
+const CONSTRAINTS = {resource_availability: 'суда доступны в эти даты', cargo_compatibility: 'груз совместим с баржей',
+  draft_and_navigation_windows: 'осадка и окна навигации', marine_admission_if_applicable: 'морской допуск, если путь идёт морем',
+  berth_reservations_if_modelled: 'брони причалов, если они моделируются'};
+// метрика: подпись, направление (+1 — больше лучше, −1 — меньше лучше, 0 — нейтрально), формат
+const DELTA = [['delivered_on_time_t', 'В срок', 1, 't'], ['delivered_total_t', 'Довезено всего', 1, 't'], ['critical_on_time_t', 'Критичные в срок', 1, 't'],
+  ['undelivered_t', 'Не довезено', -1, 't'], ['social_deficit_t', 'Дефицит соцминимумов', -1, 't'], ['satisfied_requirements', 'Выполнено минимумов', 1, 'n'],
+  ['empty_km', 'Порожний ход', -1, 'km'], ['completed_voyages', 'Рейсов', 0, 'n'], ['resource_busy_hours', 'Занятость флота', 0, 'h'],
+  ['port_waiting_seconds', 'Ожидание в портах', -1, 's'], ['cost', 'Стоимость', -1, 'money'], ['cost_per_t_on_time', 'Цена тонны в срок', -1, 'money']];
+function deltaHTML(d) {
+  const rows = DELTA.map(([k, name, dir, u]) => {
+    let v = d[k];
+    if (v == null) return k.startsWith('cost') ? `<tr><td>${name}</td><td class="n note">нет: тарифы не сопоставимы</td></tr>` : '';
+    v = Number(v); if (u === 's') v /= 3600;
+    const zero = Math.abs(v) < 1e-9, good = dir * v > 0, bad = dir * v < 0;
+    const unit = {t: ' т', km: ' км', h: ' ч', s: ' ч', n: '', money: ''}[u];
+    const txt = zero ? '0' : (v > 0 ? '+' : '−') + (u === 'money' ? moneyFmt(Math.abs(v)) : fmt(Math.abs(v), u === 'h' || u === 's' ? 1 : 0) + unit);
+    return `<tr><td>${name}</td><td class="n num" style="color:${zero ? 'var(--muted)' : good ? 'var(--ok)' : bad ? 'var(--bad)' : 'var(--text)'}">${txt}</td></tr>`;
+  }).join('');
+  return `<table class="t">${rows}</table>`;
+}
+function edgeName(id) { const e = NET.scenario && NET.scenario.edges.find(x => x.edge_id === id); return e ? `${e.origin_port} → ${e.destination_port}` : id; }
+function changeRu(ch) {
+  const tph = v => typeof v === 'object' ? Object.entries(v).map(([k, x]) => `${cargoRu(k)} ${fmt(x)}`).join(', ') + ' т/ч' : fmt(v) + ' т/ч';
+  switch (ch.kind) {
+    case 'marine_reposition': return ch.enabled ? 'Разрешить порожний перегон морем' : 'Запретить порожний перегон морем';
+    case 'unlimited_port': return `Снять ограничение причалов: ${ch.port}`;
+    case 'add_berth': return `Добавить причал ${ch.berth.berth_id} в ${ch.port} (${tph(ch.berth.handling_tph)})`;
+    case 'close_berth': return `Закрыть причал ${ch.berth_id} в ${ch.port}`;
+    case 'handling_tph': return `Причал ${ch.berth_id} в ${ch.port}: обработка ${tph(ch.value)}`;
+    case 'close_edge': return `Закрыть участок ${edgeName(ch.edge_id)}`;
+    case 'cargo': return `Заявка ${ch.cargo_id}:` + (ch.volume_t != null ? ` объём ${fmt(ch.volume_t)} т` : '') + (ch.due_at ? ` срок ${dIso(ch.due_at)}` : '');
+    case 'move_vessel': return `Перевести ${ch.vessel_id} в ${ch.port} к началу сезона`;
+    case 'remove_vessel': return `Убрать судно ${ch.vessel_id}`;
+    case 'add_vessel': return `Добавить судно ${ch.vessel && ch.vessel.vessel_id}`;
+    default: return JSON.stringify(ch);
+  }
+}
+
+/* сравнение двух планов задания (GET compare) */
+function compareHTML() {
+  if (!NET.on || D.order.length < 2) return '';
+  const a = ui.cmpFrom && D.strategies[ui.cmpFrom] ? ui.cmpFrom : (D.order.find(k => k !== cur) || D.order[0]);
+  const b = ui.cmpTo && D.strategies[ui.cmpTo] ? ui.cmpTo : cur;
+  const key = a + '>' + b, d = NET.cmp[key];
+  if (d === undefined && a !== b) { NET.cmp[key] = null; api(J('compare?' + qs({from: a, to: b}))).then(r => { NET.cmp[key] = r; renderSide(true); }).catch(e => { NET.cmp[key] = {error: e.message}; renderSide(true); }); }
+  const opt = sel => D.order.map(k => `<option value="${esc(k)}"${k === sel ? ' selected' : ''}>${esc(D.strategies[k].label)}</option>`).join('');
+  return `<h3>Сравнить планы</h3><div class="filters"><select class="btn" data-cmp="from" aria-label="Что сравнить">${opt(a)}</select><span class="note" style="align-self:center">→</span><select class="btn" data-cmp="to" aria-label="С чем сравнить">${opt(b)}</select></div>
+  ${a === b ? '<p class="note">Выберите разные планы.</p>' : !d ? '<p class="note">Считаем разницу…</p>' : d.error ? `<div class="callout warn">${esc(d.error)}</div>` : deltaHTML(d) + `<p class="note">Разница «${esc(D.strategies[b].label)}» минус «${esc(D.strategies[a].label)}»; зелёным — лучше.</p>`}`;
+}
+
+/* вкладка «Что, если?» (POST what-if) */
+function wiFields(k) {
+  const sc = NET.scenario, opt = (arr, f, l) => arr.map(x => `<option value="${esc(f(x))}">${esc(l(x))}</option>`).join('');
+  const ports = sc.ports, berthPorts = Object.keys(sc.port_operations || {});
+  const vessels = [...sc.tugs.map(v => ({...v, k: 'буксир'})), ...sc.barges.map(v => ({...v, k: 'баржа'}))];
+  const berths = berthPorts.flatMap(p => sc.port_operations[p].berths.map(b => ({p, b: b.berth_id})));
+  const row = (label, input) => `<label class="wi"><span>${label}</span>${input}</label>`;
+  switch (k) {
+    case 'marine_reposition': return row('Перегон морем', `<select class="btn" name="enabled"><option value="false">запретить</option><option value="true">разрешить</option></select>`);
+    case 'close_edge': return row('Участок', `<select class="btn" name="edge_id">${opt(sc.edges, e => e.edge_id, e => `${e.origin_port} → ${e.destination_port} · ${fmt(e.distance_km)} км`)}</select>`);
+    case 'cargo': {
+      const c = sc.cargo.find(x => x.cargo_id === ui.wiCargo) || sc.cargo[0];
+      return row('Заявка', `<select class="btn" name="cargo_id" data-wicargo>${sc.cargo.map(x => `<option value="${esc(x.cargo_id)}"${x === c ? ' selected' : ''}>${esc(x.cargo_id)}: ${esc(x.origin_port)} → ${esc(x.destination_port)}, ${fmt(x.volume_t)} т</option>`).join('')}</select>`)
+        + row('Объём, т', `<input class="btn" type="number" min="0" step="0.001" name="volume_t" value="${c.volume_t}">`)
+        + row('Срок', `<input class="btn" type="datetime-local" name="due_at" value="${esc(c.due_at.slice(0, 16))}">`);
+    }
+    case 'move_vessel': return row('Судно', `<select class="btn" name="vessel_id">${opt(vessels, v => v.vessel_id, v => `${v.vessel_id} · ${v.k}, сейчас ${v.current_port}`)}</select>`) + row('Порт', `<select class="btn" name="port">${opt(ports, p => p, p => p)}</select>`);
+    case 'remove_vessel': return row('Судно', `<select class="btn" name="vessel_id">${opt(vessels, v => v.vessel_id, v => `${v.vessel_id} · ${v.k}`)}</select>`);
+    case 'unlimited_port': return row('Порт', `<select class="btn" name="port">${opt(berthPorts, p => p, p => p)}</select>`);
+    case 'close_berth': return row('Причал', `<select class="btn" name="berth">${opt(berths, x => x.p + '|' + x.b, x => `${x.b} · ${x.p}`)}</select>`);
+    case 'handling_tph': return row('Причал', `<select class="btn" name="berth">${opt(berths, x => x.p + '|' + x.b, x => `${x.b} · ${x.p}`)}</select>`) + row('Обработка, т/ч', `<input class="btn" type="number" min="1" step="1" name="value" value="150">`);
+    case 'add_berth': return row('Порт', `<select class="btn" name="port">${opt(berthPorts, p => p, p => p)}</select>`) + row('Номер причала', `<input class="btn" name="berth_id" value="NEW-1" maxlength="40">`) + row('Обработка, т/ч', `<input class="btn" type="number" min="1" step="1" name="tph" value="100">`);
+    default: return `<label class="wi wide"><span>Изменение в формате контракта</span><textarea class="btn" name="json" rows="5" spellcheck="false">{"kind": "close_edge", "edge_id": "${esc(sc.edges[0].edge_id)}"}</textarea></label>`;
+  }
+}
+function wiRead(k, f) {
+  const v = n => f.querySelector(`[name="${n}"]`).value;
+  switch (k) {
+    case 'marine_reposition': return {kind: k, enabled: v('enabled') === 'true'};
+    case 'close_edge': return {kind: k, edge_id: v('edge_id')};
+    case 'cargo': return {kind: k, cargo_id: v('cargo_id'), volume_t: Number(v('volume_t')), due_at: v('due_at').length === 16 ? v('due_at') + ':00' : v('due_at')};
+    case 'move_vessel': return {kind: k, vessel_id: v('vessel_id'), port: v('port')};
+    case 'remove_vessel': return {kind: k, vessel_id: v('vessel_id')};
+    case 'unlimited_port': return {kind: k, port: v('port')};
+    case 'close_berth': { const [port, berth_id] = v('berth').split('|'); return {kind: k, port, berth_id}; }
+    case 'handling_tph': { const [port, berth_id] = v('berth').split('|'); return {kind: k, port, berth_id, value: Number(v('value'))}; }
+    case 'add_berth': return {kind: k, port: v('port'), berth: {berth_id: v('berth_id').trim(), operations: ['LOADING', 'UNLOADING'], handling_tph: Number(v('tph')), initial_occupancy: [], source: 'Изменение пользователя в интерфейсе', data_status: 'SYNTHETIC'}};
+    default: return JSON.parse(v('json'));
+  }
+}
+function whatifHTML() {
+  if (!NET.scenario) return '<p class="note">Загружаем сценарий…</p>';
+  const hasBerths = Object.keys(NET.scenario.port_operations || {}).length > 0;
+  const kinds = [['close_edge', 'Закрыть участок'], ['cargo', 'Изменить заявку'], ['move_vessel', 'Перевести судно'], ['remove_vessel', 'Убрать судно'], ['marine_reposition', 'Перегон морем'],
+    ...(hasBerths ? [['add_berth', 'Добавить причал'], ['close_berth', 'Закрыть причал'], ['handling_tph', 'Скорость причала'], ['unlimited_port', 'Снять ограничение порта']] : []), ['json', 'Своё (JSON)']];
+  const k = kinds.some(x => x[0] === ui.wiKind) ? ui.wiKind : kinds[0][0];
+  const base = baseVariant();
+  let h = `<div class="callout" style="margin-bottom:10px">Одно изменение сценария — и ядро пересчитывает план заново относительно «${esc(D.strategies[base].label)}». Каждый новый план проходит аудит; исходный расчёт не меняется.</div>`;
+  if (NET.presets.length) h += `<h3>Готовые изменения</h3><div class="list">${NET.presets.map((p, i) => `<div class="item wp" data-wp="${i}"><div><div class="t">${esc(changeRu(p))}</div></div><div class="r"><span class="btn">Посчитать</span></div></div>`).join('')}</div>`;
+  h += `<h3>Своё изменение</h3><div class="card"><div class="filters">${kinds.map(([v, n]) => `<button class="chip" data-wk="${v}" aria-pressed="${v === k}">${n}</button>`).join('')}</div>
+  <form id="wiForm" class="wiform" data-kind="${k}">${wiFields(k)}<button class="btn" type="submit"${NET.busy ? ' disabled' : ''}>${NET.busy ? 'Считаем…' : 'Посчитать'}</button></form></div>`;
+  if (NET.whatif.length) h += `<h3>Результаты</h3>` + NET.whatif.slice().reverse().map(w => {
+    if (w.error) return `<div class="card"><b>${esc(changeRu(w.change))}</b><div class="callout warn" style="margin-top:6px">${esc(w.error)}</div></div>`;
+    const a = w.report.alternatives[0], shown = !!D.strategies[w.report.variant];
+    const unmet = a.explanation.unmet_requirements;
+    return `<div class="card"><div class="hd"><div><b>${esc(changeRu(a.change))}</b><div class="note">${esc(w.report.variant)} · от «${esc(D.strategies[w.report.base]?.label || w.report.base)}»</div></div><span class="spacer"></span><span class="badge ${a.improved ? 'ok' : 'bad'}">${a.improved ? 'лучше' : 'не лучше'}</span></div>
+    ${deltaHTML(a.delta)}${unmet.length ? `<p class="note" style="color:var(--bad)">Не выполнены минимумы: ${unmet.map(esc).join(', ')}</p>` : ''}
+    <div style="margin-top:8px"><button class="btn" data-wshow="${esc(w.report.variant)}">${cur === w.report.variant ? 'Открыт на карте' : shown ? 'Открыть на карте' : 'Показать на карте'}</button></div></div>`;
+  }).join('');
+  return h;
+}
+async function runWhatIf(body, change) {
+  if (NET.busy) return;
+  NET.busy = true; busy(true, 'Пересчитываем изменение…'); renderSide();
+  const id = jobId;
+  try {
+    const r = await api(J('what-if'), {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({...body, base: baseVariant()})});
+    if (id !== jobId) return;
+    NET.whatif.push({change: r.alternatives[0].change, report: r});
+    addVariant(r.variant, r.view);
+  } catch (e) { if (id === jobId) NET.whatif.push({change, error: e.message}); }
+  finally { NET.busy = false; busy(false); if (id === jobId) renderSide(); }
+}
+function addVariant(key, view) {
+  if (!view || D.strategies[key]) return;
+  for (const f of view.extra_fleet || []) if (!fleetById(f.vessel_id)) D.fleet.push(f);
+  D.strategies[key] = view; D.order.push(key);
+  prepare(); renderTop(); setStrategy(cur);
+}
+
+/* причины недовоза (GET diagnose) */
+function diagFor(k) {
+  if (!NET.on) return null;
+  if (NET.diag[k] === undefined) { NET.diag[k] = null; api(J('diagnose?' + qs({variant: k}))).then(r => { NET.diag[k] = r; if (tab === 'cargo') renderSide(true); }).catch(() => {}); }
+  return NET.diag[k];
+}
+function evidenceHTML(c) {
+  return c.evidence.map(e => `<div class="ev"><span class="badge ${EV_KIND[e.kind]?.[1] || ''}">${EV_KIND[e.kind]?.[0] || esc(e.kind)}</span> ${esc(EVIDENCE[e.code] || e.code)}${e.late_t ? `, ${fmt(e.late_t)} т` : ''}${e.expired_t ? `, ${fmt(e.expired_t)} т` : ''}</div>`).join('');
+}
+function queuesHTML(d) {
+  if (!d || !d.queues.length) return '';
+  return `<div class="callout" style="margin-bottom:8px">Очереди к причалам в этом плане: ${d.queues.map(q => `${esc(q.port)} ${fmt(q.seconds / 3600, 1)} ч`).join(', ')}. Это наблюдение, а не доказанная причина недовоза: влияние очереди видно только сравнением сценариев (вкладка «Что, если?»).</div>`;
+}
+
+/* рейс (GET explain) */
+function explainHTML(vid) {
+  const key = cur + '|' + vid, x = NET.explain[key];
+  if (x === undefined) { NET.explain[key] = null; api(J('explain?' + qs({voyage: vid, variant: cur}))).then(r => { NET.explain[key] = r; renderSide(true); }).catch(e => { NET.explain[key] = {error: e.message}; renderSide(true); }); }
+  if (!x) return '<p class="note">Загружаем рейс…</p>';
+  if (x.error) return `<div class="callout warn">${esc(x.error)}</div>`;
+  const legs = (arr, label) => arr.length ? `<dt>${label}</dt><dd>${arr.map(l => esc(edgeName(l.edge_id))).join('<br>')}</dd>` : '';
+  const items = x.cost ? Object.entries(x.cost.cost_by_item).filter(([, v]) => Number(v)).sort((a, b) => b[1] - a[1]) : [];
+  return `<dl class="kv"><dt>Состав</dt><dd>${esc(x.tug_id)} + ${esc(x.barge_id)}</dd><dt>Выход из</dt><dd>${esc(x.departure_port)}</dd>
+  ${legs(x.empty, 'Порожним')}<dt>Погрузка</dt><dd>${esc(x.pickup)}</dd>${legs(x.loaded, 'С грузом')}
+  <dt>Выгрузка до</dt><dd>${dIso(x.unloading_end)}</dd><dt>Срок заявки</dt><dd>${dIso(x.due_at)} ${x.on_time ? '<span class="badge ok">в срок</span>' : '<span class="badge bad">поздно</span>'}</dd>
+  <dt>Аудит</dt><dd><span class="badge ${x.audit === 'PASSED' ? 'ok' : 'bad'}">${esc(x.audit)}</span></dd></dl>
+  <p class="note" style="margin:6px 0 2px">Проверено ядром: ${x.checked_constraints.map(c => esc(CONSTRAINTS[c] || c)).join('; ')}.</p>
+  ${x.cost ? `<h3>Стоимость рейса · ${moneyFmt(Number(x.cost.total_cost))}</h3><table class="t">${items.map(([k, v]) => `<tr><td>${esc(COST_NAMES[k] || k)}</td><td class="n num">${moneyFmt(Number(v))}</td></tr>`).join('')}</table>` : '<p class="note">Тарифы не заданы — стоимость рейса не считалась.</p>'}`;
+}
+
+/* порт: состояние на момент (GET state) и загрузка за сезон (GET port-load) */
+function portCardHTML(id) {
+  const p = D.ports.find(q => q.id === id);
+  const hk = Math.floor(T), sk = cur + '|' + hk;
+  if (!NET.port[sk] && !NET.portInflight) {
+    NET.portInflight = true;
+    api(J('state?' + qs({moment: isoAt(T), variant: cur}))).then(r => { NET.port[sk] = r; NET.portLast = r; }).catch(e => { NET.portLast = {error: e.message}; })
+      .finally(() => { NET.portInflight = false; if (sel && sel.type === 'port') renderSide(true); });
+  }
+  const st = NET.port[sk] || NET.portLast, ps = st && !st.error ? st.ports[id] : null;
+  if (NET.portLoad[cur + '|' + id] === undefined) {
+    NET.portLoad[cur + '|' + id] = null;
+    api(J('port-load?' + qs({port: id, start: D.start, end: D.end, variant: cur}))).then(r => { NET.portLoad[cur + '|' + id] = r || 'none'; renderSide(true); }).catch(e => { NET.portLoad[cur + '|' + id] = {error: e.message}; renderSide(true); });
+  }
+  const pl = NET.portLoad[cur + '|' + id];
+  let h = `<button class="back" data-back>← Назад</button><div class="card"><div class="hd"><div><b>${esc(id)}</b><div class="note">${esc(p?.river || '')}</div></div><span class="spacer"></span><button class="btn" data-portcargo="${esc(id)}">Заявки порта</button></div>`;
+  if (!ps) h += st && st.error ? `<div class="callout warn">${esc(st.error)}</div>` : '<p class="note">Загружаем состояние…</p>';
+  else {
+    const tugs = ps.vessels.filter(v => !fleetById(v.vessel_id) || fleetById(v.vessel_id).kind === 'tug');
+    h += `<h3>На ${dIso(ps.time)}</h3><div class="grid2"><div class="mini"><div class="l">Судов в порту</div><div class="v num">${ps.vessels.length}</div></div><div class="mini"><div class="l">Буксиров в очереди</div><div class="v num" style="color:${ps.queued_tugs.length ? 'var(--bad)' : 'inherit'}">${ps.queued_tugs.length}</div></div></div>`;
+    if (ps.vessels.length) h += `<table class="t" style="margin-top:8px">${ps.vessels.map(v => `<tr><td><span class="lnk" data-v="${esc(v.vessel_id)}">${esc(v.vessel_id)}</span></td><td class="n">${esc(V3_STATE[v.state] || v.state)}</td></tr>`).join('')}</table>`;
+    if (!ps.capacity_modelled) h += `<p class="note">Причалы порта не моделируются: обработка идёт по скорости баржи, очереди нет.</p>`;
+    else h += `<h3>Причалы</h3><table class="t"><tr><th>Причал</th><th>Статус</th><th class="n">освободится</th></tr>${ps.berths.map(b => `<tr><td>${esc(b.berth_id)}</td><td><span class="badge ${BERTH[b.status]?.[1] || ''}">${BERTH[b.status]?.[0] || esc(b.status)}</span>${b.operation ? `<div class="note">${esc(V3_STATE[b.operation.state] || b.operation.state)} · ${esc(b.operation.tug_id)} + ${esc(b.operation.barge_id)}</div>` : b.status === 'OCCUPIED' ? '<div class="note">внешняя бронь</div>' : ''}</td><td class="n">${b.expected_release ? dIso(b.expected_release) : '—'}</td></tr>`).join('')}</table>`;
+  }
+  h += '</div>';
+  if (pl && pl !== 'none' && !pl.error) {
+    h += `<div class="card"><h3 style="margin-top:0">За сезон</h3><dl class="kv"><dt>Рейсов обработано</dt><dd class="num">${fmt(pl.handled_voyages)}</dd><dt>Погружено / выгружено</dt><dd class="num">${fmt(pl.loaded_t)} / ${fmt(pl.unloaded_t)} т</dd>
+    <dt>Ожидание всего</dt><dd class="num">${fmt(pl.waiting_seconds / 3600, 1)} ч</dd><dt>Среднее ожидание</dt><dd class="num">${pl.mean_wait_seconds == null ? '—' : fmt(pl.mean_wait_seconds / 3600, 1) + ' ч'}</dd>
+    <dt>Пиковая очередь</dt><dd class="num">${fmt(pl.peak_queue)}</dd><dt>Средняя операция</dt><dd class="num">${pl.mean_operation_seconds == null ? '—' : fmt(pl.mean_operation_seconds / 3600, 1) + ' ч'}</dd></dl>
+    ${pl.berths.length ? `<h3>Занятость причалов</h3><div class="fin">${pl.berths.map(b => `<div class="r"><span>${esc(b.berth_id)}</span><div class="bar"><i style="width:${100 * (b.utilization || 0)}%"></i></div><span class="num" style="text-align:right">${b.utilization == null ? '—' : Math.round(100 * b.utilization) + '%'}</span></div>`).join('')}</div>` : ''}</div>`;
+  } else if (pl && pl.error) h += `<div class="callout warn">${esc(pl.error)}</div>`;
+  return h;
+}
+function bindContract() {
+  const pane = $('#pane');
+  pane.querySelectorAll('[data-cmp]').forEach(n => n.onchange = () => { ui[n.dataset.cmp === 'from' ? 'cmpFrom' : 'cmpTo'] = n.value; renderSide(); });
+  pane.querySelectorAll('[data-wk]').forEach(n => n.onclick = () => { ui.wiKind = n.dataset.wk; renderSide(); });
+  pane.querySelectorAll('[data-wicargo]').forEach(n => n.onchange = () => { ui.wiCargo = n.value; renderSide(); });
+  pane.querySelectorAll('[data-wp]').forEach(n => n.onclick = () => runWhatIf({preset: +n.dataset.wp}, NET.presets[+n.dataset.wp]));
+  pane.querySelectorAll('[data-wshow]').forEach(n => n.onclick = () => setStrategy(n.dataset.wshow));
+  pane.querySelectorAll('[data-xv]').forEach(n => n.onclick = () => { const v = +n.dataset.xv; ui.explainVoy = ui.explainVoy === v ? null : v; renderSide(); });
+  pane.querySelectorAll('[data-portcargo]').forEach(n => n.onclick = () => { tab = 'cargo'; ui.cargoFilter = 'port:' + n.dataset.portcargo; sel = null; renderSide(); });
+  const f = $('#wiForm');
+  if (f) f.onsubmit = e => {
+    e.preventDefault();
+    let change;
+    try { change = wiRead(f.dataset.kind, f); } catch (err) { alert('Не разобрать изменение: ' + err.message); return; }
+    runWhatIf({change}, change);
+  };
+}
+
+/* ---------- легенда ---------- */
+let legendOpen = innerWidth > 820;
+function renderLegend() {
+  const lg = $('#legend'); lg.hidden = !legendOpen; $('#legBtn').setAttribute('aria-pressed', legendOpen);
+  const vs = [['sail', 'идёт с грузом', 'var(--accent)', 'var(--accent)', '50%'], ['empty', 'идёт порожним', 'transparent', 'var(--accent)', '50%'], ['load', 'грузится / выгружается', 'var(--text2)', 'var(--text2)', '2px'], ['wait', 'ждёт воды', 'var(--signal)', 'var(--signal)', '2px'], ['idle', 'стоит', 'transparent', 'var(--muted)', '2px']]
+    .filter(([k]) => !D || D._states.has(k) || (k === 'load' && D._states.has('unload')) || (k === 'empty' && D._states.has('back')));
+  lg.innerHTML = `<div class="hd">Обозначения</div>
+  <div class="row"><span class="grp">Участок реки на выбранный день</span>
+  <span><i class="ln" style="background:var(--accent)"></i>проходим</span><span><i class="ln" style="background:var(--signal)"></i>с недогрузом</span>
+  <span><i class="ln" style="background:repeating-linear-gradient(90deg,var(--closed) 0 4px,transparent 4px 7px)"></i>закрыт</span><span><i class="ln" style="background:repeating-linear-gradient(90deg,var(--accent) 0 7px,transparent 7px 10px)"></i>море</span>
+  <span style="grid-column:1/-1"><i class="ln" style="height:8px;width:20px;background:color-mix(in srgb,var(--accent) 30%,transparent)"></i>ширина — сколько тонн провезено</span></div>
+  <div class="row"><span class="grp">${D && D._linear ? 'Состав' : 'Буксир'}</span>${vs.map(([k, n, f, b, r]) => `<span><i style="width:9px;height:9px;border-radius:${r};background:${f};border:1.6px solid ${b}"></i>${n}</span>`).join('')}</div>`;
+}
+$('#legBtn').onclick = () => { legendOpen = !legendOpen; renderLegend(); };
 
 /* ---------- стратегии и верх ---------- */
 function setStrategy(k) {
@@ -899,18 +1285,18 @@ function setStrategy(k) {
   placeLabels(); renderMap(); renderSide();
 }
 function renderTop() {
-  $('#subtitle').textContent = `${D.title} · ${D.ports.length} портов · ${fmt(D.links.reduce((a, l) => a + l.km, 0))} км сети · ${D.data_status === 'SYNTHETIC' ? 'синтетика' : D.data_status}`;
+  $('#subtitle').textContent = `${D.ports.length} портов, ${fmt(D.links.reduce((a, l) => a + l.km, 0))} км сети${D.data_status === 'SYNTHETIC' ? ', учебные данные' : ''}`;
   $('#strategies').innerHTML = D.order.map(k => {
     const s = D.strategies[k];
-    return `<button data-s="${k}" aria-pressed="${k === cur}" title="${esc(s.hint)}">${esc(s.label)}${k === D.best ? '<span class="star">★</span>' : ''}<small class="num">${pct(s.metrics.delivered_on_time_t, s.metrics.demand_t)}% в срок</small></button>`;
+    return `<button data-s="${k}" aria-pressed="${k === cur}" title="${esc(s.hint)} · ${pct(s.metrics.delivered_on_time_t, s.metrics.demand_t)}% спроса в срок">${k === D.best ? '<span class="star" title="Лучший план"></span>' : ''}${esc(s.label)}<small class="num">${pct(s.metrics.delivered_on_time_t, s.metrics.demand_t)}%</small></button>`;
   }).join('');
   for (const b of $('#strategies').children) b.onclick = () => setStrategy(b.dataset.s);
   $('#attrib').textContent = D.geo.source ? (D.geo.source.split(';')[0]) : '';
 }
 function load(data) {
   D = data; prepare();
-  cur = D.best; sel = null; tab = 'overview';
-  $('#slider').max = Math.round(D.horizon_h); $('#slider').step = 6;
+  cur = D.best; sel = null; tab = 'overview'; netReset();
+  $('#slider').max = Math.round(D.horizon_h); $('#slider').step = D.horizon_h < 96 ? 0.25 : 6;
   renderTop(); buildMap(); renderMonths(); renderLegend();
   // стартовый момент: середина июля, если есть, иначе начало
   const mid = D.horizon_h * .35;
@@ -925,19 +1311,29 @@ map.addEventListener('pointermove', e => {
   if (!drag) return;
   const k = scale(), dx = (e.clientX - drag.x) * k, dy = (e.clientY - drag.y) * k;
   if (Math.abs(dx) + Math.abs(dy) > 2 * k) { drag.moved = true; map.classList.add('drag'); hideTip(); }
-  view = [drag.v[0] - dx, drag.v[1] - dy, view[2], view[3]];
+  view = clampView([drag.v[0] - dx, drag.v[1] - dy, view[2], view[3]]);
   want = view.slice();
   map.setAttribute('viewBox', view.join(' '));
 });
 map.addEventListener('pointerup', e => { if (drag && !drag.moved && e.target === map) { /* клик по пустому месту */ } drag = null; map.classList.remove('drag'); });
-map.addEventListener('wheel', e => { e.preventDefault(); zoom(e.deltaY < 0 ? 0.8 : 1.25, e); }, {passive: false});
+/* шаг зума пропорционален прокрутке: колесо мыши (~100 px за щелчок) — ~20 %, тачпад и щипок — плавно */
+map.addEventListener('wheel', e => {
+  e.preventDefault();
+  const dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 400 : 1);
+  const k = e.ctrlKey ? 0.006 : 0.0018;  // ctrlKey — щипок на тачпаде
+  zoom(Math.exp(Math.max(-0.4, Math.min(0.4, dy * k))), e);
+}, {passive: false});
 function zoom(f, e) {
   const r = map.getBoundingClientRect();
   const px = e ? (e.clientX - r.left) / r.width : .5, py = e ? (e.clientY - r.top) / r.height : .5;
-  const w = Math.min(fitBox[2] * 4, Math.max(40, view[2] * f));
+  if (!view || !fitBox) return;  // карта ещё не построена
+  const r0 = map.getBoundingClientRect(), ar0 = r0.width / Math.max(1, r0.height);
+  const maxW = 1.5 * Math.max(fitBox[2], fitBox[3] * ar0);  // дальше полутора «всей сети» не отдаляем
+  const w = Math.min(maxW, Math.max(40, view[2] * f));
+  if (w === view[2]) return;
   const ff = w / view[2];
   const h = view[3] * ff;
-  view = [view[0] + (view[2] - w) * px, view[1] + (view[3] - h) * py, w, h];
+  view = clampView([view[0] + (view[2] - w) * px, view[1] + (view[3] - h) * py, w, h]);
   want = view.slice();
   map.setAttribute('viewBox', view.join(' '));
   placeLabels(); renderMap();
@@ -947,6 +1343,40 @@ window.addEventListener('resize', () => { if (D) applyView(); });
 
 /* ---------- время ---------- */
 $('#slider').oninput = e => setT(+e.target.value);
+/* выбор дня в календаре: состояние на полдень этого дня (в 00:00 большинство рейсов ещё не начато) */
+const MONTHS_FULL = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+let calYM = null;  // [год, месяц], который показан в календаре
+function renderCal() {
+  const [y, m] = calYM, lo = isoDay(t0()), hi = isoDay(at(Math.max(0, D.horizon_h - 1))), curIso = isoDay(at(T));
+  const first = new Date(y, m, 1), lead = (first.getDay() + 6) % 7, n = new Date(y, m + 1, 0).getDate();
+  const ym = (yy, mm) => `${yy}-${String(mm + 1).padStart(2, '0')}`;
+  let cells = '';
+  for (let i = 0; i < lead; i++) cells += '<span></span>';
+  for (let d = 1; d <= n; d++) {
+    const iso = isoDay(new Date(y, m, d)), off = iso < lo || iso > hi;
+    cells += `<button type="button" data-d="${d}"${off ? ' disabled' : ''}${iso === curIso ? ' aria-current="date"' : ''}>${d}</button>`;
+  }
+  $('#cal').innerHTML = `<div class="cal-h"><button type="button" data-m="-1" aria-label="Предыдущий месяц"${ym(y, m) <= lo.slice(0, 7) ? ' disabled' : ''}>‹</button><span>${MONTHS_FULL[m]} ${y}</span><button type="button" data-m="1" aria-label="Следующий месяц"${ym(y, m) >= hi.slice(0, 7) ? ' disabled' : ''}>›</button></div>`
+    + `<div class="cal-g">${['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map(w => `<span class="wd">${w}</span>`).join('')}${cells}</div>`;
+}
+function openCal(open) {
+  if (open && !D) return;
+  $('#cal').hidden = !open; $('#dateBtn').setAttribute('aria-expanded', open);
+  if (!open) return;
+  const d = at(T); calYM = [d.getFullYear(), d.getMonth()]; renderCal();
+  ($('#cal [aria-current="date"]') || $('#cal .cal-g button:not(:disabled)'))?.focus();
+}
+$('#dateBtn').onclick = () => openCal($('#cal').hidden);
+$('#cal').onclick = e => {
+  const b = e.target.closest('button'); if (!b || b.disabled) return;
+  if (b.dataset.m) { const d = new Date(calYM[0], calYM[1] + +b.dataset.m, 1); calYM = [d.getFullYear(), d.getMonth()]; renderCal(); return; }
+  /* выбранный день — на полдень (в 00:00 большинство рейсов ещё не начато) */
+  if (playing) $('#play').click();
+  setT((new Date(calYM[0], calYM[1], +b.dataset.d, 12) - t0()) / 3600e3);
+  openCal(false); $('#dateBtn').focus();
+};
+document.addEventListener('pointerdown', e => { if (!$('#cal').hidden && !e.target.closest('#cal, #dateBtn')) openCal(false); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#cal').hidden) { openCal(false); $('#dateBtn').focus(); } }, true);
 $('#play').onclick = () => { playing = !playing; $('#play').textContent = playing ? '❚❚' : '▶'; if (playing) { if (T >= D.horizon_h) setT(0); lastTs = 0; requestAnimationFrame(tick); } };
 function tick(ts) {
   if (!playing) return;
@@ -957,6 +1387,7 @@ function tick(ts) {
 }
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT' && e.target.type !== 'range' || e.target.tagName === 'SELECT') return;
+  if (e.target.closest && e.target.closest('#cal')) return;  // в календаре пробел и стрелки — его собственные
   if (e.key === ' ') { e.preventDefault(); $('#play').click(); }
   if (e.key === 'ArrowRight') setT(T + 24); if (e.key === 'ArrowLeft') setT(T - 24);
   if (e.key === 'Escape') { sel = null; renderSide(); renderMap(); }
@@ -972,7 +1403,7 @@ try { const t = localStorage.getItem('a3theme'); if (t) document.documentElement
 
 /* ---------- приложение: сценарии и загрузка ---------- */
 function busy(on, text) { $('#overlay').classList.toggle('on', on); if (text) $('#overlayText').textContent = text; }
-async function api(path, opt) { const r = await fetch(path, opt); const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.detail || r.statusText); return j; }
+async function api(path, opt) { const r = await fetch(path, opt); const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.detail || j.error || r.statusText); return j; }
 let jobSeq = 0;
 async function runJob(body, label) {
   const my = ++jobSeq;
@@ -1008,8 +1439,14 @@ async function initApp() {
   sel_.innerHTML = groups.map(([k, n]) => `<optgroup label="${n}">${sc.builtin.filter(b => (b.kind || 'network') === k).map(b => `<option value="${esc(b.name)}">${esc(b.title)}</option>`).join('')}</optgroup>`).join('');
   const want = new URLSearchParams(location.search).get('scenario');
   if (want && sc.builtin.some(b => b.name === want)) sel_.value = want;
-  sel_.hidden = false; $('#uploadBtn').hidden = false;
-  sel_.onchange = () => { if (sel_.value !== '__upload') runJob({builtin: sel_.value}, sel_.selectedOptions[0].textContent); };
+  sel_.hidden = false;
+  sel_.insertAdjacentHTML('beforeend', '<optgroup label="Свои данные"><option value="__new">Загрузить свои файлы…</option></optgroup>');
+  let prevVal = sel_.value;
+  sel_.onchange = () => {
+    if (sel_.value === '__new') { sel_.value = prevVal; $('#uploadBtn').click(); return; }
+    prevVal = sel_.value;
+    if (sel_.value !== '__upload') runJob({builtin: sel_.value}, sel_.selectedOptions[0].textContent);
+  };
   $('#uploadBtn').onclick = () => { tab = 'upload'; $('#pane').innerHTML = uploadHTML(); renderTabs(); bindUpload(); };
   runJob({builtin: sel_.value}, sel_.selectedOptions[0].textContent);
 }
