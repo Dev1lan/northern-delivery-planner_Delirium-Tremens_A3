@@ -69,8 +69,7 @@ class Scheduler:
         self.local_baseline = None
         self.service_floor = None
         self.expanded = 0
-        self.stats = dict(assignments_considered=0, safe_pruned=0, heuristic_pruned=0,
-                          detailed_checks=0, generated_candidates=0, generated_states=0, duplicate_states=0)
+        self.reset_counters()
         self.router = Router(scenario, self.limits, self.check_budget)
         self.minimum_for_type = {category: i for i, r in enumerate(scenario.requirements) for category in r.cargo_types}
         self.cargo = tuple(sorted(scenario.cargo.values(), key=lambda c: (c.ready, c.id)))
@@ -89,6 +88,11 @@ class Scheduler:
                 by_port[cargo.origin].append(cargo)
             self.cargo_by_barge[key] = compatible
             self.cargo_by_barge_port[key] = by_port
+
+    def reset_counters(self):
+        self.stats = dict(assignments_considered=0, safe_pruned=0, heuristic_pruned=0,
+                          detailed_checks=0, generated_candidates=0, generated_states=0,
+                          duplicate_states=0, beam_pruned=0)
 
     def check_budget(self):
         if self.deadline is not None and perf_counter() >= self.deadline:
@@ -337,6 +341,7 @@ class Scheduler:
                         next_frontier[key] = child
             if not next_frontier:
                 return incumbent, expanded, False
+            self.stats['beam_pruned'] += max(0, len(next_frontier) - limits.beam_width)
             frontier = nlargest(limits.beam_width, next_frontier.values(), key=score)
         return incumbent, expanded, True
 
@@ -362,6 +367,7 @@ class Scheduler:
         self.best_score = None
         self.active_score = self.local_baseline = self.service_floor = None
         self.expanded = 0
+        self.reset_counters()
         try:
             return self._plan(strategy)
         except TimeLimitReached:
