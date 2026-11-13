@@ -1,0 +1,1 @@
+{"schema": "yakutia-vegetation/1", "source": "Natural Earth II NE2_50M_SR (общественное достояние)", "projection": {"type": "lambert_azimuthal_equal_area", "lon0": 130.0, "lat0": 65.0, "units": "km"}, "blend": "multiply, вода белая", "image": "vegetation.jpg", "box_svg": [-3114.5, -2111.3, 6759.5, 3994.6], "px": [2703, 1597]}

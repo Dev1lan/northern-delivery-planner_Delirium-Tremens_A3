@@ -56,7 +56,11 @@ def finance(raw, result, used):
     """Структура стоимости: эксплуатация, альтернативная доставка недовоза, дополнительный флот, итог."""
     fe = result["financial_evaluation"] or {}
     by_unit = {k: float(v) for k, v in (fe.get("cost_by_unit") or {}).items()}
-    alternative = by_unit.pop("alternative_delivery", 0.0)
+    # старый контракт: недовоз — статья alternative_delivery внутри total_cost; новый (cost_basis =
+    # PLANNED_OPERATIONS): total_cost — только операции, оценка недовоза — estimated_undelivered_cost
+    alternative = by_unit.pop("alternative_delivery", None)
+    if alternative is None:
+        alternative = float(fe.get("estimated_undelivered_cost") or 0.0)
     operating = round(sum(by_unit.values()), 2)
     added = sorted(x["vessel_id"] for x in raw["tugs"] + raw["barges"] if x.get("what_if") == "added_vessel")
     added_used = [v for v in added if v in used]
@@ -179,8 +183,10 @@ def summarize(name, raw, result, seconds, base_used=None):
     left = Counter()
     for c in result["cargo_status"]:
         left["sea" if c["cargo_id"] in sea_c else "river"] += c["remaining_t"]
+    penalty = fe.get("undelivered_penalty", fe.get("estimated_undelivered_cost"))
     total = fe.get("total_cost")
-    penalty = fe.get("undelivered_penalty")
+    if fe.get("cost_basis") == "PLANNED_OPERATIONS" and total is not None:   # прежний смысл: операции + недовоз
+        total = round(float(total) + float(penalty or 0), 2)
     return {
         "name": name, "title": title(name), "seconds": round(seconds, 1),
         "scenario_fingerprint": result["input_fingerprint"], "core_version": result["algorithm_version"],

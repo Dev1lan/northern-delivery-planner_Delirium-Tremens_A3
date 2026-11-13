@@ -7,12 +7,13 @@
 <style>
 :root{
   color-scheme:light;
-  --page:#eef1f4; --surface:#ffffff; --surface2:#f4f6f8; --border:#dde2e7; --grid:#e8ecf0;
-  --text:#18212b; --text2:#4d5967; --muted:#6c7682;
-  --land:#f4f5f6; --sea:#dde5ec; --coast:#b8c4cf; --river:#9fb8cf; --river-bg:#c9d6e2;
-  --accent:#1d6fd8; --accent-soft:#e4eefb; --accent-ink:#fff; --signal:#c7860c; --signal-soft:#fbf1dc;
-  --ok:var(--accent); --limit:var(--signal); --closed:#a3acb6; --bad:#cf3f35; --relief-op:.55; --pl0:#bcdcff; --pl1:#0b3f8f; --seaway:var(--accent);
-  --load:var(--text2); --sail:var(--accent); --unload:var(--text2); --empty:var(--accent); --wait:var(--signal); --idle:#a3acb6;
+  --page:#e8ecf0; --surface:#ffffff; --surface2:#f1f4f7; --border:#cdd5dd; --grid:#e3e8ed;
+  --text:#0f1822; --text2:#36424f; --muted:#5a6672;
+  --land:#f6f4ee; --sea:#c6d9ea; --coast:#7f98ae; --river:#5f90bd; --river-bg:#9ebcd6;
+  --accent:#1560c8; --accent-soft:#dbe8fa; --accent-ink:#fff; --signal:#e07800; --signal-soft:#fbecd2;
+  --halo:rgba(255,255,255,.92); --veg-op:.95; --veg-blend:multiply;
+  --ok:var(--accent); --limit:var(--signal); --closed:#8d97a2; --bad:#c8352b; --relief-op:.6; --pl0:#bcdcff; --pl1:#0b3f8f; --seaway:var(--accent);
+  --load:var(--text2); --sail:var(--accent); --unload:var(--text2); --empty:var(--accent); --wait:var(--signal); --idle:#8d97a2;
   --shadow:0 1px 2px rgba(16,24,40,.06),0 6px 18px rgba(16,24,40,.08);
 }
 @media (prefers-color-scheme:dark){
@@ -22,6 +23,7 @@
   --text:#e7ebef; --text2:#a4aeb9; --muted:#8b96a2;
   --land:#1a2027; --sea:#11161b; --coast:#2f3943; --river:#3c5872; --river-bg:#26374a;
   --accent:#4f9cf0; --accent-soft:#172a40; --accent-ink:#07111d; --signal:#e8a93a; --signal-soft:#33280f;
+  --halo:var(--land); --veg-op:.6; --veg-blend:color;
   --ok:var(--accent); --limit:var(--signal); --closed:#525d69; --bad:#f0675c; --relief-op:.5; --pl0:#a9cff7; --pl1:#1554b8; --seaway:var(--accent);
   --load:var(--text2); --sail:var(--accent); --unload:var(--text2); --empty:var(--accent); --wait:var(--signal); --idle:#525d69;
   --shadow:0 1px 2px rgba(0,0,0,.35),0 8px 22px rgba(0,0,0,.35);
@@ -33,6 +35,7 @@
   --text:#e7ebef; --text2:#a4aeb9; --muted:#8b96a2;
   --land:#1a2027; --sea:#11161b; --coast:#2f3943; --river:#3c5872; --river-bg:#26374a;
   --accent:#4f9cf0; --accent-soft:#172a40; --accent-ink:#07111d; --signal:#e8a93a; --signal-soft:#33280f;
+  --halo:var(--land); --veg-op:.6; --veg-blend:color;
   --ok:var(--accent); --limit:var(--signal); --closed:#525d69; --bad:#f0675c; --relief-op:.5; --pl0:#a9cff7; --pl1:#1554b8; --seaway:var(--accent);
   --load:var(--text2); --sail:var(--accent); --unload:var(--text2); --empty:var(--accent); --wait:var(--signal); --idle:#525d69;
   --shadow:0 1px 2px rgba(0,0,0,.35),0 8px 22px rgba(0,0,0,.35);
@@ -229,9 +232,9 @@ table.t td.n,table.t th.n{text-align:right}
 .spin{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--accent);animation:sp 1s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
 /* карта */
-.lbl{font-size:13.5px;fill:var(--text);paint-order:stroke;stroke:var(--land);stroke-width:3px;stroke-linejoin:round;pointer-events:none}
+.lbl{font-size:13.5px;fill:var(--text);paint-order:stroke;stroke:var(--halo);stroke-width:3px;stroke-linejoin:round;pointer-events:none}
 .lbl.hub{font-weight:650}
-.lbl.river{fill:var(--river);stroke:var(--land);font-style:italic;font-size:12px}
+.lbl.river{fill:var(--river);stroke:var(--halo);font-style:italic;font-size:12px}
 .lbl.sea{fill:color-mix(in srgb,var(--seaway) 65%,var(--muted));stroke:none;font-style:italic;letter-spacing:.12em;font-size:13px}
 .pcnt{font-weight:700;pointer-events:none;font-variant-numeric:tabular-nums}
 .vlbl{font-size:12px;font-weight:600;fill:var(--text);paint-order:stroke;stroke:var(--surface);stroke-width:3px;pointer-events:none}
@@ -341,8 +344,8 @@ let D = null, cur = null, T = 0, tab = 'overview', sel = null, playing = false, 
 let view = null, want = null, fitBox = null;
 const ui = {fleetFilter: 'all', cargoFilter: 'all', kpiMode: 'season'};
 /* слои карты: что показывать (панель «Слои») */
-const layers = {relief: true, ports: true, minor: false, vessels: true, vlabels: false, flow: true, limits: true};
-const LAYERS = [['relief', 'Рельеф', 'хребты и долины — легче читать, где идут реки'], ['ports', 'Порты', 'крупные подписаны всегда'], ['minor', 'Все подписи портов', 'иначе — только те, что не налезают друг на друга'], ['vessels', 'Суда', ''],
+const layers = {veg: true, relief: true, ports: true, minor: false, vessels: true, vlabels: false, flow: true, limits: true};
+const LAYERS = [['veg', 'Растительность', 'тайга, тундра и горы — по Natural Earth II'], ['relief', 'Рельеф', 'хребты и долины — легче читать, где идут реки'], ['ports', 'Порты', 'крупные подписаны всегда'], ['minor', 'Все подписи портов', 'иначе — только те, что не налезают друг на друга'], ['vessels', 'Суда', ''],
   ['vlabels', 'Номера судов', 'иначе — при приближении и наведении'], ['flow', 'Грузопоток', 'ширина линии — сколько тонн провезено'], ['limits', 'Ограничения глубин', 'выключите, чтобы увидеть обычную сеть']];
 function kFit() { const r = map.getBoundingClientRect(); return fitBox ? Math.max(fitBox[2], fitBox[3] * r.width / Math.max(1, r.height)) / Math.max(1, r.width) : 1; }
 
@@ -450,12 +453,14 @@ function buildMap() {
   want = fitBox.slice();
   const land = el('rect', {x: -1e5, y: -1e5, width: 2e5, height: 2e5, fill: 'var(--land)'}, map);
   L.ctx = el('g', {}, map);
+  L.veg = el('g', {'pointer-events': 'none'}, map);
   L.relief = el('g', {'pointer-events': 'none'}, map);
   L.base = el('g', {}, map);
   L.veil = el('g', {'pointer-events': 'none'}, map);
   if (CTX && (D.geo.land || []).length) {
     land.setAttribute('fill', 'var(--sea)');
     drawCtx();
+    drawVeg();
     drawRelief();
   } else if ((D.geo.land || []).length) {
     // фон — море, поверх — суша (полигоны Natural Earth, обрезанные по рамке региона)
@@ -502,7 +507,16 @@ function buildMap() {
   applyView();
 }
 /* фон: суша и реки за пределами региона; всё дальше ~300 км от сети приглушено вуалью */
-let CTX = null, RELIEF = null;
+let CTX = null, RELIEF = null, VEG = null;
+/* растительность: цвета природных зон Natural Earth II; вода в картинке белая, поэтому multiply меняет только сушу */
+function drawVeg() {
+  if (!L.veg) return;
+  L.veg.innerHTML = '';
+  if (!VEG || !layers.veg) return;
+  const [x, y, w, h] = VEG.box_svg;
+  el('image', {href: '/api/geo/vegetation.jpg', x, y, width: w, height: h, preserveAspectRatio: 'none', opacity: css('--veg-op') || 1, style: `mix-blend-mode:${css('--veg-blend') || 'multiply'}`}, L.veg);
+}
+fetch('/api/geo/vegetation').then(r => r.ok ? r.json() : null).then(j => { if (j && j.box_svg) { VEG = j; drawVeg(); } }).catch(() => {});
 /* рельеф: отмывка Natural Earth, нейтраль 128 — режим hard-light темнит тени и светлит склоны, равнины и море не меняет */
 function drawRelief() {
   if (!L.relief) return;
@@ -556,7 +570,7 @@ function drawVeil() {
   el('path', {d: `M${-o} ${-o}H${o}V${o}H${-o}Z M${B[0]} ${B[1]}V${B[1] + B[3]}H${B[0] + B[2]}V${B[1]}Z`, 'fill-rule': 'evenodd', fill: 'var(--page)', opacity: .62}, L.veil);
 }
 // цвет вуали берётся из темы — перерисовать при её смене
-new MutationObserver(() => drawVeil()).observe(document.documentElement, {attributes: true, attributeFilter: ['data-theme']});
+new MutationObserver(() => { drawVeil(); drawVeg(); drawRelief(); }).observe(document.documentElement, {attributes: true, attributeFilter: ['data-theme']});
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => drawVeil());
 fetch('/api/geo/context').then(r => r.ok ? r.json() : null).then(j => {
   if (!j || !j.land) return;
@@ -628,11 +642,11 @@ function renderMap() {
     const col = l.kind === 'sea' ? 'var(--seaway)' : st.k === 'ok' || (st.k === 'limit' && !layers.limits) ? 'var(--ok)' : st.k === 'limit' ? 'var(--limit)' : 'var(--closed)';
     const dim = selLinks && !selLinks.has(l.id);
     l._el.setAttribute('stroke', st.k === 'closed' ? (l.kind === 'sea' ? 'color-mix(in srgb,var(--seaway) 45%,var(--closed))' : 'var(--closed)') : col);
-    l._el.setAttribute('stroke-width', st.k === 'closed' ? (l.kind === 'sea' ? 2 : 1.6) : 2.6);
+    l._el.setAttribute('stroke-width', st.k === 'closed' ? (l.kind === 'sea' ? 2 : 1.8) : 3.2);
     l._el.setAttribute('stroke-dasharray', st.k === 'closed' ? '4 4' : l.kind === 'sea' ? '7 4' : '');
     l._el.setAttribute('opacity', dim ? .25 : 1);
     const t = tons[l.id] || 0;
-    l._load.setAttribute('stroke', l.kind === 'sea' ? 'var(--seaway)' : 'var(--accent)');
+    l._load.setAttribute('stroke', l.kind === 'sea' ? 'var(--seaway)' : st.k === 'limit' && layers.limits ? 'var(--limit)' : 'var(--accent)');  // в цвет линии: синий под оранжевым давал бурый
     l._load.setAttribute('stroke-width', t > 0 && layers.flow ? 3 + 15 * Math.sqrt(t / maxT) : 0);
     l._load.setAttribute('opacity', dim ? .08 : .25);
   }
@@ -803,7 +817,7 @@ function deliveredBy(h) {
 function renderKpis() {
   const s = S(), m = s.metrics, now = deliveredBy(T);
   const fin = s.financial;
-  const cost = fin ? Number(fin.total_cost) : null;
+  const cost = fin ? opCost(fin) : null;
   // «За сезон» — итоги плана; «На дату» — что сделано к моменту на шкале времени
   const season = ui.kpiMode !== 'date', when = season ? 'за сезон' : 'к ' + dstr(T);
   const onT = season ? m.delivered_on_time_t : now.on;
@@ -1050,19 +1064,25 @@ function depthSpark(ls, di) {
 }
 /* валюта и суммы: тарифы v1/v2 приходят в своей валюте (RUB или условная DEMO) */
 function curSign() { const c = (D.tariffs && D.tariffs.currency) || 'RUB'; return c === 'RUB' ? '₽' : c; }
+/* финансы ядра: новый контракт (cost_basis = PLANNED_OPERATIONS) — total_cost только расходы по плану,
+   оценка недовоза отдельно; старый — недовоз внутри total_cost (undelivered_penalty) */
+const planned = f => f && f.cost_basis === 'PLANNED_OPERATIONS';
+const undCost = f => !f ? null : f.estimated_undelivered_cost != null ? Number(f.estimated_undelivered_cost) : f.undelivered_penalty != null ? Number(f.undelivered_penalty) : null;
+const opCost = f => !f || f.total_cost == null ? null : planned(f) ? Number(f.total_cost) : Number(f.total_cost) - (undCost(f) || 0);
 function moneyFmt(v) { return Math.abs(v) >= 1e6 ? `${fmt(v / 1e6, 1)} млн ${curSign()}` : `${fmt(v)} ${curSign()}`; }
 function financeHTML() {
   const s = S();
   if (!s.financial) return `<div class="callout">Тарифы не заданы, денежная оценка не считалась. Ядро выдаёт натуральные показатели для финансового расчёта: км в грузу и порожнём, часы работы, простоя и ожидания.</div>` + finInputs(s);
-  const f = s.financial, tot = Number(f.total_cost), m = s.metrics;
+  const f = s.financial, tot = opCost(f), und = undCost(f), m = s.metrics;
   const NAMES = COST_NAMES;
   const items = Object.entries(f.cost_by_unit).map(([k, v]) => [k, Number(v)]).sort((a, b) => b[1] - a[1]);
   const mx = Math.max(...items.map(i => i[1]), 1);
-  let h = `<div class="callout" style="margin-bottom:10px"><span class="badge stub">заглушка</span> Ставки условные${f.source_status && !/SYNTHETIC/i.test(f.source_status) ? ` (${esc(f.source_status)})` : ''}. Когда появится финансовое ядро, сюда придут его ставки и статьи; расчёт и формат не поменяются.</div>
-  <div class="grid2"><div class="mini"><div class="l">Стоимость сезона</div><div class="v num">${moneyFmt(tot)}</div></div><div class="mini"><div class="l">За тонну в срок</div><div class="v num">${fmt(tot / Math.max(1, m.delivered_on_time_t))} ${curSign()}</div></div></div>
+  let h = `<div class="callout" style="margin-bottom:10px">Ставки условные${f.source_status && !/SYNTHETIC/i.test(f.source_status) ? ` (${esc(f.source_status)})` : ''}. ${planned(f) ? 'Расчёт финансового ядра: в расходы входят только запланированные операции (рейсы, причалы, перевалка); оценка недовоза — отдельно.' : 'Старый формат результата: цена недовоза входит в сумму.'}</div>
+  <div class="grid2"><div class="mini"><div class="l">Расходы по плану</div><div class="v num">${moneyFmt(tot)}</div></div><div class="mini"><div class="l">За тонну в срок</div><div class="v num">${fmt(tot / Math.max(1, m.delivered_on_time_t))} ${curSign()}</div></div>
+  ${und != null ? `<div class="mini"><div class="l">Оценка недовоза (зимник, авиация)${planned(f) ? ' — не входит в расходы' : ''}</div><div class="v num">${moneyFmt(und)}</div></div>` : ''}${f.transshipment_cost != null ? `<div class="mini"><div class="l">Перевалка (в расходах)</div><div class="v num">${moneyFmt(Number(f.transshipment_cost))}</div></div>` : ''}</div>
   <h3>Статьи затрат</h3><div class="fin">${items.map(([k, v]) => `<div class="r"><span>${NAMES[k] || k}</span><div class="bar"><i style="width:${100 * v / mx}%"></i></div><span class="num" style="text-align:right">${moneyFmt(v)}</span></div>`).join('')}</div>
-  <h3>Сравнение стратегий</h3><table class="t"><tr><th>Стратегия</th><th class="n">в срок, т</th><th class="n">стоимость</th><th class="n">${curSign()}/т</th></tr>${D.order.map(k => { const q = D.strategies[k]; const c = q.financial ? Number(q.financial.total_cost) : null; return `<tr${k === cur ? ' style="font-weight:600"' : ''}><td>${esc(q.label)}</td><td class="n num">${fmt(q.metrics.delivered_on_time_t)}</td><td class="n num">${c == null ? '—' : moneyFmt(c)}</td><td class="n num">${c == null ? '—' : fmt(c / Math.max(1, q.metrics.delivered_on_time_t))}</td></tr>`; }).join('')}</table>
-  <p class="note">${D._linear ? 'Порожний ход — возврат состава после каждого рейса.' : 'План с перегоном дороже в рублях, но каждая доставленная в срок тонна обходится по-разному.'} ${f.undelivered_penalty != null ? 'Недовоз оценён по тарифу альтернативной доставки (зимник, авиация).' : 'Цена недовоза (зимник, авиация) появится с финансовым ядром.'}</p>`;
+  <h3>Сравнение стратегий</h3><table class="t"><tr><th>Стратегия</th><th class="n">в срок, т</th><th class="n">расходы</th><th class="n">${curSign()}/т</th></tr>${D.order.map(k => { const q = D.strategies[k]; const c = q.financial ? opCost(q.financial) : null; return `<tr${k === cur ? ' style="font-weight:600"' : ''}><td>${esc(q.label)}</td><td class="n num">${fmt(q.metrics.delivered_on_time_t)}</td><td class="n num">${c == null ? '—' : moneyFmt(c)}</td><td class="n num">${c == null ? '—' : fmt(c / Math.max(1, q.metrics.delivered_on_time_t))}</td></tr>`; }).join('')}</table>
+  <p class="note">${D._linear ? 'Порожний ход — возврат состава после каждого рейса.' : 'План с перегоном дороже в рублях, но каждая доставленная в срок тонна обходится по-разному.'} ${und != null ? 'Недовоз оценён по тарифу альтернативной доставки (зимник, авиация)' + (planned(f) ? ' и показан отдельно: в расходы и цену тонны он не входит.' : '.') : 'Цена недовоза (зимник, авиация) появится с финансовым ядром.'}</p>`;
   return h + finInputs(s);
 }
 function finInputs(s) {
@@ -1125,7 +1145,7 @@ function hOf(iso) { return (new Date(iso) - t0()) / 3600e3; }
 function dIso(iso) { return iso ? dstr(hOf(iso), true) : '—'; }
 function baseVariant() { return cur && cur.startsWith('NETWORK_') ? cur : D.best; }
 const COST_NAMES = {loaded_km: 'Ход с грузом', empty_km: 'Порожний ход', loading_hour: 'Погрузка', unloading_hour: 'Выгрузка', waiting_hour: 'Ожидание', tug_busy_hour: 'Работа буксиров', barge_busy_hour: 'Работа барж',
-  loaded_fuel: 'Топливо с грузом', empty_fuel: 'Топливо порожнём', tug_operation: 'Работа буксиров', barge_operation: 'Работа барж', loading: 'Погрузка', unloading: 'Выгрузка', port_call: 'Портовые сборы', waiting: 'Ожидание', repositioning: 'Перегон', alternative_delivery: 'Недовоз: альтернативная доставка'};
+  loaded_fuel: 'Топливо с грузом', empty_fuel: 'Топливо порожнём', tug_operation: 'Работа буксиров', barge_operation: 'Работа барж', loading: 'Погрузка', unloading: 'Выгрузка', port_call: 'Портовые сборы', waiting: 'Ожидание', repositioning: 'Перегон', transshipment: 'Перевалка', alternative_delivery: 'Недовоз: альтернативная доставка'};
 const V3_STATE = {IDLE: 'стоит', UNAVAILABLE: 'недоступно', WAITING: 'ждёт', PORT_QUEUE: 'в очереди к причалу', LOADING: 'погрузка', UNLOADING: 'выгрузка', EMPTY_TRANSIT: 'идёт порожним', LOADED_TRANSIT: 'идёт с грузом'};
 const BERTH = {OPEN: ['свободен', 'ok'], OCCUPIED: ['занят', 'bad'], CLOSED: ['закрыт', '']};
 const EVIDENCE = {
@@ -1375,6 +1395,7 @@ function explainHTML(vid) {
   return `<dl class="kv"><dt>Состав</dt><dd>${esc(x.tug_id)} + ${esc(x.barge_id)}</dd><dt>Выход из</dt><dd>${esc(x.departure_port)}</dd>
   ${legs(x.empty, 'Порожним')}<dt>Погрузка</dt><dd>${esc(x.pickup)}</dd>${legs(x.loaded, 'С грузом')}
   <dt>Выгрузка до</dt><dd>${dIso(x.unloading_end)}</dd><dt>Срок заявки</dt><dd>${dIso(x.due_at)} ${x.on_time ? '<span class="badge ok">в срок</span>' : '<span class="badge bad">поздно</span>'}</dd>
+  ${x.transfer ? `<dt>Перевалка</dt><dd>этап ${x.transfer.stage} из 2 через ${esc(x.transfer.port || '')}; рейсы партии ${x.transfer.voyages.map(n => '№' + n).join(', ')}</dd>` : ''}
   <dt>Аудит</dt><dd><span class="badge ${x.audit === 'PASSED' ? 'ok' : 'bad'}">${esc(x.audit)}</span></dd></dl>
   <p class="note" style="margin:6px 0 2px">Проверено ядром: ${x.checked_constraints.map(c => esc(CONSTRAINTS[c] || c)).join('; ')}.</p>
   ${x.cost ? `<h3>Стоимость рейса · ${moneyFmt(Number(x.cost.total_cost))}</h3><table class="t">${items.map(([k, v]) => `<tr><td>${esc(COST_NAMES[k] || k)}</td><td class="n num">${moneyFmt(Number(v))}</td></tr>`).join('')}</table>` : '<p class="note">Тарифы не заданы — стоимость рейса не считалась.</p>'}`;
@@ -1449,7 +1470,7 @@ function renderLegend() {
 $('#legBtn').onclick = () => { legendOpen = !legendOpen; renderLegend(); };
 function renderLayers() {
   $('#layers').innerHTML = `<div class="hd">Слои карты</div>` + LAYERS.map(([k, n, h]) => `<label><input type="checkbox" data-layer="${k}"${layers[k] ? ' checked' : ''}><span>${n}${h ? `<br><small>${h}</small>` : ''}</span></label>`).join('');
-  $('#layers').querySelectorAll('[data-layer]').forEach(i => i.onchange = () => { layers[i.dataset.layer] = i.checked; if (i.dataset.layer === 'relief') drawRelief(); placeLabels(); renderMap(); });
+  $('#layers').querySelectorAll('[data-layer]').forEach(i => i.onchange = () => { layers[i.dataset.layer] = i.checked; if (i.dataset.layer === 'relief') drawRelief(); if (i.dataset.layer === 'veg') drawVeg(); placeLabels(); renderMap(); });
 }
 $('#layBtn').onclick = () => { const o = $('#layers').hidden; $('#layers').hidden = !o; $('#layBtn').setAttribute('aria-pressed', o); if (o) renderLayers(); };
 for (const b of $('#kmode').children) b.onclick = () => { ui.kpiMode = b.dataset.km; for (const x of $('#kmode').children) x.setAttribute('aria-pressed', x === b); renderKpis(); };
@@ -1617,7 +1638,10 @@ function forecastAllHTML(fc) {
   if (!f || !f.metrics || !s) return '';
   const fin = s.financial || {};
   const rows = FC_ROWS.filter(([key]) => f.metrics[key] && f.metrics[key].value != null).map(([key, name, div, dec]) => {
-    const p = f.metrics[key], raw = key === 'operating_cost' ? (fin.total_cost != null ? fin.total_cost - fin.undelivered_penalty : null) : s.metrics[key] != null ? s.metrics[key] : fin[key];
+    const p = f.metrics[key], raw = key === 'operating_cost' ? opCost(fin) : key === 'undelivered_penalty' ? undCost(fin)
+      : key === 'total_cost' ? (opCost(fin) == null ? null : opCost(fin) + (undCost(fin) || 0))
+      : key === 'cost_per_t_on_time' ? (opCost(fin) == null ? null : (opCost(fin) + (undCost(fin) || 0)) / Math.max(1, s.metrics.delivered_on_time_t))
+      : s.metrics[key] != null ? s.metrics[key] : fin[key];
     if (raw == null) return '';
     const a = Number(raw), inside = a >= p.lo - 1e-6 && a <= p.hi + 1e-6;
     return `<tr><td>${name}</td><td class="n num">${fmt(p.value / div, dec)}<small>${fmt(p.lo / div, dec)}–${fmt(p.hi / div, dec)}</small></td><td class="n num">${fmt(a / div, dec)}</td><td class="n"><span class="badge ${inside ? 'ok' : 'bad'}">${inside ? 'в интервале' : 'вне интервала'}</span></td></tr>`;

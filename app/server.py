@@ -224,11 +224,18 @@ def index():
     return html.replace("/*__APP__*/false", "true")
 
 
-@app.get("/v3", response_class=HTMLResponse, include_in_schema=False)
-def index_v3():
-    """Проба правок по дизайну (слои карты, три вкладки, блок «почему выиграл план»)."""
-    html = (ROOT / "yakutia/network_v3.html").read_text(encoding="utf-8")
+@app.get("/v4", response_class=HTMLResponse, include_in_schema=False)
+def index_v4():
+    """Проба оформления: растительность на карте и более читаемая светлая тема."""
+    html = (ROOT / "yakutia/network_v4.html").read_text(encoding="utf-8")
     return html.replace("/*__APP__*/false", "true")
+
+
+@app.get("/v3", include_in_schema=False)
+def index_v3():
+    """Старый адрес пробы v3: она теперь на главной."""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse("/")
 
 
 @app.get("/v2", include_in_schema=False)
@@ -261,6 +268,23 @@ def geo_relief_image():
     path = ROOT / "yakutia/geo/relief.jpg"
     if not path.exists():
         raise HTTPException(404, "Нет yakutia/geo/relief.jpg: соберите его yakutia/geo_relief.py")
+    return FileResponse(path, media_type="image/jpeg", headers={"Cache-Control": "max-age=86400"})
+
+
+@app.get("/api/geo/vegetation", include_in_schema=False)
+def geo_vegetation():
+    """Рамка слоя растительности (yakutia/geo_vegetation.py) в координатах карты — только для отрисовки."""
+    path = ROOT / "yakutia/geo/vegetation.json"
+    if not path.exists():
+        raise HTTPException(404, "Нет yakutia/geo/vegetation.json: соберите его yakutia/geo_vegetation.py")
+    return FileResponse(path, media_type="application/json", headers={"Cache-Control": "max-age=86400"})
+
+
+@app.get("/api/geo/vegetation.jpg", include_in_schema=False)
+def geo_vegetation_image():
+    path = ROOT / "yakutia/geo/vegetation.jpg"
+    if not path.exists():
+        raise HTTPException(404, "Нет yakutia/geo/vegetation.jpg: соберите его yakutia/geo_vegetation.py")
     return FileResponse(path, media_type="image/jpeg", headers={"Cache-Control": "max-age=86400"})
 
 
@@ -420,6 +444,11 @@ def network_builtin() -> Dict[str, dict]:
                                         scenario=real / "yakutia_real_2026_deep.json", limits=real / "limits.json",
                                         tariffs=NET_TARIFFS, cards=real / "fleet_cards.json", geo=real / "geo.json",
                                         policy=real / "search_policy.json")
+    if (real / "yakutia_real_2026_bykov.json").exists():
+        out["yakutia_real_bykov"] = dict(title="Якутия 2026: + перевалка в Быковом Мысе (условный терминал)",
+                                         scenario=real / "yakutia_real_2026_bykov.json", limits=real / "limits.json",
+                                         tariffs=NET_TARIFFS, cards=real / "fleet_cards.json", geo=real / "geo.json",
+                                         policy=real / "search_policy.json")
     if (NET_DEMO / "yakutia_stress.json").exists():
         out["yakutia_stress"] = dict(title="Якутия, стресс-тест причала: Нижнеянск, один причал",
                                      scenario=NET_DEMO / "yakutia_stress.json", tariffs=NET_DEMO / "tariffs_base.json",
@@ -457,7 +486,7 @@ def _ru_error(msg: str) -> str:
 
 # Что показывать в выпадающем списке сайта. Остальные готовые сценарии остаются доступны через API
 # (/api/network/jobs с builtin) — на них опираются тесты и примеры.
-SHOWN_NETWORK = ("yakutia", "yakutia_real", "yakutia_real_deep", "yakutia_stress")
+SHOWN_NETWORK = ("yakutia", "yakutia_real", "yakutia_real_deep", "yakutia_real_bykov", "yakutia_stress")
 SHOWN_LINEAR = ("r1_baseline_central_central",)
 
 
@@ -683,7 +712,13 @@ def network_port_load(job_id: str, port: str, start: str, end: str, variant: Opt
 def network_explain(job_id: str, voyage: str, variant: Optional[str] = None):
     """Маршрут, срок, аудит и цена рейса; номер рейса с 1 внутри варианта (контракт: GET /api/explain)."""
     from network.analysis import explain_voyage
-    return _core_call(explain_voyage, _plan(_net_job(job_id), variant), voyage)
+    plan = _plan(_net_job(job_id), variant)
+    out = _core_call(explain_voyage, plan, voyage)
+    v = plan["voyages"][int(voyage) - 1]
+    if v.get("batch_id"):          # перевалка: этап партии, терминал и второй рейс той же партии
+        out["transfer"] = {"batch_id": v["batch_id"], "stage": v.get("stage"), "port": v.get("transfer_port"),
+                           "voyages": [i + 1 for i, w in enumerate(plan["voyages"]) if w.get("batch_id") == v["batch_id"]]}
+    return out
 
 
 @app.get("/api/network/jobs/{job_id}/diagnose")
