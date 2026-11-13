@@ -126,7 +126,9 @@ def run_scenario(raw, strategy=REPOSITION, *, limits=None, tariffs=None, search_
     result = build_result(raw, scenario, scheduler.plan(strategy), limits, tariffs)
     if search_policy is not None:
         result['search_diagnostics'] = {
-            'policy': asdict(search_policy), 'budget_seconds': search_policy.budget_seconds,
+            'policy': {key: value for key, value in asdict(search_policy).items()
+                       if key != 'recover_undelivered' or value},
+            'budget_seconds': search_policy.budget_seconds,
             'elapsed_seconds': round(perf_counter() - started, 6), **scheduler.diagnostics(),
         }
     return result
