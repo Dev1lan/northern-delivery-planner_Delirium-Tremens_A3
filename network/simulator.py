@@ -6,9 +6,9 @@ from network.ports import slots
 
 
 def voyages(scenario, tug, barge, cargo, capacity, origin, ready, limits, *, router=None,
-            allow_reposition=False, require_return=False, requirement=None, deficit_kg=0, bookings=None):
+            allow_reposition=False, require_return=False, requirement=None, deficit_kg=0, bookings=None, finish_by=None):
     bookings = bookings or {}
-    cutoff = min(scenario.end, tug.available_to, barge.available_to)
+    cutoff = min(scenario.end, tug.available_to, barge.available_to, finish_by or scenario.end)
     delivery_cutoff = min(cutoff, cargo.expires_at) if cargo.expires_at is not None else cutoff
     if ready >= delivery_cutoff or cargo.ready >= delivery_cutoff or not capacity:
         return ()
