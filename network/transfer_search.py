@@ -16,7 +16,7 @@ def extend(scheduler, state, *, score=None, incumbent=None):
     while examined < scheduler.limits.repair_states:
         candidate = None
         candidate_score = None
-        for proposal in _chains(scheduler, best):
+        for proposal in _chains(scheduler, best, compare_prices=scheduler.cost_start_expanded is not None):
             examined += 1
             proposal_score = score(proposal)
             if candidate_score is None or proposal_score > candidate_score:
@@ -32,7 +32,7 @@ def extend(scheduler, state, *, score=None, incumbent=None):
     return incumbent
 
 
-def _chains(scheduler, state):
+def _chains(scheduler, state, *, compare_prices):
     scenario = scheduler.scenario
     for cargo in scheduler.cargo:
         scheduler.check_budget()
@@ -51,7 +51,7 @@ def _chains(scheduler, state):
                 continue
             for first in _options(scheduler, state, first_cargo, capacity):
                 first = replace(first, batch_id=batch_id, stage=1, transfer_port=port)
-                proposal, smaller = _finish(scheduler, state, cargo, first, terminal)
+                proposal, smaller = _finish(scheduler, state, cargo, first, terminal, compare_prices)
                 if proposal is not None:
                     yield proposal
                     continue
@@ -61,13 +61,13 @@ def _chains(scheduler, state):
                     pair = (first.tug_id, first.barge_id)
                     for resized in _options(scheduler, state, first_cargo, smaller, pairs=(pair,)):
                         resized = replace(resized, batch_id=batch_id, stage=1, transfer_port=port)
-                        proposal, _ = _finish(scheduler, state, cargo, resized, terminal)
+                        proposal, _ = _finish(scheduler, state, cargo, resized, terminal, compare_prices)
                         if proposal is not None:
                             yield proposal
                             break
 
 
-def _finish(scheduler, state, cargo, first, terminal):
+def _finish(scheduler, state, cargo, first, terminal, compare_prices):
     scenario = scheduler.scenario
     ready = transfer_ready(scenario, first)
     if ready >= min(scenario.end, cargo.due):
@@ -75,6 +75,7 @@ def _finish(scheduler, state, cargo, first, terminal):
     staged = scheduler.append(state, first)
     second_cargo = replace(cargo, origin=first.transfer_port, ready=ready)
     smaller = 0
+    best = None
     for second in _options(scheduler, staged, second_cargo, first.kg):
         if (first.tug_id, first.barge_id) == (second.tug_id, second.barge_id):
             continue
@@ -89,8 +90,11 @@ def _finish(scheduler, state, cargo, first, terminal):
             replay(scenario, proposal.moves)
         except ScheduleViolation:
             continue
-        return proposal, 0
-    return None, smaller
+        if not compare_prices:
+            return proposal, 0
+        if best is None or proposal.net_cost < best.net_cost:
+            best = proposal
+    return best, smaller
 
 
 def _may_reach(scheduler, cargo):
