@@ -164,7 +164,6 @@ class CostModel:
                    if legacy else {'cost_basis': 'PLANNED_OPERATIONS', 'estimated_undelivered_cost': money(penalty),
                                    'unpriced_undelivered_t': unpriced / 1000}),
                 'empty_transition_cost': money(by_item.get('empty_fuel', ZERO) + by_item.get('repositioning', ZERO)),
-                **({'transshipment_cost': money(by_item.get('transshipment', ZERO))}
-                   if any(move.stage == 2 and self.scenario.terminals[move.transfer_port].rate_per_t is not None
-                          for move in moves) else {}),
+                **({'transshipment_cost': money(by_item.get('transshipment', ZERO))} if 'transshipment' in by_item
+                   else {}),
                 'price_status': 'PARTIAL' if legacy and unpriced else 'PRICED'}
