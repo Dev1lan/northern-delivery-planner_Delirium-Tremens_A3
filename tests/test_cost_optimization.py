@@ -121,3 +121,20 @@ class CostOptimizationTests(unittest.TestCase):
         self.assertEqual(result['financial_evaluation']['empty_transition_cost'], '50.00')
         self.assertEqual(result['financial_evaluation']['total_cost'], '400.00')
         self.assertEqual(audit_result(result)['schedule_audit']['status'], 'PASSED')
+
+    def test_alternative_delivery_cost_can_change_preferred_cargo(self):
+        raw, _ = self.one_job()
+        raw['cargo'].append(dict(raw['cargo'][0], cargo_id='FOOD', cargo_type='food'))
+        prices = tariffs({'loaded_fuel': 1})
+        prices['alternative_delivery'] = {
+            'coal': dict(value=5, unit='tonne', source='test', source_status='SYNTHETIC'),
+            'food': dict(value=15, unit='tonne', source='test', source_status='SYNTHETIC'),
+        }
+        limits = Limits(max_actions=1)
+        reference = run_scenario(raw, REPOSITION, limits=limits, tariffs=prices)
+        result = run_scenario(raw, COST, limits=limits, tariffs=prices, initial_plan=reference)
+        self.assertEqual(reference['voyages'][0]['cargo_id'], 'AB')
+        self.assertEqual(result['voyages'][0]['cargo_id'], 'FOOD')
+        self.assertEqual(result['financial_evaluation']['total_cost'], '510.00')
+        self.assertEqual(result['metrics']['delivered_on_time_t'], 100)
+        self.assertEqual(audit_result(result)['schedule_audit']['status'], 'PASSED')

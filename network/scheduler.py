@@ -151,6 +151,10 @@ class Scheduler:
             bookings[berth] = (*bookings.get(berth, ()), interval)
         charge = self.voyage_price(move) if self.cost_start_expanded is not None else Decimal(0)
         self.stats['generated_states'] += 1
+        # In financial search retain the net operating cost. The initial
+        # residual charge is a constant for all plans on this scenario.
+        if self.cost_start_expanded is not None:
+            charge -= self.cost_model.alternative_credit(cargo.type, move.kg)
         return State({**state.locations, move.tug_id: location, move.barge_id: location},
                      {**state.remaining, cargo.id: state.remaining[cargo.id] - move.kg}, tuple(deficits),
                      state.on_time + (move.kg if move.unloading_end <= cargo.due else 0),
@@ -572,8 +576,7 @@ class Scheduler:
         def score(item):
             meets_service = (item.on_time >= floor[0] and item.delivered >= floor[1]
                              and all(left <= right for left, right in zip(item.deficit, required)))
-            penalty, _ = self.cost_model.residual(item.remaining)
-            price = item.operating_cost + penalty
+            price = item.operating_cost
             if meets_service:
                 return True, -price, *item.score(True)
             return (False, *item.score(True)[:2], min(item.on_time, floor[0]),
@@ -583,7 +586,8 @@ class Scheduler:
         self.active_score = score
         self.best_score = None
         reference_state = replace(reference_state, operating_cost=sum(
-            (self.voyage_price(move) for move in reference_state.moves), Decimal(0)))
+            (self.voyage_price(move) - self.cost_model.alternative_credit(
+                self.scenario.cargo[move.cargo_id].type, move.kg) for move in reference_state.moves), Decimal(0)))
         self.record(reference_state)
         reference_state = self.reassign_terminal(seed, reference_state)
         state, _, cost_limited = self.search(seed, COST, reference_state, score=score)
