@@ -114,7 +114,7 @@ def build_result(raw, scenario, plan, limits, tariffs=None):
     return result
 
 
-def run_scenario(raw, strategy=REPOSITION, *, limits=None, tariffs=None, search_policy=None):
+def run_scenario(raw, strategy=REPOSITION, *, limits=None, tariffs=None, search_policy=None, initial_plan=None):
     started = perf_counter()
     limits = limits or Limits()
     scenario = parse_scenario(raw)
@@ -122,8 +122,19 @@ def run_scenario(raw, strategy=REPOSITION, *, limits=None, tariffs=None, search_
     if strategy == COST and tariffs is not None and tariffs.get('tariff_version') == 2:
         from network.costs import CostModel
         model = CostModel(scenario, tariffs)
+    moves = None
+    if initial_plan is not None:
+        if strategy != COST or initial_plan.get('strategy') not in (REPOSITION, COST):
+            raise ValueError('An initial plan is supported only for NETWORK_COST from REPOSITION or COST')
+        if initial_plan.get('input_fingerprint') != fingerprint(raw):
+            raise ValueError('Initial plan scenario differs')
+        if audit_result(initial_plan)['schedule_audit']['status'] != 'PASSED':
+            raise ValueError('Initial plan failed independent audit')
+        moves = decode_voyages(initial_plan['voyages'])
+        if any(not scenario.cargo[move.cargo_id].usable_at(move.unloading_end) for move in moves):
+            raise ValueError('Initial plan contains expired deliveries')
     scheduler = Scheduler(scenario, limits, model, policy=search_policy)
-    result = build_result(raw, scenario, scheduler.plan(strategy), limits, tariffs)
+    result = build_result(raw, scenario, scheduler.plan(strategy, initial_plan=moves), limits, tariffs)
     if search_policy is not None:
         result['search_diagnostics'] = {
             'policy': {key: value for key, value in asdict(search_policy).items()
@@ -169,6 +180,12 @@ def audit_result(result, *, require_cost=True):
         report['schedule_audit'] = {'status': 'FAILED', 'violations': [
             {'voyage': None, 'code': 'MISSING_TARIFF_PARAMETERS', 'detail': 'NETWORK_COST needs version 2 tariffs'}]}
         return report
+    floor = result.get('cost_service_floor')
+    if strategy == COST and floor is not None and (
+            metrics['delivered_on_time_t'] < floor['on_time_t'] or metrics['delivered_total_t'] < floor['total_t']):
+        report['schedule_audit'] = {'status': 'FAILED', 'violations': [
+            {'voyage': None, 'code': 'COST_SERVICE_FLOOR', 'detail': 'Delivered tonnes below exported floor'}]}
+        return report
     mismatches = [name for name, value in expected.items() if result.get(name) != value]
     if mismatches:
         code = 'EVENT_LOG_MISMATCH' if 'events' in mismatches else 'DERIVED_FIELDS_MISMATCH'
@@ -183,6 +200,7 @@ def main(argv=None):
     parser.add_argument('--strategy', choices=(*STRATEGIES, RETURN_EMPTY, COST), default=REPOSITION)
     parser.add_argument('--limits', type=Path, help='JSON object overriding search limits')
     parser.add_argument('--tariffs', type=Path)
+    parser.add_argument('--initial-plan', type=Path, help='Audited v3 seed for NETWORK_COST')
     parser.add_argument('--mode', choices=('FAST', 'DEMO', 'STANDARD', 'RESEARCH'))
     parser.add_argument('--time-seconds', type=float)
     parser.add_argument('--recover-undelivered', action='store_true')
@@ -200,7 +218,8 @@ def main(argv=None):
                           args.max_detailed_checks_per_iteration, args.recover_undelivered, args.sea_fleet_allocation)
     result = run_scenario(read(args.scenario), args.strategy, limits=Limits(**read(args.limits)) if args.limits else None,
                           tariffs=read(args.tariffs) if args.tariffs else None,
-                          search_policy=policy if policy != SearchPolicy() else None)
+                          search_policy=policy if policy != SearchPolicy() else None,
+                          initial_plan=read(args.initial_plan) if args.initial_plan else None)
     payload = json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False) + '\n'
     if args.output:
         with args.output.open('x', encoding='utf-8') as stream:

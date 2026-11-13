@@ -110,6 +110,9 @@ class CostModel:
     def voyage_cost(self, move):
         return sum((cost for _, cost, _, _ in self.charges(move)), ZERO)
 
+    def alternative_credit(self, cargo_type, kg):
+        return Decimal(kg) / TONNE * self.alternative.get(cargo_type, ZERO)
+
     def residual(self, remaining):
         penalty, unpriced = ZERO, 0
         for key, kg in remaining.items():
