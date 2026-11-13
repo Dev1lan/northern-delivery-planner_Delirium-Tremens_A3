@@ -138,3 +138,14 @@ class CostOptimizationTests(unittest.TestCase):
         self.assertEqual(result['financial_evaluation']['total_cost'], '510.00')
         self.assertEqual(result['metrics']['delivered_on_time_t'], 100)
         self.assertEqual(audit_result(result)['schedule_audit']['status'], 'PASSED')
+
+    def test_terminal_repair_can_replace_only_the_tug(self):
+        raw, prices = self.one_job()
+        raw['barges'].pop()
+        raw['compatible_pairs'][1]['barge_id'] = raw['barges'][0]['vessel_id']
+        reference = run_scenario(raw, REPOSITION, tariffs=prices)
+        with patch.object(Scheduler, 'search', side_effect=TimeLimitReached):
+            result = run_scenario(raw, COST, tariffs=prices, initial_plan=reference)
+        self.assertEqual(result['voyages'][0]['barge_id'], reference['voyages'][0]['barge_id'])
+        self.assertEqual(result['voyages'][0]['tug_id'], 'T2')
+        self.assertEqual(result['financial_evaluation']['total_cost'], '15.00')

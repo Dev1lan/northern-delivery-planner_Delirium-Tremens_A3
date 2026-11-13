@@ -616,7 +616,9 @@ class Scheduler:
                     continue
                 # An unused resource or one released by an earlier voyage
                 # can take over without changing a subsequent voyage.
-                if pair == (move.tug_id, move.barge_id) or any(last_use.get(key, -1) >= index for key in pair):
+                original_pair = (move.tug_id, move.barge_id)
+                if pair == original_pair or any(key not in original_pair and last_use.get(key, -1) >= index
+                                                for key in pair):
                     continue
                 alternative = self.assign_pair(move, pair)
                 if self.voyage_price(alternative) >= original_price:
