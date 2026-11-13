@@ -27,3 +27,10 @@ class BatchTests(unittest.TestCase):
         self.assertEqual(list(run_jobs([], workers=4)), [])
         with self.assertRaisesRegex(ValueError, 'positive integer'):
             list(run_jobs([], workers=0))
+
+    def test_worker_failure_reaches_caller(self):
+        root = Path(__file__).resolve().parents[1]
+        scenario = json.loads((root / 'data' / 'network_demo' / 'a_chain.json').read_text())
+        jobs = [PlanningJob(scenario, 'UNKNOWN'), PlanningJob(scenario)]
+        with self.assertRaisesRegex(ValueError, 'Unknown network strategy'):
+            list(run_jobs(jobs, workers=2))
