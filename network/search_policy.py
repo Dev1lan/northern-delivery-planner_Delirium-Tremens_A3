@@ -12,8 +12,11 @@ class SearchPolicy:
     max_candidates_per_state: int | None = None
     max_detailed_checks_per_iteration: int | None = None
     recover_undelivered: bool = False
+    sea_fleet_allocation: bool = False
 
     def __post_init__(self):
+        if type(self.sea_fleet_allocation) is not bool:
+            raise ValueError("sea_fleet_allocation must be boolean")
         if type(self.recover_undelivered) is not bool:
             raise ValueError("recover_undelivered must be boolean")
         if self.mode not in (None, 'FAST', 'DEMO', 'STANDARD', 'RESEARCH'):
