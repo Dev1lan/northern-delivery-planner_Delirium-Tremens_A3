@@ -46,3 +46,4 @@ venv*/
 *.bak
 *~
 yakutia/build/
+other_data/

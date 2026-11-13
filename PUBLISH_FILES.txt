@@ -124,3 +124,11 @@ tests/test_network_analysis.py
 tests/test_network_expiry.py
 tests/test_ports.py
 docs/network/API_CONTRACT.md
+docs/NETWORK_PERFORMANCE.md
+experiments/benchmark_network.py
+experiments/prepare_network_benchmark.py
+network/search_policy.py
+tests/test_routing_performance.py
+tests/test_search_policy.py
+network/batch.py
+tests/test_network_batch.py

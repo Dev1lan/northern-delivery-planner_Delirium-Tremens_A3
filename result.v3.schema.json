@@ -35,6 +35,9 @@
         "physically_delivered_t": {"type": "number", "minimum": 0},
         "usable_delivered_t": {"type": "number", "minimum": 0},
         "expired_t": {"type": "number", "minimum": 0}}}},
+    "search_diagnostics": {"type": "object", "required": ["policy", "elapsed_seconds", "budget_seconds"],
+      "properties": {"policy": {"type": "object"}, "elapsed_seconds": {"type": "number", "minimum": 0},
+        "budget_seconds": {"type": ["number", "null"], "exclusiveMinimum": 0}}},
     "port_operations": {"type": "object", "additionalProperties": {"type": "object"}},
     "cost_service_floor": {"type": "object", "required": ["on_time_t", "total_t"],
       "additionalProperties": false, "properties": {"on_time_t": {"type": "number", "minimum": 0},
@@ -136,7 +139,8 @@
     "termination_reason": {
       "enum": [
         "SEARCH_FINISHED",
-        "SEARCH_LIMIT"
+        "SEARCH_LIMIT",
+        "TIME_LIMIT"
       ]
     },
     "expanded_states": {

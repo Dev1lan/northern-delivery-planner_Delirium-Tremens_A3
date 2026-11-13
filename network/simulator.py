@@ -1,11 +1,11 @@
 """Generate physically plausible load/route choices for one compatible pair."""
 
 from network.models import Voyage, handling_time, loaded_draft
-from network.routing import paths
+from network.routing import Router
 from network.ports import slots
 
 
-def voyages(scenario, tug, barge, cargo, capacity, origin, ready, limits, *,
+def voyages(scenario, tug, barge, cargo, capacity, origin, ready, limits, *, router=None,
             allow_reposition=False, require_return=False, requirement=None, deficit_kg=0, bookings=None):
     bookings = bookings or {}
     cutoff = min(scenario.end, tug.available_to, barge.available_to)
@@ -16,8 +16,8 @@ def voyages(scenario, tug, barge, cargo, capacity, origin, ready, limits, *,
         return ()
     empty_draft = loaded_draft(tug, barge, 0)
     empty_cutoff = min(delivery_cutoff, cargo.due) if origin != cargo.origin else delivery_cutoff
-    approaches = paths(scenario, tug, barge, origin, cargo.origin, ready, empty_cutoff, empty_draft,
-                       limits, reposition=True)
+    router = router or Router(scenario, limits)
+    approaches = router.paths(tug, barge, origin, cargo.origin, ready, empty_cutoff, empty_draft, reposition=True)
     results = {}
     for empty in approaches:
         at_pickup = max(cargo.ready, empty[-1].arrive if empty else ready)
@@ -33,13 +33,13 @@ def voyages(scenario, tug, barge, cargo, capacity, origin, ready, limits, *,
             earliest_unload = deadline if cargo.destination in scenario.berths else deadline - handling
             for loader, load_start, departure in slots(scenario, cargo.origin, 'LOADING', barge, cargo.type,
                                                        kg, draft, at_pickup, earliest_unload, bookings):
-                for loaded in paths(scenario, tug, barge, cargo.origin, cargo.destination, departure,
-                                    earliest_unload, draft, limits):
+                for loaded in router.paths(tug, barge, cargo.origin, cargo.destination, departure,
+                                           earliest_unload, draft):
                     for unloader, unload_start, unloaded in slots(
                             scenario, cargo.destination, 'UNLOADING', barge, cargo.type,
                             kg, draft, loaded[-1].arrive, deadline, bookings):
-                        back = paths(scenario, tug, barge, cargo.destination, cargo.origin, unloaded, cutoff,
-                                     empty_draft, limits) if require_return else ((),)
+                        back = router.paths(tug, barge, cargo.destination, cargo.origin, unloaded, cutoff,
+                                            empty_draft) if require_return else ((),)
                         for return_legs in back:
                             options.append(Voyage(tug.id, barge.id, cargo.id, kg, empty, load_start, departure,
                                                   loaded, unloaded, return_legs, loader, unloader,

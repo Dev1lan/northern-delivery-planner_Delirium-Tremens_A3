@@ -1,18 +1,19 @@
 """Run comparable network scenarios and preserve their inputs and audited results."""
 
 import argparse
+from contextlib import closing
 from dataclasses import asdict
 import json
 from pathlib import Path
 import platform
 import re
-from time import perf_counter
 
 from jsonschema import Draft202012Validator
 
 from experiments.run_comparison import read_json, sha256, write_csv, write_json
 from network import VERSION
-from network.adapter import audit_result, run_scenario
+from network.adapter import audit_result
+from network.batch import PlanningJob, run_jobs
 from network.models import Limits, parse_scenario
 from network.replanning import replan
 from network.scheduler import COST, REPOSITION, RETURN_EMPTY, SOCIAL, STRATEGIES
@@ -24,7 +25,9 @@ SCHEMA = ROOT / 'result.v3.schema.json'
 
 
 def run(paths, output, *, strategies=(*STRATEGIES, RETURN_EMPTY), limits=None,
-        tariffs=None, revision=None, replan_demo=False):
+        tariffs=None, revision=None, replan_demo=False, workers=1):
+    if type(workers) is not int or workers < 1:
+        raise ValueError('workers must be a positive integer')
     limits = limits or Limits()
     if not strategies or len(set(strategies)) != len(strategies) or set(strategies) - {*STRATEGIES, RETURN_EMPTY, COST}:
         raise ValueError('Select distinct supported strategies')
@@ -61,53 +64,57 @@ def run(paths, output, *, strategies=(*STRATEGIES, RETURN_EMPTY), limits=None,
                'data_status': (next(iter(statuses)) if len(statuses := {s['data_status'] for s in scenarios.values()}) == 1
                                else 'MIXED'),
                'strategies': list(strategies), 'parameters': asdict(limits),
+               **({'workers': workers} if workers != 1 else {}),
                'source_sha256': {p.relative_to(ROOT).as_posix(): sha256(p) for p in sources},
                'input_sha256': {p.name: sha256(p) for p in sorted(inputs.glob('*.json'))},
                'tariffs_sha256': sha256(output / 'tariffs.json') if tariffs is not None else None,
                'replanning_input_sha256': sha256(output / 'replan_input.json') if replan_demo else None})
     metrics_rows, comparisons = [], []
-    for sid, raw in sorted(scenarios.items()):
-        scenario_output = output / sid
-        scenario_output.mkdir()
-        results = {}
-        for strategy in strategies:
-            start = perf_counter()
-            result = run_scenario(raw, strategy, limits=limits, tariffs=tariffs)
-            duration = perf_counter() - start
-            validator.validate(result)
-            independent = audit_result(result)
-            if independent['schedule_audit']['status'] != 'PASSED':
-                raise ValueError(f'{sid}/{strategy} failed independent replay: {independent}')
-            results[strategy] = result
-            write_json(scenario_output / f'{strategy.lower()}.json', result)
-            financial = result['financial_evaluation']
-            metrics_rows.append({'scenario_id': sid, 'strategy': strategy, **result['metrics'],
-                                 'requirements_status': result['requirements_status'],
-                                 'feasibility_status': result['feasibility_status'],
-                                 'physical_violations': 0, 'cost': financial['total_cost'] if financial else None,
-                                 'currency': financial['currency'] if financial else None,
-                                 'compute_seconds': round(duration, 6)})
-        if REPOSITION in results:
-            for baseline in (SOCIAL, RETURN_EMPTY):
-                if baseline not in results:
-                    continue
-                a, b = results[baseline]['metrics'], results[REPOSITION]['metrics']
-                keys = ('delivered_on_time_t', 'delivered_total_t', 'empty_km', 'social_deficit_t')
-                comparisons.append({'scenario_id': sid, 'baseline': baseline, 'candidate': REPOSITION,
-                                    **{f'delta_{k}': round(b[k] - a[k], 6) for k in keys},
-                                    'selected_repositioning': results[REPOSITION]['reposition_comparison']['selected_repositioning']})
-        if replan_demo and sid == 'h_replan':
-            config = read_json(demo_update)
-            revised = {**raw, 'edges': [dict(e, condition={**e['condition'], **config['edge_updates'].get(e['edge_id'], {})})
-                                       for e in raw['edges']], 'cargo': [*raw['cargo'], *config['new_cargo']]}
-            outcome = replan(results[REPOSITION], revised, config['as_of'], resource_updates=config['resource_updates'],
-                             delivered_t=config['delivered_t'], remaining_t=config['remaining_t'], limits=limits)
-            if outcome['status'] != 'REPLANNED':
-                raise ValueError(f'Expected the demo to replan: {outcome["reason"]}')
-            validator.validate(outcome['remaining_plan'])
-            if audit_result(outcome['remaining_plan'])['schedule_audit']['status'] != 'PASSED':
-                raise ValueError('Replanned suffix failed independent replay')
-            write_json(scenario_output / 'replanned.json', outcome)
+    ordered_scenarios = sorted(scenarios.items())
+    jobs = (PlanningJob(raw, strategy, limits, tariffs)
+            for _, raw in ordered_scenarios for strategy in strategies)
+    with closing(run_jobs(jobs, workers=workers)) as runs:
+        for sid, raw in sorted(scenarios.items()):
+            scenario_output = output / sid
+            scenario_output.mkdir()
+            results = {}
+            for strategy in strategies:
+                completed = next(runs)
+                result = completed.result
+                validator.validate(result)
+                independent = audit_result(result)
+                if independent['schedule_audit']['status'] != 'PASSED':
+                    raise ValueError(f'{sid}/{strategy} failed independent replay: {independent}')
+                results[strategy] = result
+                write_json(scenario_output / f'{strategy.lower()}.json', result)
+                financial = result['financial_evaluation']
+                metrics_rows.append({'scenario_id': sid, 'strategy': strategy, **result['metrics'],
+                                     'requirements_status': result['requirements_status'],
+                                     'feasibility_status': result['feasibility_status'],
+                                     'physical_violations': 0, 'cost': financial['total_cost'] if financial else None,
+                                     'currency': financial['currency'] if financial else None,
+                                     'compute_seconds': round(completed.compute_seconds, 6)})
+            if REPOSITION in results:
+                for baseline in (SOCIAL, RETURN_EMPTY):
+                    if baseline not in results:
+                        continue
+                    a, b = results[baseline]['metrics'], results[REPOSITION]['metrics']
+                    keys = ('delivered_on_time_t', 'delivered_total_t', 'empty_km', 'social_deficit_t')
+                    comparisons.append({'scenario_id': sid, 'baseline': baseline, 'candidate': REPOSITION,
+                                        **{f'delta_{k}': round(b[k] - a[k], 6) for k in keys},
+                                        'selected_repositioning': results[REPOSITION]['reposition_comparison']['selected_repositioning']})
+            if replan_demo and sid == 'h_replan':
+                config = read_json(demo_update)
+                revised = {**raw, 'edges': [dict(e, condition={**e['condition'], **config['edge_updates'].get(e['edge_id'], {})})
+                                           for e in raw['edges']], 'cargo': [*raw['cargo'], *config['new_cargo']]}
+                outcome = replan(results[REPOSITION], revised, config['as_of'], resource_updates=config['resource_updates'],
+                                 delivered_t=config['delivered_t'], remaining_t=config['remaining_t'], limits=limits)
+                if outcome['status'] != 'REPLANNED':
+                    raise ValueError(f'Expected the demo to replan: {outcome["reason"]}')
+                validator.validate(outcome['remaining_plan'])
+                if audit_result(outcome['remaining_plan'])['schedule_audit']['status'] != 'PASSED':
+                    raise ValueError('Replanned suffix failed independent replay')
+                write_json(scenario_output / 'replanned.json', outcome)
     write_csv(output / 'metrics.csv', metrics_rows)
     write_csv(output / 'comparison.csv', comparisons)
     summary = {'scenarios': len(scenarios), 'schedules': len(metrics_rows), 'physical_violations': 0,
@@ -124,6 +131,7 @@ def main(argv=None):
     parser.add_argument('--limits', type=Path)
     parser.add_argument('--tariffs', type=Path)
     parser.add_argument('--revision')
+    parser.add_argument('--workers', type=int, default=1, help='Parallel worker processes for independent plans')
     parser.add_argument('--replan-demo', action='store_true')
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args(argv)
@@ -133,7 +141,7 @@ def main(argv=None):
                  strategies=tuple(args.strategy or defaults),
                  limits=Limits(**read_json(args.limits)) if args.limits else None,
                  tariffs=tariffs,
-                 revision=args.revision, replan_demo=args.replan_demo)
+                 revision=args.revision, replan_demo=args.replan_demo, workers=args.workers)
     print(json.dumps(result, indent=2))
 
 
