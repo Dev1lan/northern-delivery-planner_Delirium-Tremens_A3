@@ -198,8 +198,11 @@ def audit_result(result, *, require_cost=True):
     if priced and ('tariff_parameters' in priced or strategy == COST):
         from network.costs import CostModel
         try:
+            legacy = 'cost_basis' not in priced
+            if legacy and any(move.stage is not None for move in moves):
+                raise ValueError('Historical financial basis does not support transshipment')
             expected['financial_evaluation'] = CostModel(scenario, priced['tariff_parameters']).breakdown(
-                moves, legacy='cost_basis' not in priced)
+                moves, legacy=legacy)
         except (ValueError, KeyError, TypeError) as exc:
             report['schedule_audit'] = {'status': 'FAILED', 'violations': [
                 {'voyage': None, 'code': 'INVALID_TARIFF_PARAMETERS', 'detail': str(exc)}]}
