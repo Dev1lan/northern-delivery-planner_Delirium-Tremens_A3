@@ -5,6 +5,7 @@ from copy import deepcopy
 from dataclasses import asdict
 import json
 from pathlib import Path
+from time import perf_counter
 import sys
 
 from network import VERSION
@@ -12,6 +13,7 @@ from network.financial import evaluate_schedule
 from network.metrics import cargo_condition, event_rows, summarize
 from network.models import Leg, Limits, Voyage, parse_scenario, timestamp
 from network.ports import port_report
+from network.search_policy import SearchPolicy
 from network.scheduler import COST, REPOSITION, RETURN_EMPTY, STRATEGIES, Scheduler
 from network.validator import audit, replay, requirement_report
 from result_adapter import fingerprint
@@ -112,14 +114,22 @@ def build_result(raw, scenario, plan, limits, tariffs=None):
     return result
 
 
-def run_scenario(raw, strategy=REPOSITION, *, limits=None, tariffs=None):
+def run_scenario(raw, strategy=REPOSITION, *, limits=None, tariffs=None, search_policy=None):
+    started = perf_counter()
     limits = limits or Limits()
     scenario = parse_scenario(raw)
     model = None
     if strategy == COST and tariffs is not None and tariffs.get('tariff_version') == 2:
         from network.costs import CostModel
         model = CostModel(scenario, tariffs)
-    return build_result(raw, scenario, Scheduler(scenario, limits, model).plan(strategy), limits, tariffs)
+    scheduler = Scheduler(scenario, limits, model, policy=search_policy)
+    result = build_result(raw, scenario, scheduler.plan(strategy), limits, tariffs)
+    if search_policy is not None:
+        result['search_diagnostics'] = {
+            'policy': asdict(search_policy), 'budget_seconds': search_policy.budget_seconds,
+            'elapsed_seconds': round(perf_counter() - started, 6), **scheduler.diagnostics(),
+        }
+    return result
 
 
 def audit_result(result, *, require_cost=True):
@@ -171,14 +181,22 @@ def main(argv=None):
     parser.add_argument('--strategy', choices=(*STRATEGIES, RETURN_EMPTY, COST), default=REPOSITION)
     parser.add_argument('--limits', type=Path, help='JSON object overriding search limits')
     parser.add_argument('--tariffs', type=Path)
+    parser.add_argument('--mode', choices=('FAST', 'DEMO', 'STANDARD', 'RESEARCH'))
+    parser.add_argument('--time-seconds', type=float)
+    parser.add_argument('--top-k-pairs-per-cargo', type=int)
+    parser.add_argument('--max-candidates-per-state', type=int)
+    parser.add_argument('--max-detailed-checks-per-iteration', type=int)
     parser.add_argument('--output', type=Path)
     args = parser.parse_args(argv)
 
     def read(path):
         return json.loads(path.read_text(encoding='utf-8-sig'))
 
+    policy = SearchPolicy(args.mode, args.time_seconds, args.top_k_pairs_per_cargo, args.max_candidates_per_state,
+                          args.max_detailed_checks_per_iteration)
     result = run_scenario(read(args.scenario), args.strategy, limits=Limits(**read(args.limits)) if args.limits else None,
-                          tariffs=read(args.tariffs) if args.tariffs else None)
+                          tariffs=read(args.tariffs) if args.tariffs else None,
+                          search_policy=policy if policy != SearchPolicy() else None)
     payload = json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False) + '\n'
     if args.output:
         with args.output.open('x', encoding='utf-8') as stream:
