@@ -1,0 +1,22 @@
+{
+  "port_operations": {
+    "Быков Мыс": {
+      "source": "SYNTHETIC benchmark assumption: one berth, dry cargo only, 100 t/h; no published capacity used",
+      "berths": [{
+        "berth_id": "DEMO-BYKOV",
+        "source": "SYNTHETIC benchmark assumption",
+        "operations": ["LOADING", "UNLOADING"],
+        "handling_tph": {"coal": 100, "food": 100, "general": 100}
+      }]
+    }
+  },
+  "transshipment_ports": {
+    "Быков Мыс": {
+      "source": "SYNTHETIC benchmark assumption: dry-cargo transfer, no verified terminal parameters",
+      "cargo_types": ["coal", "food", "general"],
+      "directions": ["RIVER_TO_SEA", "SEA_TO_RIVER"],
+      "handling_seconds": 0,
+      "storage_assumption": "UNLIMITED"
+    }
+  }
+}

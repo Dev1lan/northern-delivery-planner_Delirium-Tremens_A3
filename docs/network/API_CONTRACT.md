@@ -197,3 +197,5 @@ if audit_result(plan)["schedule_audit"]["status"] != "PASSED":
 ### Старый линейный движок v1/v2
 
 `result_adapter.run_scenario(scenario_path, *, config_path, strategy, contract_version, requirements, ...)` принимает папку CSV-сценария. В v1 доступны `FCFS`, `EARLIEST_DUE` и `OPTIMIZED`, в v2 дополнительно `SOCIAL_PRIORITY` и `requirements`. Схемы: [v1](../../result.schema.json), [v2](../../result.v2.schema.json). Для диспетчеризации по версии используйте `schema_version`. В старом контракте список рейсов — `trips`, в v3 — `voyages` и `events`. У локального HTTP-сервера v3 отсутствуют ручки для v1/v2, ML и импорта файлов.
+
+[Поля перевалки и актуальная база финансового расчёта](../NETWORK_TRANSSHIPMENT.md).
