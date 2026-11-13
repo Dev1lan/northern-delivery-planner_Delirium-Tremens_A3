@@ -456,6 +456,22 @@ def network_sample(name: str):
     return FileResponse(files[name], filename=files[name].name)
 
 
+def _network_forecast(raw):
+    """Быстрый прогноз сетевой ML-модели (ml/network_ml) до расчёта ядра; ошибки модели не мешают расчёту."""
+    started = time.perf_counter()
+    try:
+        import importlib.util
+        if "network_ml_predict" not in sys.modules:
+            spec = importlib.util.spec_from_file_location("network_ml_predict", ROOT / "ml/network_ml/predict.py")
+            mod = importlib.util.module_from_spec(spec)
+            sys.modules["network_ml_predict"] = mod
+            spec.loader.exec_module(mod)
+        out = sys.modules["network_ml_predict"].forecast(raw)
+    except Exception as e:  # noqa: BLE001 — нет sklearn/модели: сайт работает без прогноза
+        out = {"status": "UNAVAILABLE", "error": f"{type(e).__name__}: {e}"}
+    return out, round((time.perf_counter() - started) * 1000, 1)
+
+
 @app.post("/api/network/jobs", status_code=202)
 def network_job(req: NetworkRequest):
     """Проверить сетевой сценарий ядром и посчитать 4 стратегии в отдельном процессе."""
@@ -522,7 +538,9 @@ def network_job(req: NetworkRequest):
         JOBS[job_id] = job
     threading.Thread(target=_watch, args=(job,), daemon=True).start()
     _evict()
-    return dict(job_id=job_id, status="running", kind="network")
+    forecast, forecast_ms = _network_forecast(raw)
+    (job_dir / "forecast.json").write_text(json.dumps(forecast, ensure_ascii=False), encoding="utf-8")
+    return dict(job_id=job_id, status="running", kind="network", forecast=forecast, forecast_ms=forecast_ms)
 
 
 @app.get("/api/network/jobs/{job_id}")
@@ -800,6 +818,10 @@ def _warmup():
             except Exception:
                 pass
         threading.Thread(target=run, daemon=True).start()
+    sample = NET_DATA / "yakutia_network.json"
+    if sample.exists():                       # сетевая модель: прогреть загрузку весов
+        threading.Thread(target=lambda: _network_forecast(json.loads(sample.read_text(encoding="utf-8"))),
+                         daemon=True).start()
 
 
 @app.on_event("shutdown")

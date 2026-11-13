@@ -817,7 +817,7 @@ function renderSide(soft) {
 function overviewHTML() {
   const s = S(), m = s.metrics, maxD = D._demand;
   const rc = s.reposition_comparison;
-  let h = `<h3>Стратегии</h3><div class="cmp">` + D.order.map(k => {
+  let h = forecastHTML() + `<h3>Стратегии</h3><div class="cmp">` + D.order.map(k => {
     const q = D.strategies[k].metrics;
     return `<div class="r ${k === cur ? 'on' : ''}" data-s="${k}" title="${esc(D.strategies[k].hint)}"><div class="name">${esc(D.strategies[k].label)}${k === D.best ? ' <span class="badge" style="color:var(--accent)">лучший</span>' : ''}</div>
     <div class="bar"><i class="tot" style="width:${100 * q.delivered_total_t / maxD}%"></i><i style="width:${100 * q.delivered_on_time_t / maxD}%"></i></div><div class="val num">${pct(q.delivered_on_time_t, maxD)}%</div></div>`;
@@ -1473,7 +1473,24 @@ try { const t = localStorage.getItem('a3theme'); if (t) document.documentElement
 /* ---------- приложение: сценарии и загрузка ---------- */
 function busy(on, text) { $('#overlay').classList.toggle('on', on); if (text) $('#overlayText').textContent = text; }
 async function api(path, opt) { const r = await fetch(path, opt); const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.detail || j.error || r.statusText); return j; }
-let jobSeq = 0;
+let jobSeq = 0, netForecast = null;
+const FC_SHORT = {NETWORK_REPOSITION: 'с перегоном', NETWORK_COST: 'по цене', NETWORK_SOCIAL: 'соцминимумы', NETWORK_GREEDY: 'жадная', NETWORK_FCFS: 'по очереди'};
+function forecastLine(fc) {
+  const top = Object.entries(fc.by_strategy).sort((a, b) => b[1].on_time_t - a[1].on_time_t).slice(0, 2);
+  const ood = fc.status !== 'OK';
+  return `прогноз ML за ${Math.round(fc.ms || 0)} мс: ${top.map(([k, v]) => `${FC_SHORT[k] || k} ≈${fmt(v.on_time_t / 1000)} тыс. т (${Math.round(v.on_time_share * 100)}%)`).join(', ')}${ood ? ' — сценарий крупнее обучающих, грубый ориентир' : ''}; ядро уточняет`;
+}
+function forecastHTML() {
+  const fc = D && D._forecast;
+  if (!fc) return '';
+  const rows = D.order.filter(k => fc.by_strategy[k]).map(k => {
+    // ошибка — в процентах спроса: у стратегий с малым тоннажем относительная ошибка «по себе» обманчиво велика
+    const p = fc.by_strategy[k].on_time_t, a = D.strategies[k].metrics.delivered_on_time_t, err = (p - a) / (D._demand || 1);
+    return `<tr><td>${esc(D.strategies[k].label)}</td><td class="n num">${fmt(p)} т</td><td class="n num">${fmt(a)} т</td><td class="n num" style="color:${Math.abs(err) <= 0.05 ? 'var(--ok)' : 'var(--signal)'}">${err >= 0 ? '+' : '−'}${fmt(Math.abs(err) * 100, 1)} п. п.</td></tr>`;
+  }).join('');
+  return `<h3>Прогноз ML до расчёта</h3><div class="callout" style="margin-bottom:8px">Сетевая модель (ml/network_ml) дала оценку за ${Math.round(fc.ms || 0)} мс, до запуска ядра.${fc.status !== 'OK' ? ' <b>Сценарий выходит за обучающие данные</b> (' + esc((fc.outside_features || []).map(x => x.replace('f_', '')).join(', ')) + ') — это грубый ориентир, стратегия не рекомендуется.' : fc.recommended ? ' Рекомендованная стратегия: ' + esc(FC_SHORT[fc.recommended] || fc.recommended) + '.' : ''} Итог и аудит — только ядро.</div>
+  <table class="t"><tr><td></td><td class="n note">прогноз</td><td class="n note">ядро</td><td class="n note">ошибка, % спроса</td></tr>${rows}</table>`;
+}
 async function runJob(body, label) {
   const my = ++jobSeq;
   busy(true, `Считаем «${label}»…`);
@@ -1482,7 +1499,11 @@ async function runJob(body, label) {
     if (my !== jobSeq) return;
     const id = j.job_id;
     const fc = j.forecast;
-    if (fc && fc.available && !fc.out_of_distribution && fc.expected_on_time_share) {
+    netForecast = fc && fc.by_strategy ? {...fc, ms: j.forecast_ms} : null;
+    if (netForecast) {
+      $('#overlayText').textContent = label;
+      label += ' · ' + forecastLine(netForecast);
+    } else if (fc && fc.available && !fc.out_of_distribution && fc.expected_on_time_share) {
       const best = fc.strategy_to_run || Object.keys(fc.expected_on_time_share)[0];
       const iv = (fc.on_time_share_interval90 || {})[best];
       label += ` · нейросеть за ${Math.round(j.forecast_ms || 0)} мс: в срок ≈${Math.round(fc.expected_on_time_share[best] * 100)}%${iv ? ` (${Math.round(iv[0] * 100)}–${Math.round(iv[1] * 100)}%)` : ''}, матмодель уточняет`;
@@ -1497,7 +1518,7 @@ async function runJob(body, label) {
     }
     const data = await api(`/api/network/jobs/${id}/data`);
     if (my !== jobSeq) return;
-    jobId = id; load(data); setStrategy(cur);
+    jobId = id; load(data); D._forecast = netForecast; setStrategy(cur);
   } catch (e) { if (my === jobSeq) alert('Не удалось посчитать: ' + e.message); }
   finally { if (my === jobSeq) busy(false); }
 }
