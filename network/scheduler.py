@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 
 from network.models import Limits, Location
-from network.routing import distance
+from network.routing import Router, distance
 from network.ports import reservations
 from network.simulator import voyages
 from network.validator import replay
@@ -55,6 +55,7 @@ class Scheduler:
         self.scenario = scenario
         self.limits = limits or Limits()
         self.cost_model = cost_model
+        self.router = Router(scenario, self.limits)
         self.minimum_for_type = {category: i for i, r in enumerate(scenario.requirements) for category in r.cargo_types}
         self.cargo = tuple(sorted(scenario.cargo.values(), key=lambda c: (c.ready, c.id)))
 
@@ -101,7 +102,7 @@ class Scheduler:
                 requirement = s.requirements[index] if index is not None else None
                 deficit = state.deficit[index] if index is not None else 0
                 for move in voyages(s, tug, barge, cargo, min(barge.capacity_kg, state.remaining[cargo.id]),
-                                    tug_loc.port, ready, self.limits, allow_reposition=strategy in (REPOSITION, COST),
+                                    tug_loc.port, ready, self.limits, router=self.router, allow_reposition=strategy in (REPOSITION, COST),
                                     require_return=strategy == RETURN_EMPTY, requirement=requirement,
                                     deficit_kg=deficit, bookings=state.bookings):
                     on_time = move.unloading_end <= cargo.due
