@@ -489,6 +489,7 @@ class Scheduler:
         return not self.policy.disable_transshipment and can_connect_modes(self.scenario)
 
     def _plan_transfers(self, started, budget):
+        self.local_baseline = self.initial()
         deadline = self.deadline
         if budget is not None:
             self.deadline = started + budget * 0.8

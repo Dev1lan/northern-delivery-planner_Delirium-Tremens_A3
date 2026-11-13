@@ -1,13 +1,14 @@
 from copy import deepcopy
 from pathlib import Path
+from unittest.mock import patch
 import json
 import unittest
 
 from jsonschema import Draft202012Validator
 
 from network.adapter import audit_result, run_scenario
-from network.scheduler import COST
-from network.search_policy import SearchPolicy
+from network.scheduler import COST, Scheduler
+from network.search_policy import SearchPolicy, TimeLimitReached
 from tests.test_costs import tariffs
 from tests.test_network import load
 
@@ -168,3 +169,19 @@ class TransshipmentTests(unittest.TestCase):
         self.assertEqual(result['metrics']['delivered_on_time_t'], 50)
         self.assertEqual([v['tug_id'] for v in result['voyages']], ['SEA', 'T1'])
         self.assertEqual(audit_result(result)['schedule_audit']['status'], 'PASSED')
+
+
+    def test_timeout_keeps_the_completed_chain_with_an_auditable_local_reference(self):
+        from network import scheduler as engine
+
+        extend = engine.extend
+
+        def interrupted(planner, state):
+            extend(planner, state)
+            raise TimeLimitReached
+
+        with patch.object(Scheduler, '_plan', side_effect=TimeLimitReached), patch.object(engine, 'extend', interrupted):
+            plan = run_scenario(transfer_scenario())
+        self.assertEqual(plan['termination_reason'], 'TIME_LIMIT')
+        self.assertEqual(plan['metrics']['delivered_on_time_t'], 150)
+        self.assertEqual(audit_result(plan)['schedule_audit']['status'], 'PASSED')
