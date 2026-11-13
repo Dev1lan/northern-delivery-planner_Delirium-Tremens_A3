@@ -238,6 +238,7 @@ table.t td.n,table.t th.n{text-align:right}
 .item .ev{font-size:11.5px;color:var(--text2);white-space:normal;margin-top:3px}
 tr.xv{cursor:pointer} tr.xv:hover td{background:var(--surface2)}
 @media (max-width:520px){.wi{grid-template-columns:1fr}}
+.xt td{font-size:12px;padding:4px 6px}.xt td.n{white-space:nowrap}
 </style>
 </head>
 <body>
@@ -1022,14 +1023,15 @@ function zoomTo(links) {
 }
 
 /* ---------- ручки контракта ядра v3: «Что, если?», сравнение, причины, рейс, порт ---------- */
-const NET = {on: false, scenario: null, presets: [], diag: {}, explain: {}, cmp: {}, whatif: [], port: {}, portLoad: {}, busy: false};
+const NET = {on: false, scenario: null, presets: [], diag: {}, explain: {}, cmp: {}, whatif: [], port: {}, portLoad: {}, busy: false, exp: null, expCmp: {}};
 function netReset() {
-  Object.assign(NET, {on: !!(jobId && D && !D._linear), scenario: null, presets: [], diag: {}, explain: {}, cmp: {}, whatif: [], port: {}, portLoad: {}, busy: false});
+  Object.assign(NET, {on: !!(jobId && D && !D._linear), scenario: null, presets: [], diag: {}, explain: {}, cmp: {}, whatif: [], port: {}, portLoad: {}, busy: false, exp: null, expCmp: {}});
   if (!NET.on) return;
   const id = jobId;
   Promise.all([api(`/api/network/jobs/${id}/scenario`), api(`/api/network/jobs/${id}/presets`)])
     .then(([sc, pr]) => { if (id !== jobId) return; NET.scenario = sc; NET.presets = pr; if (tab === 'whatif') renderSide(); })
     .catch(() => {});
+  api('/api/network/experiments').then(r => { if (id !== jobId) return; NET.exp = r; if (tab === 'whatif') renderSide(); }).catch(() => {});
 }
 const J = p => `/api/network/jobs/${jobId}/${p}`;
 function qs(o) { return new URLSearchParams(o).toString(); }
@@ -1148,7 +1150,7 @@ function whatifHTML() {
     ...(hasBerths ? [['add_berth', 'Добавить причал'], ['close_berth', 'Закрыть причал'], ['handling_tph', 'Скорость причала'], ['unlimited_port', 'Снять ограничение порта']] : []), ['json', 'Своё (JSON)']];
   const k = kinds.some(x => x[0] === ui.wiKind) ? ui.wiKind : kinds[0][0];
   const base = baseVariant();
-  let h = `<div class="callout" style="margin-bottom:10px">Одно изменение сценария — и ядро пересчитывает план заново относительно «${esc(D.strategies[base].label)}». Каждый новый план проходит аудит; исходный расчёт не меняется.</div>`;
+  let h = seaExpHTML() + `<div class="callout" style="margin-bottom:10px">Одно изменение сценария — и ядро пересчитывает план заново относительно «${esc(D.strategies[base].label)}». Каждый новый план проходит аудит; исходный расчёт не меняется.</div>`;
   if (NET.presets.length) h += `<h3>Готовые изменения</h3><div class="list">${NET.presets.map((p, i) => `<div class="item wp" data-wp="${i}"><div><div class="t">${esc(changeRu(p))}</div></div><div class="r"><span class="btn">Посчитать</span></div></div>`).join('')}</div>`;
   h += `<h3>Своё изменение</h3><div class="card"><div class="filters">${kinds.map(([v, n]) => `<button class="chip" data-wk="${v}" aria-pressed="${v === k}">${n}</button>`).join('')}</div>
   <form id="wiForm" class="wiform" data-kind="${k}">${wiFields(k)}<button class="btn" type="submit"${NET.busy ? ' disabled' : ''}>${NET.busy ? 'Считаем…' : 'Посчитать'}</button></form></div>`;
@@ -1179,6 +1181,71 @@ function addVariant(key, view) {
   for (const f of view.extra_fleet || []) if (!fleetById(f.vessel_id)) D.fleet.push(f);
   D.strategies[key] = view; D.order.push(key);
   prepare(); renderTop(); setStrategy(cur);
+}
+
+/* проверенные эксперименты с морским флотом (GET /api/network/experiments, POST jobs/{id}/experiments/{name}) */
+const SEA_SHORT = {E1: 'обычное планирование (реки углублены, +4 Р-153)', E1P: 'тот же флот, морские заявки получают Р-153 первыми',
+  E2: 'дополнительный морской флот: +16 Р-153, +16 барж'};
+function seaExpOn() { return NET.exp && NET.exp.shown && NET.exp.shown.length && NET.scenario && String(NET.scenario.scenario_id || '').startsWith('yakutia_real'); }
+function seaRow(name) { return NET.exp.experiments.find(r => r.name === name); }
+function seaExpHTML() {
+  if (!seaExpOn()) return '';
+  const names = NET.exp.shown, rows = names.map(seaRow), st = NET.exp.settings && NET.exp.settings.base || {};
+  const t = v => v == null ? '—' : fmt(v) + ' т', m = v => v == null ? '<span class="note">неизвестно</span>' : moneyFmt(v);
+  const line = (name, f) => `<tr><td>${name}</td>${rows.map(r => `<td class="n num">${f(r)}</td>`).join('')}</tr>`;
+  const soc = NET.exp.experiments.filter(r => r.name.endsWith('S'));
+  const socRow = n => soc.find(r => r.name === n + 'S');
+  let h = `<h3>Морской флот: проверенные эксперименты</h3>
+  <div class="callout" style="margin-bottom:8px">Заранее посчитанные планы на одинаковых заявках (65 заявок, ${fmt(rows[0].demand_t)} т), лимитах и тарифах v2; стратегия «С перегоном», бюджет ${esc(st.budget_seconds ?? 45)} с, политика ${esc(st.policy ? st.policy.mode : 'RESEARCH')} с восстановлением недовоза; ядро ${esc(rows[0].core_version || '')}, коммит ${esc((st.repo_commit || '').slice(0, 7))}. <b>Углубление рек и дополнительные суда — допущения «что если»</b>, а не фактическое состояние акватории. E1P — два прохода вне ядра: сначала морские заявки на всём флоте, затем остальное.</div>
+  <div class="note" style="margin-bottom:6px">${rows.map(r => `<div><b>${esc(r.name)}</b> — ${esc(SEA_SHORT[r.name] || r.title)}</div>`).join('')}</div>
+  <div style="overflow-x:auto"><table class="t xt"><tr><td></td>${rows.map(r => `<td class="n"><b>${esc(r.name)}</b></td>`).join('')}</tr>
+  ${line('Довезено всего', r => t(r.delivered_total_t))}${line('из них в срок', r => t(r.delivered_on_time_t))}
+  ${line('Морем', r => t(r.sea_delivered_t))}${line('По реке', r => t(r.delivered_total_t - r.sea_delivered_t))}
+  ${line('Недовоз', r => t(r.undelivered_t))}${line('— морской / речной', r => `${fmt(r.undelivered_sea_t / 1000)} / ${fmt(r.undelivered_river_t / 1000)} тыс.`)}
+  ${line('Рейсов', r => fmt(r.voyages))}${line('Р-153 рейсов', r => fmt(r.r153_voyages))}${line('Р-153 занято', r => `${r.r153_tugs_used} из ${r.r153_tugs_total}`)}
+  ${line('Р-153 река / море', r => `${fmt(r.r153_river_t / 1000)} / ${fmt(r.r153_sea_t / 1000)} тыс. т`)}
+  ${line('Эксплуатация', r => m(r.finance && r.finance.operating_rub))}${line('Альтернативная доставка недовоза', r => m(r.finance && r.finance.alternative_delivery_rub))}
+  ${line('Дополнительный флот', r => r.finance && r.finance.extra_fleet.vessels_used ? `<span class="note">${r.finance.extra_fleet.vessels_used} судов, ставка неизвестна</span>` : m(0))}
+  ${line('Итого', r => r.finance && r.finance.total_rub != null ? m(r.finance.total_rub) : `<span class="note">≥ ${moneyFmt(r.finance ? r.finance.total_known_rub : r.total_cost_rub)} + флот</span>`)}
+  ${soc.length ? line('Соцминимумы № 326-р', r => { const x = socRow(r.name); return x ? `${x.requirements.filter(q => q.satisfied).length} из ${x.requirements.length}, дефицит ${fmt(x.social_deficit_t)} т` : '—'; }) : ''}
+  ${line('Время расчёта', r => fmt(r.seconds, 1) + ' с')}${line('Завершение', r => esc(String(r.termination).replace('TWO_PASS:', '').replace('SEARCH_LIMIT', 'поиск').replace('TIME_LIMIT', 'время').replace('SEARCH_FINISHED', 'полностью')))}
+  ${line('Аудит', r => `<span class="badge ${r.audit === 'PASSED' ? 'ok' : 'bad'}">${r.audit === 'PASSED' ? 'пройден' : esc(r.audit)}</span>`)}
+  <tr><td></td>${rows.map(r => `<td class="n"><button class="btn" data-xshow="${esc(r.name)}"${r.saved ? '' : ' disabled title="План не сохранён"'}>${cur === 'X_' + r.name ? 'На карте' : 'На карту'}</button></td>`).join('')}</tr></table></div>`;
+  const pairs = [['E1', 'E1P'], ['E1', 'E2'], ['E1P', 'E2']].filter(([a, b]) => names.includes(a) && names.includes(b));
+  h += `<div class="filters" style="margin-top:8px">${pairs.map(([a, b]) => `<button class="chip" data-xcmp="${a}>${b}" aria-pressed="${ui.xCmp === a + '>' + b}">До ${a} → после ${b}</button>`).join('')}</div>`;
+  if (ui.xCmp) {
+    const [a, b] = ui.xCmp.split('>'), d = NET.expCmp[ui.xCmp];
+    h += !d ? '<p class="note">Загружаем планы и считаем разницу…</p>' : d.error ? `<div class="callout warn">${esc(d.error)}</div>`
+      : deltaHTML(d) + `<p class="note">«${esc(b)}» минус «${esc(a)}», зелёным — лучше. На карте: <button class="btn" data-wshow="X_${esc(a)}">до (${esc(a)})</button> <button class="btn" data-wshow="X_${esc(b)}">после (${esc(b)})</button></p>`;
+  }
+  return h;
+}
+async function loadExp(name) {
+  const key = 'X_' + name;
+  if (D.strategies[key]) return key;
+  const r = await api(J('experiments/' + name), {method: 'POST'});
+  addVariant(r.variant, r.view);
+  return key;
+}
+async function showExp(name) {
+  if (NET.busy) return;
+  NET.busy = true; busy(true, 'Загружаем план эксперимента…');
+  const id = jobId;
+  try { const key = await loadExp(name); if (id === jobId) setStrategy(key); }
+  catch (e) { alert(e.message); }
+  finally { NET.busy = false; busy(false); if (id === jobId) renderSide(); }
+}
+async function compareExp(pair) {
+  ui.xCmp = pair; renderSide();
+  if (NET.expCmp[pair]) return;
+  const [a, b] = pair.split('>'), id = jobId;
+  NET.busy = true; busy(true, 'Загружаем планы экспериментов…');
+  try {
+    const ka = await loadExp(a), kb = await loadExp(b);
+    NET.expCmp[pair] = await api(J('compare?' + qs({from: ka, to: kb})));
+    if (id === jobId) setStrategy(kb);
+  } catch (e) { NET.expCmp[pair] = {error: e.message}; }
+  finally { NET.busy = false; busy(false); if (id === jobId) renderSide(); }
 }
 
 /* причины недовоза (GET diagnose) */
@@ -1251,6 +1318,8 @@ function bindContract() {
   pane.querySelectorAll('[data-wicargo]').forEach(n => n.onchange = () => { ui.wiCargo = n.value; renderSide(); });
   pane.querySelectorAll('[data-wp]').forEach(n => n.onclick = () => runWhatIf({preset: +n.dataset.wp}, NET.presets[+n.dataset.wp]));
   pane.querySelectorAll('[data-wshow]').forEach(n => n.onclick = () => setStrategy(n.dataset.wshow));
+  pane.querySelectorAll('[data-xshow]').forEach(n => n.onclick = () => showExp(n.dataset.xshow));
+  pane.querySelectorAll('[data-xcmp]').forEach(n => n.onclick = () => compareExp(n.dataset.xcmp));
   pane.querySelectorAll('[data-xv]').forEach(n => n.onclick = () => { const v = +n.dataset.xv; ui.explainVoy = ui.explainVoy === v ? null : v; renderSide(); });
   pane.querySelectorAll('[data-portcargo]').forEach(n => n.onclick = () => { tab = 'cargo'; ui.cargoFilter = 'port:' + n.dataset.portcargo; sel = null; renderSide(); });
   const f = $('#wiForm');

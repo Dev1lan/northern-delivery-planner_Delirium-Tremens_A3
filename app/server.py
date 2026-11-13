@@ -552,7 +552,7 @@ def network_job_result(job_id: str, strategy: str):
     j = _job(job_id)
     if j.kind == "linear":
         return job_result(job_id, strategy)
-    if strategy not in NET_STRATEGIES:
+    if strategy not in NET_STRATEGIES and not re.fullmatch(r"W\d+|X_[A-Z0-9]+", strategy):
         raise HTTPException(404, "Нет такой стратегии")
     path = j.dir / "results" / f"result_{strategy}.json"
     if j.status != "done" or not path.exists():
@@ -600,7 +600,7 @@ def _plan(j: Job, variant: Optional[str]) -> dict:
         raise ContractError("variant must be a string")
     if key not in j.results:
         path = j.dir / "results" / f"result_{key}.json"
-        if not re.fullmatch(r"NETWORK_[A-Z_]+|W\d+", key) or not path.exists():
+        if not re.fullmatch(r"NETWORK_[A-Z_]+|W\d+|X_[A-Z0-9]+", key) or not path.exists():
             raise ContractError(f"Unknown variant: {key}")
         j.results[key] = json.loads(path.read_text(encoding="utf-8"))
     return j.results[key]
@@ -725,6 +725,68 @@ def network_what_if(job_id: str, request: Request, body: dict = Body(...)):
                            for kind, fleet in (("tug", "tugs"), ("barge", "barges"))
                            for r in result["scenario"][fleet] if r["vessel_id"] not in known]
     return dict(variant=key, base=base_key, view=view, **report)
+
+
+# ---------- заранее посчитанные эксперименты с морским флотом (data/yakutia_real/sea_experiments.py) ----------
+SEA_EXP = ROOT / "data/yakutia_real/scenario"
+SEA_SHOWN = ("E1", "E1P", "E2")   # что показывать в «Что, если?»: обычное планирование, морские первыми, +флот
+
+
+def _sea_report():
+    out, rows = {}, {}
+    for kind, name in (("base", "sea_experiments_report.json"), ("social", "sea_experiments_social.json")):
+        data = _read_opt(SEA_EXP / name)
+        if isinstance(data, list):            # старый формат отчёта: только список экспериментов
+            data = {"settings": None, "experiments": data}
+        if isinstance(data, dict):
+            out[kind] = data.get("settings")
+            for r in data.get("experiments", []):
+                rows[r["name"]] = r
+    return out, rows
+
+
+@app.get("/api/network/experiments")
+def network_experiments():
+    """Проверенные эксперименты E0/E1/E1P/E2/...: показатели, структура стоимости, настройки и версия ядра."""
+    settings, rows = _sea_report()
+    saved = {p.name.split(".")[0] for p in (SEA_EXP / "sea_results").glob("*.json.gz")}
+    return dict(settings=settings, shown=[k for k in SEA_SHOWN if k in rows],
+                experiments=[dict(r, saved=r["name"] in saved) for r in rows.values()])
+
+
+@app.post("/api/network/jobs/{job_id}/experiments/{name}")
+def network_job_experiment(job_id: str, name: str):
+    """Подключить сохранённый план эксперимента к заданию как вариант X_<name>: карта, compare, diagnose, explain."""
+    import gzip
+    if not re.fullmatch(r"[A-Z0-9]{2,6}", name):
+        raise ContractError("Unknown experiment")
+    path = SEA_EXP / "sea_results" / f"{name}.json.gz"
+    _, rows = _sea_report()
+    if not path.exists() or name not in rows:
+        raise ContractError(f"Experiment {name} is not saved: run data/yakutia_real/sea_experiments.py")
+    j = _net_job(job_id)
+    key = f"X_{name}"
+    with LOCK:
+        result = j.results.get(key)
+    if result is None:
+        with gzip.open(path, "rt", encoding="utf-8") as f:
+            result = json.load(f)
+        with LOCK:
+            j.results[key] = result
+        (j.dir / "results" / f"result_{key}.json").write_text(json.dumps(result, ensure_ascii=False), encoding="utf-8")
+    row = rows[name]
+    raw = json.loads((j.dir / "scenario.json").read_text(encoding="utf-8"))
+    import payload as net_view
+    view = net_view.view_for(result["scenario"], result, cards=_read_opt(j.dir / "cards.json"),
+                             geo=_read_opt(j.dir / "geo.json"), label=f"{name}: {row['title']}",
+                             hint=f"Эксперимент {name}, заранее посчитан и проверен аудитом")
+    view["seconds"] = row.get("seconds")
+    known = {v["vessel_id"] for fleet in ("tugs", "barges") for v in raw[fleet]}
+    view["extra_fleet"] = [{**{k: v for k, v in r.items() if k not in ("available_at", "available_to")},
+                            "kind": kind, "card": None}
+                           for kind, fleet in (("tug", "tugs"), ("barge", "barges"))
+                           for r in result["scenario"][fleet] if r["vessel_id"] not in known]
+    return dict(variant=key, view=view, experiment=row)
 
 
 @app.on_event("startup")

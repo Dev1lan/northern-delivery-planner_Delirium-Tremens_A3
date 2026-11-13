@@ -1,0 +1,368 @@
+{
+ "settings": {
+  "core_version": "3.0.0",
+  "repo_commit": "aa174b087863357878922ebd707995c1cd3a41a5",
+  "strategy": "NETWORK_REPOSITION",
+  "budget_seconds": 45,
+  "policy": {
+   "mode": "RESEARCH",
+   "time_seconds": 45,
+   "recover_undelivered": true
+  },
+  "limits": "data/yakutia_real/scenario/limits.json",
+  "tariffs": "data/yakutia/tariffs_v2.json",
+  "two_pass_split": "20 с морские заявки + 25 с остальное"
+ },
+ "experiments": [
+  {
+   "name": "E0S",
+   "title": "Основной сценарий (реальные глубины, 2 Р-153); социальные минимумы № 326-р",
+   "seconds": 37.4,
+   "scenario_fingerprint": "1acb398ee7bf1294afb1ffa044b5605e1c1201a2f0d21c5d021d4728c35e4a86",
+   "core_version": "3.0.0",
+   "termination": "SEARCH_LIMIT",
+   "demand_t": 729895.0,
+   "delivered_total_t": 547053.777,
+   "delivered_on_time_t": 547053.777,
+   "undelivered_t": 182841.223,
+   "sea_delivered_t": 0,
+   "undelivered_sea_t": 139101.0,
+   "undelivered_river_t": 43740.223,
+   "social": "NOT_SATISFIED",
+   "social_deficit_t": 141561.223,
+   "requirements": [
+    {
+     "requirement_id": "LIFE_COAL",
+     "required_t": 263459.0,
+     "satisfied": false,
+     "deficit_t": 107801.223
+    },
+    {
+     "requirement_id": "LIFE_CRUDE_OIL",
+     "required_t": 30179.0,
+     "satisfied": false,
+     "deficit_t": 30179.0
+    },
+    {
+     "requirement_id": "LIFE_FOOD",
+     "required_t": 1500.0,
+     "satisfied": false,
+     "deficit_t": 1360.0
+    },
+    {
+     "requirement_id": "LIFE_GAS_CONDENSATE",
+     "required_t": 2221.0,
+     "satisfied": false,
+     "deficit_t": 2221.0
+    }
+   ],
+   "critical_on_time_t": 394899.777,
+   "voyages": 607,
+   "repositioning_voyages": 601,
+   "r153_voyages": 0,
+   "r153_tugs_used": 0,
+   "r153_tugs_total": 2,
+   "r153_river_t": 0,
+   "r153_sea_t": 0,
+   "tugs_used": 37,
+   "barges_used": 38,
+   "added_vessels": 0,
+   "added_vessels_used": 0,
+   "newly_used_vs_E0": null,
+   "finance": {
+    "currency": "RUB",
+    "tariff_status": "SYNTHETIC",
+    "operating_rub": 1071238741.51,
+    "operating_by_item_rub": {
+     "loaded_fuel": 85030416.0,
+     "empty_fuel": 52366500.0,
+     "tug_operation": 749923880.0,
+     "barge_operation": 124987313.33,
+     "loading": 16411613.31,
+     "unloading": 16411613.31,
+     "port_call": 24280000.0,
+     "waiting": 1827405.56,
+     "repositioning": 0.0
+    },
+    "alternative_delivery_rub": 2873411007.0,
+    "extra_fleet": {
+     "vessels": 0,
+     "vessels_used": 0,
+     "cost_rub": 0.0,
+     "status": "NOT_APPLICABLE: дополнительный флот не задействован"
+    },
+    "total_known_rub": 3944649748.51,
+    "total_rub": 3944649748.51
+   },
+   "total_cost_rub": "3944649748.51",
+   "alternative_delivery_rub": "2873411007.00",
+   "operating_cost_rub": 1071238741.51,
+   "audit": "PASSED",
+   "audit_violations": 0
+  },
+  {
+   "name": "E1S",
+   "title": "Углублённые пути + 4 Р-153 (сайт); социальные минимумы № 326-р",
+   "seconds": 43.2,
+   "scenario_fingerprint": "286374c2cf8f56eaa4c7d138d788e134c0c17ed986fc86140654fd96ab1865ff",
+   "core_version": "3.0.0",
+   "termination": "SEARCH_LIMIT",
+   "demand_t": 729895.0,
+   "delivered_total_t": 596913.277,
+   "delivered_on_time_t": 596913.277,
+   "undelivered_t": 132981.723,
+   "sea_delivered_t": 49307.5,
+   "undelivered_sea_t": 89793.5,
+   "undelivered_river_t": 43188.223,
+   "social": "NOT_SATISFIED",
+   "social_deficit_t": 91701.723,
+   "requirements": [
+    {
+     "requirement_id": "LIFE_COAL",
+     "required_t": 263459.0,
+     "satisfied": false,
+     "deficit_t": 73478.723
+    },
+    {
+     "requirement_id": "LIFE_CRUDE_OIL",
+     "required_t": 30179.0,
+     "satisfied": false,
+     "deficit_t": 16863.0
+    },
+    {
+     "requirement_id": "LIFE_FOOD",
+     "required_t": 1500.0,
+     "satisfied": false,
+     "deficit_t": 1360.0
+    },
+    {
+     "requirement_id": "LIFE_GAS_CONDENSATE",
+     "required_t": 2221.0,
+     "satisfied": true,
+     "deficit_t": 0.0
+    }
+   ],
+   "critical_on_time_t": 444759.277,
+   "voyages": 458,
+   "repositioning_voyages": 452,
+   "r153_voyages": 73,
+   "r153_tugs_used": 6,
+   "r153_tugs_total": 6,
+   "r153_river_t": 126891.0,
+   "r153_sea_t": 49307.5,
+   "tugs_used": 37,
+   "barges_used": 38,
+   "added_vessels": 4,
+   "added_vessels_used": 4,
+   "newly_used_vs_E0": 22,
+   "finance": {
+    "currency": "RUB",
+    "tariff_status": "SYNTHETIC",
+    "operating_rub": 898828826.17,
+    "operating_by_item_rub": {
+     "loaded_fuel": 66950316.0,
+     "empty_fuel": 42246048.0,
+     "tug_operation": 622439217.5,
+     "barge_operation": 103739869.58,
+     "loading": 17907398.31,
+     "unloading": 17907398.31,
+     "port_call": 18320000.0,
+     "waiting": 9318578.47,
+     "repositioning": 0.0
+    },
+    "alternative_delivery_rub": 2176083507.0,
+    "extra_fleet": {
+     "vessels": 4,
+     "vessels_used": 4,
+     "cost_rub": null,
+     "status": "UNKNOWN: подтверждённых ставок аренды или содержания судов река—море нет; в тарифах v2 только часы работы, топливо и сборы"
+    },
+    "total_known_rub": 3074912333.17,
+    "total_rub": null
+   },
+   "total_cost_rub": "3074912333.18",
+   "alternative_delivery_rub": "2176083507.00",
+   "operating_cost_rub": 898828826.18,
+   "audit": "PASSED",
+   "audit_violations": 0,
+   "extra_t_vs_E0": 49859.5,
+   "operating_cost_per_extra_t_rub": -3457.92
+  },
+  {
+   "name": "E1PS",
+   "title": "E1, морские заявки первыми (два прохода); социальные минимумы № 326-р",
+   "seconds": 25.9,
+   "scenario_fingerprint": "286374c2cf8f56eaa4c7d138d788e134c0c17ed986fc86140654fd96ab1865ff",
+   "core_version": "3.0.0",
+   "termination": "TWO_PASS:SEARCH_LIMIT+TIME_LIMIT",
+   "demand_t": 729895.0,
+   "delivered_total_t": 616134.777,
+   "delivered_on_time_t": 616134.777,
+   "undelivered_t": 113760.223,
+   "sea_delivered_t": 68529.0,
+   "undelivered_sea_t": 70572.0,
+   "undelivered_river_t": 43188.223,
+   "social": "NOT_SATISFIED",
+   "social_deficit_t": 75331.223,
+   "requirements": [
+    {
+     "requirement_id": "LIFE_COAL",
+     "required_t": 263459.0,
+     "satisfied": false,
+     "deficit_t": 57108.223
+    },
+    {
+     "requirement_id": "LIFE_CRUDE_OIL",
+     "required_t": 30179.0,
+     "satisfied": false,
+     "deficit_t": 16863.0
+    },
+    {
+     "requirement_id": "LIFE_FOOD",
+     "required_t": 1500.0,
+     "satisfied": false,
+     "deficit_t": 1360.0
+    },
+    {
+     "requirement_id": "LIFE_GAS_CONDENSATE",
+     "required_t": 2221.0,
+     "satisfied": true,
+     "deficit_t": 0.0
+    }
+   ],
+   "critical_on_time_t": 463980.777,
+   "voyages": 506,
+   "repositioning_voyages": 500,
+   "r153_voyages": 44,
+   "r153_tugs_used": 6,
+   "r153_tugs_total": 6,
+   "r153_river_t": 40000.0,
+   "r153_sea_t": 68529.0,
+   "tugs_used": 40,
+   "barges_used": 42,
+   "added_vessels": 4,
+   "added_vessels_used": 4,
+   "newly_used_vs_E0": 20,
+   "finance": {
+    "currency": "RUB",
+    "tariff_status": "SYNTHETIC",
+    "operating_rub": 985614324.07,
+    "operating_by_item_rub": {
+     "loaded_fuel": 72576234.0,
+     "empty_fuel": 44633124.0,
+     "tug_operation": 681958367.5,
+     "barge_operation": 113659727.92,
+     "loading": 18484043.31,
+     "unloading": 18484043.31,
+     "port_call": 20240000.0,
+     "waiting": 15578784.03,
+     "repositioning": 0.0
+    },
+    "alternative_delivery_rub": 1957474007.0,
+    "extra_fleet": {
+     "vessels": 4,
+     "vessels_used": 4,
+     "cost_rub": null,
+     "status": "UNKNOWN: подтверждённых ставок аренды или содержания судов река—море нет; в тарифах v2 только часы работы, топливо и сборы"
+    },
+    "total_known_rub": 2943088331.07,
+    "total_rub": null
+   },
+   "total_cost_rub": "2943088331.06",
+   "alternative_delivery_rub": "1957474007.00",
+   "operating_cost_rub": 985614324.06,
+   "audit": "PASSED",
+   "audit_violations": 0,
+   "extra_t_vs_E0": 69081.0,
+   "operating_cost_per_extra_t_rub": -1239.48
+  },
+  {
+   "name": "E2S",
+   "title": "E1 + 16 Р-153, 10 барж 16800, 6 барж 16800Н1; социальные минимумы № 326-р",
+   "seconds": 45.2,
+   "scenario_fingerprint": "b8abb01f7bbeb519cedd1981e11811815a65f3852f73fe6dd2b6a282ab41c7c8",
+   "core_version": "3.0.0",
+   "termination": "TIME_LIMIT",
+   "demand_t": 729895.0,
+   "delivered_total_t": 669501.777,
+   "delivered_on_time_t": 669501.777,
+   "undelivered_t": 60393.223,
+   "sea_delivered_t": 121896.0,
+   "undelivered_sea_t": 17205.0,
+   "undelivered_river_t": 43188.223,
+   "social": "NOT_SATISFIED",
+   "social_deficit_t": 29543.223,
+   "requirements": [
+    {
+     "requirement_id": "LIFE_COAL",
+     "required_t": 263459.0,
+     "satisfied": false,
+     "deficit_t": 14608.223
+    },
+    {
+     "requirement_id": "LIFE_CRUDE_OIL",
+     "required_t": 30179.0,
+     "satisfied": false,
+     "deficit_t": 14415.0
+    },
+    {
+     "requirement_id": "LIFE_FOOD",
+     "required_t": 1500.0,
+     "satisfied": false,
+     "deficit_t": 520.0
+    },
+    {
+     "requirement_id": "LIFE_GAS_CONDENSATE",
+     "required_t": 2221.0,
+     "satisfied": true,
+     "deficit_t": 0.0
+    }
+   ],
+   "critical_on_time_t": 517347.777,
+   "voyages": 411,
+   "repositioning_voyages": 405,
+   "r153_voyages": 201,
+   "r153_tugs_used": 22,
+   "r153_tugs_total": 22,
+   "r153_river_t": 353212.0,
+   "r153_sea_t": 121896.0,
+   "tugs_used": 45,
+   "barges_used": 46,
+   "added_vessels": 36,
+   "added_vessels_used": 35,
+   "newly_used_vs_E0": 51,
+   "finance": {
+    "currency": "RUB",
+    "tariff_status": "SYNTHETIC",
+    "operating_rub": 895504213.48,
+    "operating_by_item_rub": {
+     "loaded_fuel": 68977656.0,
+     "empty_fuel": 41590896.0,
+     "tug_operation": 615458300.0,
+     "barge_operation": 102576383.33,
+     "loading": 20085053.31,
+     "unloading": 20085053.31,
+     "port_call": 16440000.0,
+     "waiting": 10290871.53,
+     "repositioning": 0.0
+    },
+    "alternative_delivery_rub": 1286499007.0,
+    "extra_fleet": {
+     "vessels": 36,
+     "vessels_used": 35,
+     "cost_rub": null,
+     "status": "UNKNOWN: подтверждённых ставок аренды или содержания судов река—море нет; в тарифах v2 только часы работы, топливо и сборы"
+    },
+    "total_known_rub": 2182003220.48,
+    "total_rub": null
+   },
+   "total_cost_rub": "2182003220.48",
+   "alternative_delivery_rub": "1286499007.00",
+   "operating_cost_rub": 895504213.48,
+   "audit": "PASSED",
+   "audit_violations": 0,
+   "extra_t_vs_E0": 122448.0,
+   "operating_cost_per_extra_t_rub": -1435.18
+  }
+ ]
+}

@@ -19,6 +19,8 @@ HERE = Path(__file__).resolve().parent / "scenario"
 SRC = HERE / "yakutia_real_2026_demo.json"
 OUT = HERE / "yakutia_real_2026_deep.json"
 EXTRA_TUGS = 4
+ADDED = ("ВАРИАНТ «что если»: дополнительное судно проекта ЛОРП сверх расстановки по местам зимовки; "
+         "в данных перевозчика его нет")
 # Устьевые участки: последнее речное ребро перед морским портом на каждой реке.
 MOUTHS = {("Кюсюр", "Быков Мыс"), ("Усть-Куйга", "Нижнеянск"), ("Белая Гора", "Чокурдах"),
           ("Колымское", "Зелёный Мыс")}
@@ -98,6 +100,7 @@ def deepen(s, mode="paths"):
                 d["max_allowed_draft_m"] = max(d["max_allowed_draft_m"], need_draft)
                 d["usable_depth_m"] = max(d["usable_depth_m"], need_depth)
         e["provenance"] = "ASSUMED"
+        e["what_if"] = "deepened"
         e["source"] = (f'{e.get("source", "")}; ВАРИАНТ: глубина поднята до {need_depth} м '
                        f'(осадка {need_draft} м + запас {s["underkeel_m"]} м), чтобы прошли суда река—море')
         changed.append((eid, old))
@@ -112,6 +115,7 @@ def add_sea_fleet(s, tugs=EXTRA_TUGS, dry=0, tank=0, bases=("Жатай",), pref
         if "16800Н1" in b["vessel_id"] and not b.get("navigation_permits"):
             b["navigation_permits"] = [dict(p, source="ВАРИАНТ: допуск как у 16800 (допущение)") for p in permit]
             b["vessel_class"] = sea_tug["vessel_class"]
+            b["what_if"] = "sea_permit"
     dry_t = next(b for b in s["barges"] if b["vessel_id"].endswith("-16800"))
     tank_t = next(b for b in s["barges"] if "16800Н1" in b["vessel_id"])
 
@@ -124,12 +128,14 @@ def add_sea_fleet(s, tugs=EXTRA_TUGS, dry=0, tank=0, bases=("Жатай",), pref
     for i in range(tugs):
         port = bases[i % len(bases)]
         s["tugs"].append(dict(copy.deepcopy(sea_tug), vessel_id=f"{prefix}{start + i:02d}-Р-153",
-                              current_port=port, available_at=opening(port)))
+                              current_port=port, available_at=opening(port), provenance="ASSUMED",
+                              what_if="added_vessel", source=ADDED))
     for kind, n, tpl in (("16800", dry, dry_t), ("16800Н1", tank, tank_t)):
         for i in range(n):
             port = bases[i % len(bases)]
             s["barges"].append(dict(copy.deepcopy(tpl), vessel_id=f"{prefix}Б{i + 1:02d}-{kind}",
-                                    current_port=port, available_at=opening(port)))
+                                    current_port=port, available_at=opening(port), provenance="ASSUMED",
+                                    what_if="added_vessel", source=ADDED))
     sea_tugs = [t["vessel_id"] for t in s["tugs"] if t.get("navigation_permits")]
     sea_barges = [b["vessel_id"] for b in s["barges"] if b.get("navigation_permits")]
     have = {(p["tug_id"], p["barge_id"]) for p in s["compatible_pairs"]}

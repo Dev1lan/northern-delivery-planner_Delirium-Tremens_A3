@@ -1,0 +1,141 @@
+{
+ "core_version": "3.0.0",
+ "rows_passed": 3000,
+ "features": [
+  "f_season_days",
+  "f_n_ports",
+  "f_n_edges",
+  "f_sea_edge_share",
+  "f_n_cargo",
+  "f_demand_t",
+  "f_n_tugs",
+  "f_n_barges",
+  "f_n_pairs",
+  "f_pairs_per_tug",
+  "f_capacity_t",
+  "f_has_social",
+  "f_share_coal",
+  "f_share_fuel",
+  "f_share_crude_oil",
+  "f_share_gas_condensate",
+  "f_share_food",
+  "f_share_general",
+  "f_share_critical",
+  "f_capacity_per_demand",
+  "f_sea_pair_share",
+  "f_nopath_share",
+  "f_sea_demand_share",
+  "f_mean_path_km",
+  "f_mean_window_days",
+  "f_draft_full_feasible_share",
+  "f_draft_any_feasible_share",
+  "f_window_slack",
+  "f_mean_reposition_km",
+  "f_tugs_without_reach",
+  "f_fluid_share",
+  "f_fluid_feasible_share"
+ ],
+ "time_limited_share": 0.0383,
+ "label": "metrics.delivered_on_time_t / demand_t по стратегии; только аудит PASSED",
+ "metrics": {
+  "holdout_20pct_scenarios": {
+   "rows": 600,
+   "scenarios": 120,
+   "mae_share": 0.0569,
+   "mae_t": 6677.2,
+   "r2": 0.9287,
+   "mae_share_without_time_limit": 0.0556,
+   "time_limited_rows": 20,
+   "mae_share_time_limited": 0.0956,
+   "best_strategy_accuracy": 0.9667,
+   "mean_regret_t": 299.9,
+   "mean_regret_share": 0.0016
+  },
+  "baseline_fluid_holdout": {
+   "rows": 600,
+   "scenarios": 120,
+   "mae_share": 0.465,
+   "mae_t": 75701.1,
+   "r2": -1.6264,
+   "mae_share_without_time_limit": 0.4759,
+   "time_limited_rows": 20,
+   "mae_share_time_limited": 0.151,
+   "best_strategy_accuracy": 0.8667,
+   "mean_regret_t": 756.6,
+   "mean_regret_share": 0.0048
+  },
+  "holdout_trained_without_time_limit": {
+   "rows": 600,
+   "scenarios": 120,
+   "mae_share": 0.0588,
+   "mae_t": 6944.0,
+   "r2": 0.9245,
+   "mae_share_without_time_limit": 0.0567,
+   "time_limited_rows": 20,
+   "mae_share_time_limited": 0.12,
+   "best_strategy_accuracy": 0.9333,
+   "mean_regret_t": 714.6,
+   "mean_regret_share": 0.0026
+  },
+  "leave_out_deep": {
+   "rows": 1000,
+   "scenarios": 200,
+   "mae_share": 0.0794,
+   "mae_t": 15424.7,
+   "r2": 0.8793,
+   "mae_share_without_time_limit": 0.0773,
+   "time_limited_rows": 50,
+   "mae_share_time_limited": 0.1177,
+   "best_strategy_accuracy": 0.98,
+   "mean_regret_t": 150.6,
+   "mean_regret_share": 0.0006
+  },
+  "leave_out_real": {
+   "rows": 1000,
+   "scenarios": 200,
+   "mae_share": 0.0664,
+   "mae_t": 15320.0,
+   "r2": 0.774,
+   "mae_share_without_time_limit": 0.0634,
+   "time_limited_rows": 65,
+   "mae_share_time_limited": 0.1102,
+   "best_strategy_accuracy": 0.985,
+   "mean_regret_t": 121.8,
+   "mean_regret_share": 0.0004
+  },
+  "leave_out_syn": {
+   "rows": 1000,
+   "scenarios": 200,
+   "mae_share": 0.3189,
+   "mae_t": 5128.5,
+   "r2": -0.5744,
+   "mae_share_without_time_limit": 0.3189,
+   "time_limited_rows": 0,
+   "best_strategy_accuracy": 0.91,
+   "mean_regret_t": 58.6,
+   "mean_regret_share": 0.0041
+  }
+ },
+ "per_strategy_holdout": {
+  "NETWORK_COST": {
+   "mae_share": 0.0908,
+   "mean_true_share": 0.6909
+  },
+  "NETWORK_FCFS": {
+   "mae_share": 0.0296,
+   "mean_true_share": 0.1323
+  },
+  "NETWORK_GREEDY": {
+   "mae_share": 0.0354,
+   "mean_true_share": 0.1333
+  },
+  "NETWORK_REPOSITION": {
+   "mae_share": 0.0911,
+   "mean_true_share": 0.6862
+  },
+  "NETWORK_SOCIAL": {
+   "mae_share": 0.0376,
+   "mean_true_share": 0.1564
+  }
+ }
+}

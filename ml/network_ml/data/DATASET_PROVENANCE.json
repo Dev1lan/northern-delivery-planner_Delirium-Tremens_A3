@@ -1,0 +1,20 @@
+{
+ "created": "2026-11-13T12:42:52",
+ "core_version": "3.0.0",
+ "repo_commit": "aa174b087863357878922ebd707995c1cd3a41a5",
+ "rows": 3000,
+ "audit_passed": 3000,
+ "per_base": 200,
+ "seed": 2026,
+ "strategies": [
+  "NETWORK_REPOSITION",
+  "NETWORK_SOCIAL",
+  "NETWORK_GREEDY",
+  "NETWORK_FCFS",
+  "NETWORK_COST"
+ ],
+ "tariffs": "data/yakutia/tariffs_v2.json",
+ "labels": "network.batch.run_jobs → metrics.delivered_on_time_t; audit_result на каждой строке",
+ "note": "Сценарии — возмущения синтетической и реальной сети Якутии; это обучающие варианты, не факты.",
+ "seconds": 673.2
+}
