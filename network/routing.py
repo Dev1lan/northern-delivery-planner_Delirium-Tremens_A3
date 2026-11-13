@@ -117,6 +117,9 @@ class Router:
                     heappush(queue, (estimate, previous))
         return best
 
+    def pair_signature(self, tug_id, barge_id):
+        return (self._signatures(tug_id, barge_id, False), self._signatures(tug_id, barge_id, True))
+
     def lower_bound(self, tug, barge, origin, destination, *, reposition=False):
         if origin == destination:
             return timedelta()

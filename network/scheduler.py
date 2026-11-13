@@ -1,7 +1,7 @@
 """Deterministic dispatch and bounded search over complete network schedules."""
 
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from decimal import Decimal
 from functools import lru_cache
 from heapq import nlargest, nsmallest
@@ -76,7 +76,9 @@ class Scheduler:
         self.cargo = tuple(sorted(scenario.cargo.values(), key=lambda c: (c.ready, c.id)))
 
         self.assignment_options = lru_cache(maxsize=4096)(self._assignment_options)
-        self.assignment_voyages = lru_cache(maxsize=4096)(self._assignment_voyages)
+        self.assignment_voyages = lru_cache(maxsize=16384)(self._assignment_voyages)
+        self.pair_representative = lru_cache(maxsize=4096)(self._pair_representative)
+        self.equivalent_pairs = {}
         self.berth_ids = {port: tuple(b.id for b in berths) for port, berths in scenario.berths.items()}
         self.cargo_by_barge = {}
         self.cargo_by_barge_port = {}
@@ -226,6 +228,15 @@ class Scheduler:
             ranked = ranked[:keep]
         yield from ranked
 
+    def _pair_representative(self, tug_id, barge_id):
+        tug, barge = self.scenario.tugs[tug_id], self.scenario.barges[barge_id]
+        # Admission and sailing duration for every edge must agree. Include
+        # class for berth access and both ends of the loaded-draft formula.
+        key = (self.router.pair_signature(tug_id, barge_id), min(tug.available_to, barge.available_to),
+               tug.draft, barge.draft_empty, barge.draft_full, barge.capacity_kg,
+               barge.handling_tph, barge.access.vessel_class)
+        return self.equivalent_pairs.setdefault(key, (tug_id, barge_id))
+
     def _assignment_voyages(self, tug_id, barge_id, cargo_id, capacity, origin, ready,
                             requirement_index, deficit, allow_reposition, return_empty, reservations):
         s = self.scenario
@@ -245,9 +256,13 @@ class Scheduler:
                 bookings = tuple((key, tuple(sorted(state.bookings[key]))) for key in relevant_berths
                                  if key in state.bookings)
                 requirement = s.requirements[index] if index is not None else None
-                for move in self.assignment_voyages(tug.id, barge.id, cargo.id, capacity, origin, ready,
+                actual_pair = (tug.id, barge.id)
+                representative = self.pair_representative(*actual_pair)
+                for move in self.assignment_voyages(*representative, cargo.id, capacity, origin, ready,
                                                     index, deficit, strategy in (REPOSITION, COST),
                                                     strategy == RETURN_EMPTY, bookings):
+                    if representative != actual_pair:
+                        move = replace(move, tug_id=tug.id, barge_id=barge.id)
                     on_time = move.unloading_end <= cargo.due
                     if strategy in (FCFS, RETURN_EMPTY):
                         rank = (cargo.ready, cargo.id, move.load_start, -move.kg, move.end)
