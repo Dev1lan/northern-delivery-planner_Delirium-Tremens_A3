@@ -13,7 +13,7 @@ from network.routing import Router, distance
 from network.ports import reservations
 from network.sea_allocation import SeaAllocation
 from network.simulator import voyages
-from network.validator import replay
+from network.validator import ScheduleViolation, replay
 
 FCFS = 'NETWORK_FCFS'
 GREEDY = 'NETWORK_GREEDY'
@@ -34,7 +34,7 @@ class State:
     empty_km: float = 0
     moves: tuple = ()
     bookings: dict = field(default_factory=dict)
-    operating_cost: Decimal = Decimal(0)
+    net_cost: Decimal = Decimal(0)
 
     def score(self, social):
         minimums = (-sum(x > 0 for x in self.deficit), -sum(self.deficit)) if social else ()
@@ -61,6 +61,7 @@ class Scheduler:
         self.scenario = scenario
         self.limits = limits or Limits()
         self.cost_model = cost_model
+        self.voyage_price = lru_cache(maxsize=16384)(cost_model.voyage_cost) if cost_model else None
         self.policy = policy or SearchPolicy()
         self.deadline = None
         self.best = None
@@ -95,6 +96,10 @@ class Scheduler:
     def reset_counters(self):
         self.cargo_search = defaultdict(Counter)
         self.sea_adjustments = 0
+        self.cost_start_expanded = None
+        self.cost_candidates = 0
+        self.cost_reassignments = 0
+        self.cost_reassignment_trials = 0
         self.stats = dict(assignments_considered=0, safe_pruned=0, heuristic_pruned=0,
                           detailed_checks=0, generated_candidates=0, generated_states=0,
                           duplicate_states=0, beam_pruned=0)
@@ -117,6 +122,12 @@ class Scheduler:
         return {**self.stats, **self.router.stats(), 'voyage_cache_hits': info.hits,
                 'voyage_cache_misses': info.misses,
                 **({'sea_opportunity_adjustments': self.sea_adjustments} if self.policy.sea_fleet_allocation else {}),
+                **({'cost_search_started': self.cost_start_expanded is not None,
+                    'cost_expanded_states': self.expanded - self.cost_start_expanded
+                    if self.cost_start_expanded is not None else 0,
+                    'cost_candidates': self.cost_candidates,
+                    'cost_reassignments': self.cost_reassignments,
+                    'cost_reassignment_trials': self.cost_reassignment_trials} if self.active_strategy == COST else {}),
                 **({'cargo_search': dict(self.cargo_search)} if self.policy.recover_undelivered else {})}
 
     def initial(self):
@@ -138,13 +149,17 @@ class Scheduler:
         bookings = dict(state.bookings)
         for berth, interval in reservations(move):
             bookings[berth] = (*bookings.get(berth, ()), interval)
-        charge = self.cost_model.voyage_cost(move) if self.cost_model else Decimal(0)
+        charge = self.voyage_price(move) if self.cost_start_expanded is not None else Decimal(0)
         self.stats['generated_states'] += 1
+        # In financial search retain the net operating cost. The initial
+        # residual charge is a constant for all plans on this scenario.
+        if self.cost_start_expanded is not None:
+            charge -= self.cost_model.alternative_credit(cargo.type, move.kg)
         return State({**state.locations, move.tug_id: location, move.barge_id: location},
                      {**state.remaining, cargo.id: state.remaining[cargo.id] - move.kg}, tuple(deficits),
                      state.on_time + (move.kg if move.unloading_end <= cargo.due else 0),
                      state.delivered + move.kg, state.empty_km + empty, (*state.moves, move), bookings,
-                     state.operating_cost + charge)
+                     state.net_cost + charge)
 
     def _assignment_options(self, tug_id, barge_id, origin, reposition):
         s = self.scenario
@@ -311,7 +326,9 @@ class Scheduler:
                                 distance(s, move.empty), move.end, cargo.due, cargo.id)
                         if strategy == COST:
                             priced_move = self.assign_pair(move, actual_pair)
-                            rank = (*rank[:3], self.cost_model.voyage_cost(priced_move) / move.kg, *rank[3:])
+                            credit = self.cost_model.alternative_credit(cargo.type, move.kg)
+                            rank = (*rank[:3], (self.voyage_price(priced_move) - credit) / move.kg, *rank[3:])
+                            self.cost_candidates += 1
                     item = (rank, move, actual_pair)
                     if self.deadline is not None and (best is None or rank < best[0]):
                         best = item
@@ -388,6 +405,7 @@ class Scheduler:
         if score is None:
             def score(state):
                 return state.score(True)
+        incumbent_score = score(incumbent)
         for _ in range(max(0, limits.max_actions - len(initial.moves))):
             next_frontier = {}
             for state in frontier:
@@ -408,8 +426,8 @@ class Scheduler:
                         continue
                     child = self.append(state, move)
                     child_score = score(child)
-                    if child_score > score(incumbent):
-                        incumbent = child
+                    if child_score > incumbent_score:
+                        incumbent, incumbent_score = child, child_score
                         self.record(child)
                     key = child.key()
                     old = next_frontier.get(key)
@@ -436,11 +454,12 @@ class Scheduler:
             prefix = self.append(prefix, move)
         return incumbent, expanded, truncated
 
-    def plan(self, strategy):
+    def plan(self, strategy, *, initial_plan=None):
         started = perf_counter()
         budget = self.policy.budget_seconds
         self.deadline = started + budget if budget is not None else None
         self.active_strategy = strategy
+        self.sea_allocation = None
         self.best = self.initial()
         self.best_score = None
         self.active_score = self.local_baseline = self.service_floor = None
@@ -451,6 +470,8 @@ class Scheduler:
                 self.sea_allocation = SeaAllocation(self.scenario, self.router)
                 if not self.sea_allocation.specialized:
                     self.sea_allocation = None
+            if strategy == COST:
+                return self._plan_cost(initial_plan, started, budget)
             return self._plan(strategy)
         except TimeLimitReached:
             state = self.best
@@ -471,7 +492,6 @@ class Scheduler:
         seed = self.initial()
         baseline = None
         reposition_selected = False
-        floor = None
         if strategy in (FCFS, GREEDY, RETURN_EMPTY):
             state, expanded, truncated = self.dispatch(seed, strategy)
         else:
@@ -496,29 +516,11 @@ class Scheduler:
                 if alternative.score(True) > baseline.score(True):
                     state = alternative
                     reposition_selected = any(move.empty for move in state.moves[len(seed.moves):])
-            if strategy == COST:
-                floor = (state.on_time, state.delivered)
-
-                def cost_score(item):
-                    penalty, _ = self.cost_model.residual(item.remaining)
-                    return (*item.score(True)[:2], min(item.on_time, floor[0]), min(item.delivered, floor[1]),
-                            -(item.operating_cost + penalty), *item.score(False))
-
-                self.service_floor = floor
-                self.active_score = cost_score
-                self.best_score = None
-                self.record(state)
-                state, count, limited = self.search(seed, COST, state, score=cost_score)
-                expanded += count
-                truncated = truncated or limited
-                state, count, limited = self.repair(seed, state, COST, score=cost_score)
-                expanded += count
-                truncated = truncated or limited
         # Reconstruct positions and mass independently before exposing the plan.
         replay(self.scenario, state.moves, allow_reposition=strategy in (REPOSITION, COST),
                allow_return=strategy == RETURN_EMPTY)
         return Plan(strategy, state.moves, 'SEARCH_LIMIT' if truncated else 'SEARCH_FINISHED', expanded,
-                    baseline.moves if strategy == REPOSITION else None, reposition_selected, floor)
+                    baseline.moves if strategy == REPOSITION else None, reposition_selected)
 
     def _recover_plan(self, seed, strategy):
         # Build a service incumbent before optimizing cost. Sea allocation
@@ -541,22 +543,103 @@ class Scheduler:
             self.local_baseline = local
             state = max((local, state), key=lambda item: item.score(True))
         state, _, repaired = self.repair(seed, state, REPOSITION)
-        floor = None
-        if strategy == COST:
-            floor = self.service_floor = (state.on_time, state.delivered)
-
-            def score(item):
-                penalty, _ = self.cost_model.residual(item.remaining)
-                meets_floor = item.on_time >= floor[0] and item.delivered >= floor[1]
-                return (meets_floor, *item.score(True)[:4], -(item.operating_cost + penalty),
-                        *item.score(False)[2:])
-
-            self.active_score = score
-            self.best_score = None
-            self.record(state)
-            state, _, cost_limited = self.search(seed, COST, state, score=score)
-            limited = limited or cost_limited
         replay(self.scenario, state.moves)
         return Plan(strategy, state.moves, 'SEARCH_LIMIT' if limited or local_limited or repaired
                     else 'SEARCH_FINISHED', self.expanded, local.moves if strategy == REPOSITION else None,
-                    any(move.empty for move in state.moves), floor)
+                    any(move.empty for move in state.moves))
+
+    def _plan_cost(self, initial_plan, started, budget):
+        if self.cost_model is None:
+            raise ValueError('NETWORK_COST requires version 2 tariffs')
+        seed = self.initial()
+        if initial_plan is None:
+            # Reserve a share of a timed run for financial alternatives.
+            final_deadline = self.deadline
+            if budget is not None:
+                self.deadline = started + budget * 0.75
+            try:
+                reference = self._plan(REPOSITION)
+                reference_state = self.best
+                limited = reference.termination_reason == 'SEARCH_LIMIT'
+            except TimeLimitReached:
+                reference_state = self.best
+                limited = True
+            finally:
+                self.deadline = final_deadline
+        else:
+            reference_state = seed
+            for move in initial_plan:
+                reference_state = self.append(reference_state, move)
+            limited = False
+        floor = self.service_floor = (reference_state.on_time, reference_state.delivered)
+        required = reference_state.deficit
+
+        def score(item):
+            meets_service = (item.on_time >= floor[0] and item.delivered >= floor[1]
+                             and all(left <= right for left, right in zip(item.deficit, required)))
+            price = item.net_cost
+            if meets_service:
+                return True, -price, *item.score(True)
+            return (False, *item.score(True)[:2], min(item.on_time, floor[0]),
+                    min(item.delivered, floor[1]), -price, *item.score(False))
+
+        self.cost_start_expanded = self.expanded
+        self.active_score = score
+        self.best_score = None
+        reference_state = replace(reference_state, net_cost=sum(
+            (self.voyage_price(move) - self.cost_model.alternative_credit(
+                self.scenario.cargo[move.cargo_id].type, move.kg) for move in reference_state.moves), Decimal(0)))
+        self.record(reference_state)
+        reference_state = self.reassign_terminal(seed, reference_state)
+        state, _, cost_limited = self.search(seed, COST, reference_state, score=score)
+        state, _, repaired = self.repair(seed, state, COST, score=score)
+        replay(self.scenario, state.moves)
+        return Plan(COST, state.moves, 'SEARCH_LIMIT' if limited or cost_limited or repaired else 'SEARCH_FINISHED',
+                    self.expanded, cost_service_floor=floor)
+
+    def reassign_terminal(self, seed, incumbent):
+        """Try lower-priced replacements at the same time and on the same path."""
+        moves = sorted(incumbent.moves, key=lambda move: (move.start, move.tug_id, move.barge_id, move.cargo_id))
+        last_use = {}
+        for index, move in enumerate(moves):
+            last_use[move.tug_id] = last_use[move.barge_id] = index
+        for index, move in enumerate(moves):
+            if last_use[move.tug_id] != index or last_use[move.barge_id] != index:
+                continue
+            original_price = self.voyage_price(move)
+            cargo = self.scenario.cargo[move.cargo_id]
+            for pair in self.scenario.pairs:
+                self.check_budget()
+                tug, barge = self.scenario.tugs[pair[0]], self.scenario.barges[pair[1]]
+                if (cargo.type not in barge.cargo_types or move.kg > barge.capacity_kg
+                        or min(tug.available_to, barge.available_to) < move.end):
+                    continue
+                # An unused resource or one released by an earlier voyage
+                # can take over without changing a subsequent voyage.
+                original_pair = (move.tug_id, move.barge_id)
+                if pair == original_pair or any(key not in original_pair and last_use.get(key, -1) >= index
+                                                for key in pair):
+                    continue
+                alternative = self.assign_pair(move, pair)
+                if self.voyage_price(alternative) >= original_price:
+                    continue
+                self.cost_reassignment_trials += 1
+                revised = (*moves[:index], alternative, *moves[index + 1:])
+                try:
+                    replay(self.scenario, revised)
+                except ScheduleViolation:
+                    if self.cost_reassignment_trials >= self.limits.repair_states:
+                        return incumbent
+                    continue
+                state = seed
+                for voyage in revised:
+                    state = self.append(state, voyage)
+                self.cost_reassignments += 1
+                self.record(state)
+                incumbent = state
+                moves[index] = alternative
+                last_use[pair[0]] = last_use[pair[1]] = index
+                break
+            if self.cost_reassignment_trials >= self.limits.repair_states:
+                break
+        return incumbent
