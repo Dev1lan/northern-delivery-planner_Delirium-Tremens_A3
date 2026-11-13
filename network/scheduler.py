@@ -499,8 +499,14 @@ class Scheduler:
         finally:
             self.deadline = deadline
         improved = extend(self, self.best)
+        limited = direct is None or direct.termination_reason == 'SEARCH_LIMIT'
+        if direct is None:
+            # Reuse time left after the transfer pass, starting from the
+            # current audited service incumbent, including any complete chains.
+            improved, _, resumed_limited = self.search(improved, REPOSITION, improved)
+            limited = limited or resumed_limited
         baseline = self.local_baseline or self.initial()
-        return Plan(REPOSITION, improved.moves, direct.termination_reason if direct else 'SEARCH_LIMIT',
+        return Plan(REPOSITION, improved.moves, 'SEARCH_LIMIT' if limited else 'SEARCH_FINISHED',
                     self.expanded, baseline.moves, any(move.empty for move in improved.moves))
 
     def _plan(self, strategy):
