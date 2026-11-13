@@ -11,6 +11,7 @@ from network.models import Limits, Location
 from network.search_policy import SearchPolicy, TimeLimitReached
 from network.routing import Router, distance
 from network.ports import reservations
+from network.sea_allocation import SeaAllocation
 from network.simulator import voyages
 from network.validator import replay
 
@@ -71,6 +72,8 @@ class Scheduler:
         self.expanded = 0
         self.reset_counters()
         self.router = Router(scenario, self.limits, self.check_budget)
+        self.sea_allocation = None
+        self.sea_dispatch = False
         self.minimum_for_type = {category: i for i, r in enumerate(scenario.requirements) for category in r.cargo_types}
         self.cargo = tuple(sorted(scenario.cargo.values(), key=lambda c: (c.ready, c.id)))
 
@@ -91,6 +94,7 @@ class Scheduler:
 
     def reset_counters(self):
         self.cargo_search = defaultdict(Counter)
+        self.sea_adjustments = 0
         self.stats = dict(assignments_considered=0, safe_pruned=0, heuristic_pruned=0,
                           detailed_checks=0, generated_candidates=0, generated_states=0,
                           duplicate_states=0, beam_pruned=0)
@@ -112,6 +116,7 @@ class Scheduler:
         info = self.assignment_voyages.cache_info()
         return {**self.stats, **self.router.stats(), 'voyage_cache_hits': info.hits,
                 'voyage_cache_misses': info.misses,
+                **({'sea_opportunity_adjustments': self.sea_adjustments} if self.policy.sea_fleet_allocation else {}),
                 **({'cargo_search': dict(self.cargo_search)} if self.policy.recover_undelivered else {})}
 
     def initial(self):
@@ -277,6 +282,8 @@ class Scheduler:
         best = None
         distinct = {}
         traced = self.policy.recover_undelivered
+        allocation = self.sea_allocation if self.sea_dispatch else None
+        witnesses = {}
 
         def ranked_moves():
             nonlocal best
@@ -315,6 +322,16 @@ class Scheduler:
                         previous = distinct.get(key)
                         if previous is None or rank < previous[0]:
                             distinct[key] = item
+                    if allocation and on_time:
+                        if allocation.occupies_sea(move):
+                            key = (cargo.id, actual_pair)
+                            previous = witnesses.get(key)
+                            if previous is None or rank < previous[0]:
+                                witnesses[key] = item
+                        elif allocation.specialized.isdisjoint(actual_pair):
+                            previous = witnesses.get(cargo.id)
+                            if previous is None or move.kg > previous[1].kg:
+                                witnesses[cargo.id] = item
                     yield item
 
         try:
@@ -324,8 +341,12 @@ class Scheduler:
                 _, move, pair = best
                 self.record(self.append(state, self.assign_pair(move, pair), strategy == RETURN_EMPTY))
             raise
+        if allocation and witnesses:
+            items = list({id(item): item for item in (*selected, *witnesses.values())}.values())
+            selected, adjustments = allocation.shortlist(items, self.limits.candidate_limit, state.remaining)
+            self.sea_adjustments += adjustments
         if traced:
-            if strategy in (REPOSITION, COST) and self.limits.candidate_limit > 1:
+            if not allocation and strategy in (REPOSITION, COST) and self.limits.candidate_limit > 1:
                 count = max(1, self.limits.candidate_limit // 4)
                 leaders = selected[:self.limits.candidate_limit - count]
                 represented = {(move.cargo_id, state.locations[pair[0]].port) for _, move, pair in leaders}
@@ -426,6 +447,10 @@ class Scheduler:
         self.expanded = 0
         self.reset_counters()
         try:
+            if self.policy.sea_fleet_allocation and strategy in (REPOSITION, COST):
+                self.sea_allocation = SeaAllocation(self.scenario, self.router)
+                if not self.sea_allocation.specialized:
+                    self.sea_allocation = None
             return self._plan(strategy)
         except TimeLimitReached:
             state = self.best
@@ -450,7 +475,7 @@ class Scheduler:
         if strategy in (FCFS, GREEDY, RETURN_EMPTY):
             state, expanded, truncated = self.dispatch(seed, strategy)
         else:
-            if self.policy.recover_undelivered and strategy in (REPOSITION, COST):
+            if (self.policy.recover_undelivered or self.sea_allocation) and strategy in (REPOSITION, COST):
                 return self._recover_plan(seed, strategy)
             simple = [self.dispatch(seed, name) for name in (FCFS, GREEDY, SOCIAL)]
             start = max((state for state, _, _ in simple), key=lambda item: item.score(True))
@@ -496,13 +521,25 @@ class Scheduler:
                     baseline.moves if strategy == REPOSITION else None, reposition_selected, floor)
 
     def _recover_plan(self, seed, strategy):
-        # Build a local reference quickly, then use the budget for service
-        # before optimizing cost. Avoid spending it in three local passes.
-        local, _, local_limited = self.dispatch(seed, SOCIAL)
-        self.local_baseline = local
-        greedy, _, greedy_limited = self.dispatch(seed, REPOSITION)
+        # Build a service incumbent before optimizing cost. Sea allocation
+        # starts with joint dispatch so the local reference cannot consume its budget.
+        if self.sea_allocation:
+            local, local_limited = seed, False
+            self.local_baseline = local
+        else:
+            local, _, local_limited = self.dispatch(seed, SOCIAL)
+            self.local_baseline = local
+        self.sea_dispatch = self.sea_allocation is not None
+        try:
+            greedy, _, greedy_limited = self.dispatch(seed, REPOSITION)
+        finally:
+            self.sea_dispatch = False
         state, _, limited = self.search(seed, REPOSITION, max((local, greedy), key=lambda item: item.score(True)))
         limited = limited or greedy_limited
+        if self.sea_allocation and strategy == REPOSITION:
+            local, _, local_limited = self.dispatch(seed, SOCIAL)
+            self.local_baseline = local
+            state = max((local, state), key=lambda item: item.score(True))
         state, _, repaired = self.repair(seed, state, REPOSITION)
         floor = None
         if strategy == COST:
