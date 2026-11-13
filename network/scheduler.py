@@ -252,8 +252,9 @@ class Scheduler:
 
     def candidates(self, state, strategy):
         s = self.scenario
-        candidates = []
-        try:
+        best = None
+        def ranked_moves():
+            nonlocal best
             for tug, barge, cargo, capacity, origin, ready, index, _, deficit, _, _ in self.detailed_assignments(state, strategy):
                 self.stats['detailed_checks'] += 1
                 relevant_berths = (*self.berth_ids.get(cargo.origin, ()), *self.berth_ids.get(cargo.destination, ()))
@@ -265,8 +266,6 @@ class Scheduler:
                 for move in self.assignment_voyages(*representative, cargo.id, capacity, origin, ready,
                                                     index, deficit, strategy in (REPOSITION, COST),
                                                     strategy == RETURN_EMPTY, bookings):
-                    if representative != actual_pair:
-                        move = replace(move, tug_id=tug.id, barge_id=barge.id)
                     on_time = move.unloading_end <= cargo.due
                     if strategy in (FCFS, RETURN_EMPTY):
                         rank = (cargo.ready, cargo.id, move.load_start, -move.kg, move.end)
@@ -277,16 +276,28 @@ class Scheduler:
                         rank = (-int(useful > 0), -useful, -int(on_time), -(move.kg / elapsed), -move.kg,
                                 distance(s, move.empty), move.end, cargo.due, cargo.id)
                         if strategy == COST:
-                            rank = (*rank[:3], self.cost_model.voyage_cost(move) / move.kg, *rank[3:])
-                    candidates.append((rank, move))
+                            priced_move = self.assign_pair(move, actual_pair)
+                            rank = (*rank[:3], self.cost_model.voyage_cost(priced_move) / move.kg, *rank[3:])
+                    item = (rank, move, actual_pair)
+                    if self.deadline is not None and (best is None or rank < best[0]):
+                        best = item
                     self.stats['generated_candidates'] += 1
+                    yield item
+
+        try:
+            selected = nsmallest(self.limits.candidate_limit, ranked_moves(), key=lambda item: item[0])
         except TimeLimitReached:
-            if candidates:
-                _, move = min(candidates, key=lambda item: item[0])
-                partial = self.append(state, move, strategy == RETURN_EMPTY)
-                self.record(partial)
+            if best is not None:
+                _, move, pair = best
+                self.record(self.append(state, self.assign_pair(move, pair), strategy == RETURN_EMPTY))
             raise
-        return [move for _, move in nsmallest(self.limits.candidate_limit, candidates, key=lambda item: item[0])]
+        return [self.assign_pair(move, pair) for _, move, pair in selected]
+
+    @staticmethod
+    def assign_pair(move, pair):
+        if (move.tug_id, move.barge_id) == pair:
+            return move
+        return replace(move, tug_id=pair[0], barge_id=pair[1])
 
     def dispatch(self, initial, strategy):
         state = initial
