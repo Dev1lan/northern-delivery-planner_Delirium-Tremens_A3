@@ -200,22 +200,31 @@ class Scheduler:
                     -capacity, origin != cargo.origin, earliest, cargo.id)
 
         ranked = sorted(assignments, key=estimate)
-        per_cargo = {}
-        selected = skipped = 0
-        for item in ranked:
-            self.check_budget()
-            cargo = item[2].id
-            if any(limit is not None and selected >= limit for limit in
-                   (policy.max_candidates_per_state, policy.max_detailed_checks_per_iteration)):
-                self.stats['heuristic_pruned'] += len(ranked) - selected - skipped
-                break
-            if policy.top_k_pairs_per_cargo is not None and per_cargo.get(cargo, 0) >= policy.top_k_pairs_per_cargo:
-                self.stats['heuristic_pruned'] += 1
-                skipped += 1
-                continue
-            per_cargo[cargo] = per_cargo.get(cargo, 0) + 1
-            selected += 1
-            yield item
+        if policy.top_k_pairs_per_cargo is not None:
+            by_cargo = defaultdict(list)
+            for item in ranked:
+                by_cargo[item[2].id].append(item)
+            selected = []
+            for options in by_cargo.values():
+                classes = set()
+                distinct, repeated = [], []
+                for item in options:
+                    self.check_budget()
+                    tug, barge = item[:2]
+                    signature = (tug.access.vessel_class, barge.access.vessel_class)
+                    (repeated if signature in classes else distinct).append(item)
+                    classes.add(signature)
+                selected.extend((*distinct, *repeated)[:policy.top_k_pairs_per_cargo])
+            self.stats['heuristic_pruned'] += len(ranked) - len(selected)
+            kept = {(item[0].id, item[1].id, item[2].id) for item in selected}
+            ranked = [item for item in ranked if (item[0].id, item[1].id, item[2].id) in kept]
+        limits = [limit for limit in (policy.max_candidates_per_state, policy.max_detailed_checks_per_iteration)
+                  if limit is not None]
+        if limits:
+            keep = min(limits)
+            self.stats['heuristic_pruned'] += max(0, len(ranked) - keep)
+            ranked = ranked[:keep]
+        yield from ranked
 
     def _assignment_voyages(self, tug_id, barge_id, cargo_id, capacity, origin, ready,
                             requirement_index, deficit, allow_reposition, return_empty, reservations):
