@@ -108,3 +108,14 @@ def verify_batches(scenario, voyages, violation):
             if occupied > scenario.terminals[port].capacity_kg:
                 raise violation(changes[0][2], 'TRANSFER_STORAGE_CAPACITY', port)
     return ready
+
+
+def can_connect_modes(scenario):
+    """A river-only stage requires a nonmarine edge incident to its terminal."""
+    for port, terminal in scenario.terminals.items():
+        if 'RIVER_TO_SEA' in terminal.directions and any(
+                edge.destination == port and not edge.marine for edge in scenario.edges.values()):
+            return True
+        if 'SEA_TO_RIVER' in terminal.directions and any(not edge.marine for edge in scenario.outgoing[port]):
+            return True
+    return False

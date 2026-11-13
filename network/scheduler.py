@@ -14,7 +14,7 @@ from network.ports import reservations
 from network.sea_allocation import SeaAllocation
 from network.simulator import voyages
 from network.validator import ScheduleViolation, replay
-from network.transshipment import leg_cargo
+from network.transshipment import can_connect_modes, leg_cargo
 from network.transfer_search import extend
 
 FCFS = 'NETWORK_FCFS'
@@ -486,7 +486,7 @@ class Scheduler:
 
     @property
     def transfers_enabled(self):
-        return bool(self.scenario.terminals) and not self.policy.disable_transshipment
+        return not self.policy.disable_transshipment and can_connect_modes(self.scenario)
 
     def _plan_transfers(self, started, budget):
         deadline = self.deadline

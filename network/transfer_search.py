@@ -12,6 +12,7 @@ def extend(scheduler, state, *, score=None, incumbent=None):
     incumbent = best if incumbent is None else incumbent
     score = score or (lambda item: item.score(True))
     examined = 0
+    incumbent_score = score(incumbent)
     while examined < scheduler.limits.repair_states:
         candidate = None
         candidate_score = None
@@ -20,8 +21,8 @@ def extend(scheduler, state, *, score=None, incumbent=None):
             proposal_score = score(proposal)
             if candidate_score is None or proposal_score > candidate_score:
                 candidate, candidate_score = proposal, proposal_score
-            if proposal_score > score(incumbent):
-                incumbent = proposal
+            if proposal_score > incumbent_score:
+                incumbent, incumbent_score = proposal, proposal_score
                 scheduler.record(incumbent)
             if examined >= scheduler.limits.repair_states:
                 break
