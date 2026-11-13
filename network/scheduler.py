@@ -431,7 +431,7 @@ class Scheduler:
             state = self.best
             baseline = self.local_baseline
             if strategy == REPOSITION:
-                baseline = baseline or self.initial()
+                baseline = baseline or state
             replay(self.scenario, state.moves, allow_reposition=strategy in (REPOSITION, COST),
                    allow_return=strategy == RETURN_EMPTY)
             return Plan(strategy, state.moves, 'TIME_LIMIT', self.expanded,

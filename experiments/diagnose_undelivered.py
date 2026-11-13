@@ -8,12 +8,12 @@ import json
 from pathlib import Path
 from time import perf_counter
 
-from network.adapter import audit_result, decode_voyages, encode_voyage, run_scenario
+from network.adapter import audit_result, build_result, decode_voyages, encode_voyage, run_scenario
 from network.analysis import _reachable, diagnose
 from network.insertion import FixedPlan, improve_fixed_plan
 from network.models import Limits, loaded_draft, parse_scenario
 from network.costs import CostModel
-from network.scheduler import REPOSITION
+from network.scheduler import COST, REPOSITION, Plan
 from network.search_policy import SearchPolicy
 from network.validator import replay
 
@@ -22,7 +22,7 @@ def read(path):
     return json.loads(path.read_text(encoding='utf-8-sig'))
 
 
-def inspect_result(result, *, seconds_per_cargo=1):
+def inspect_result(result, *, seconds_per_cargo=1, improved_output=None):
     audit = audit_result(result)
     if audit['schedule_audit']['status'] != 'PASSED':
         raise ValueError(audit['schedule_audit'])
@@ -45,6 +45,7 @@ def inspect_result(result, *, seconds_per_cargo=1):
                          'draft_m': vessel.draft if is_tug else vessel.draft_empty,
                          'full_draft_m': None if is_tug else vessel.draft_full,
                          'capacity_t': None if is_tug else vessel.capacity_kg / 1000,
+                         'vessel_class': vessel.access.vessel_class,
                          'available_at': vessel.initial.available_at.isoformat(),
                          'available_to': vessel.available_to.isoformat(), 'compatible_cargo': [],
                          'admitted_approach_cargo': [], 'isolated_witness_cargo': [], 'insertion_witness_cargo': []}
@@ -145,7 +146,25 @@ def inspect_result(result, *, seconds_per_cargo=1):
                                   'fleet': sorted({v[k] for v in isolated['voyages'] for k in ('tug_id', 'barge_id')})},
                      'fixed_plan_insertion': encode_voyage(witness) if witness else None,
                      'diagnosis': ('INSERTION_WITNESS' if witness else proven[0] if proven else 'UNKNOWN')})
-    local, repair_report = improve_fixed_plan(scenario, moves, limits, cost_model=cost_model)
+    local, repair_report = (improve_fixed_plan(scenario, moves, limits, cost_model=cost_model)
+                            if result['strategy'] in (COST, REPOSITION)
+                            else (moves, {'improved': False, 'reason': 'UNSUPPORTED_STRATEGY'}))
+    if repair_report['improved']:
+        service_floor = result.get('cost_service_floor')
+        floor = tuple(round(service_floor[key] * 1000) for key in ('on_time_t', 'total_t')) if service_floor else None
+        plan = Plan(result['strategy'], local, result['termination_reason'], result['expanded_states'],
+                    cost_service_floor=floor)
+        revised = build_result(raw, scenario, plan, limits, tariff)
+        audit = audit_result(revised)
+        if audit['schedule_audit']['status'] != 'PASSED':
+            raise ValueError(audit['schedule_audit'])
+        repair_report['metrics'] = revised['metrics']
+        repair_report['audit'] = audit['schedule_audit']
+        repair_report['cost_before'] = (result['financial_evaluation'] or {}).get('total_cost')
+        repair_report['cost_after'] = (revised['financial_evaluation'] or {}).get('total_cost')
+        if improved_output is not None:
+            with improved_output.open('x', encoding='utf-8') as stream:
+                json.dump(revised, stream, ensure_ascii=False, indent=2)
     removed, added = set(moves) - set(local), set(local) - set(moves)
     repair_report.update(removed=[encode_voyage(v) for v in moves if v in removed],
                          added=[encode_voyage(v) for v in local if v in added])
@@ -162,9 +181,11 @@ def main():
     parser.add_argument('result', type=Path)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--seconds-per-cargo', type=float, default=1)
+    parser.add_argument('--improved-output', type=Path, help='Export an audited local improvement if found')
     args = parser.parse_args()
     started = perf_counter()
-    report = inspect_result(read(args.result), seconds_per_cargo=args.seconds_per_cargo)
+    report = inspect_result(read(args.result), seconds_per_cargo=args.seconds_per_cargo,
+                            improved_output=args.improved_output)
     report['result_sha256'] = hashlib.sha256(args.result.read_bytes()).hexdigest()
     report['elapsed_seconds'] = round(perf_counter() - started, 3)
     with args.output.open('x', encoding='utf-8') as stream:

@@ -11,7 +11,6 @@ class SearchPolicy:
     top_k_pairs_per_cargo: int | None = None
     max_candidates_per_state: int | None = None
     max_detailed_checks_per_iteration: int | None = None
-
     recover_undelivered: bool = False
 
     def __post_init__(self):

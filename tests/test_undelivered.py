@@ -1,5 +1,4 @@
 import unittest
-from dataclasses import replace
 
 from network.adapter import audit_result, decode_voyages, run_scenario
 from network.insertion import FixedPlan, improve_fixed_plan
@@ -45,9 +44,9 @@ class UndeliveredTests(unittest.TestCase):
         raw['barges'][-1]['cargo_types_allowed'] = ['food']
         raw['cargo'][1].update(volume_t=10, cargo_type='food')
         s = parse_scenario(raw)
-        limits = Limits(candidate_limit=8)
-        baseline = Scheduler(s, replace(limits, candidate_limit=4))
-        improved = Scheduler(s, replace(limits, candidate_limit=4), policy=SearchPolicy(recover_undelivered=True))
+        limits = Limits(candidate_limit=4)
+        baseline = Scheduler(s, limits)
+        improved = Scheduler(s, limits, policy=SearchPolicy(recover_undelivered=True))
         self.assertEqual({v.cargo_id for v in baseline.candidates(baseline.initial(), REPOSITION)}, {'AB'})
         self.assertIn('BC', {v.cargo_id for v in improved.candidates(improved.initial(), REPOSITION)})
 
@@ -66,3 +65,34 @@ class UndeliveredTests(unittest.TestCase):
         self.assertEqual(audit_result(result)['schedule_audit']['status'], 'PASSED')
         raw['social_requirements'] = []
         self.assertEqual(run_scenario(raw, COST, tariffs=tariffs())['requirements_status'], 'NOT_CONFIGURED')
+
+
+    def test_local_repair_preserves_satisfied_minimum(self):
+        raw = load('a_chain')
+        raw['cargo'][0].update(cargo_id='FOOD', cargo_type='food', volume_t=30)
+        raw['cargo'][1].update(cargo_id='COAL', origin_port='A', destination_port='C', volume_t=100)
+        raw['social_requirements'] = [{'requirement_id': 'FOOD', 'cargo_types': ['food'], 'required_t': 30,
+                                       'deadline': raw['cargo'][0]['due_at'], 'basis': 'delivered_by_deadline',
+                                       'source_status': 'SYNTHETIC'}]
+        scenario = parse_scenario(raw)
+        limits = Limits(max_actions=1)
+        original = decode_voyages(run_scenario(raw, limits=limits)['voyages'])
+        self.assertEqual(original[0].cargo_id, 'FOOD')
+        repaired, details = improve_fixed_plan(scenario, original, limits)
+        self.assertGreater(details['audited_proposals'], 0)
+        self.assertIn(original[0], repaired)
+
+    def test_recovery_timeout_keeps_an_auditable_plan(self):
+        from unittest.mock import patch
+        from network.scheduler import TimeLimitReached
+
+        raw = load('a_chain')
+        def stop(planner):
+            if planner.stats['generated_states']:
+                raise TimeLimitReached
+
+        with patch.object(Scheduler, 'check_budget', stop):
+            result = run_scenario(raw, REPOSITION, search_policy=SearchPolicy(recover_undelivered=True))
+        self.assertEqual(result['termination_reason'], 'TIME_LIMIT')
+        self.assertEqual(result['feasibility_status'], 'NOT_CHECKED')
+        self.assertEqual(audit_result(result)['schedule_audit']['status'], 'PASSED')
