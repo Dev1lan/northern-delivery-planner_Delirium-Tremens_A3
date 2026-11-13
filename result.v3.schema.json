@@ -297,6 +297,8 @@
             "cost_by_port": {"type": "object"},
             "cost_per_t": {"type": ["string", "null"]},
             "cost_per_t_on_time": {"type": ["string", "null"]},
+            "cost_basis": {"const": "PLANNED_OPERATIONS"},
+            "estimated_undelivered_cost": {"type": "string"},
             "undelivered_penalty": {"type": "string"},
             "unpriced_undelivered_t": {"type": "number", "minimum": 0},
             "empty_transition_cost": {"type": "string"},

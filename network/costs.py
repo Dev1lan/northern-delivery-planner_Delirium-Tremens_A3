@@ -110,9 +110,6 @@ class CostModel:
     def voyage_cost(self, move):
         return sum((cost for _, cost, _, _ in self.charges(move)), ZERO)
 
-    def alternative_credit(self, cargo_type, kg):
-        return Decimal(kg) / TONNE * self.alternative.get(cargo_type, ZERO)
-
     def residual(self, remaining):
         penalty, unpriced = ZERO, 0
         for key, kg in remaining.items():
@@ -123,7 +120,7 @@ class CostModel:
                 penalty += Decimal(kg) / TONNE * tariff
         return penalty, unpriced
 
-    def breakdown(self, moves):
+    def breakdown(self, moves, *, legacy=False):
         by_item, by_vessel, by_port = defaultdict(Decimal), defaultdict(Decimal), defaultdict(Decimal)
         remaining = {c.id: c.kg for c in self.scenario.cargo.values()}
         voyages = []
@@ -145,7 +142,8 @@ class CostModel:
                 if move.unloading_end <= cargo.due:
                     timely += move.kg
         penalty, unpriced = self.residual(remaining)
-        by_item['alternative_delivery'] = penalty
+        if legacy:
+            by_item['alternative_delivery'] = penalty
         total = sum(by_item.values(), ZERO)
         return {'currency': self.currency, 'source_status': self.tariffs.get('source_status', 'ASSUMED'),
                 'rates': self.tariffs['rates'], 'tariff_parameters': self.tariffs,
@@ -154,6 +152,8 @@ class CostModel:
                 'cost_by_port': {k: money(v) for k, v in by_port.items()}, 'total_cost': money(total),
                 'cost_per_t': money(total * TONNE / delivered) if delivered else None,
                 'cost_per_t_on_time': money(total * TONNE / timely) if timely else None,
-                'undelivered_penalty': money(penalty), 'unpriced_undelivered_t': unpriced / 1000,
+                **({'undelivered_penalty': money(penalty), 'unpriced_undelivered_t': unpriced / 1000}
+                   if legacy else {'cost_basis': 'PLANNED_OPERATIONS', 'estimated_undelivered_cost': money(penalty),
+                                   'unpriced_undelivered_t': unpriced / 1000}),
                 'empty_transition_cost': money(by_item.get('empty_fuel', ZERO) + by_item.get('repositioning', ZERO)),
-                'price_status': 'PARTIAL' if unpriced else 'PRICED'}
+                'price_status': 'PARTIAL' if legacy and unpriced else 'PRICED'}

@@ -151,10 +151,6 @@ class Scheduler:
             bookings[berth] = (*bookings.get(berth, ()), interval)
         charge = self.voyage_price(move) if self.cost_start_expanded is not None else Decimal(0)
         self.stats['generated_states'] += 1
-        # In financial search retain the net operating cost. The initial
-        # residual charge is a constant for all plans on this scenario.
-        if self.cost_start_expanded is not None:
-            charge -= self.cost_model.alternative_credit(cargo.type, move.kg)
         return State({**state.locations, move.tug_id: location, move.barge_id: location},
                      {**state.remaining, cargo.id: state.remaining[cargo.id] - move.kg}, tuple(deficits),
                      state.on_time + (move.kg if move.unloading_end <= cargo.due else 0),
@@ -326,8 +322,7 @@ class Scheduler:
                                 distance(s, move.empty), move.end, cargo.due, cargo.id)
                         if strategy == COST:
                             priced_move = self.assign_pair(move, actual_pair)
-                            credit = self.cost_model.alternative_credit(cargo.type, move.kg)
-                            rank = (*rank[:3], (self.voyage_price(priced_move) - credit) / move.kg, *rank[3:])
+                            rank = (*rank[:3], self.voyage_price(priced_move) / move.kg, *rank[3:])
                             self.cost_candidates += 1
                     item = (rank, move, actual_pair)
                     if self.deadline is not None and (best is None or rank < best[0]):
@@ -587,8 +582,7 @@ class Scheduler:
         self.active_score = score
         self.best_score = None
         reference_state = replace(reference_state, net_cost=sum(
-            (self.voyage_price(move) - self.cost_model.alternative_credit(
-                self.scenario.cargo[move.cargo_id].type, move.kg) for move in reference_state.moves), Decimal(0)))
+            (self.voyage_price(move) for move in reference_state.moves), Decimal(0)))
         self.record(reference_state)
         reference_state = self.reassign_terminal(seed, reference_state)
         state, _, cost_limited = self.search(seed, COST, reference_state, score=score)

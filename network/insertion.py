@@ -100,11 +100,7 @@ def plan_score(scenario, moves, cost_model=None):
     total = sum(move.kg for move in usable)
     cost = 0
     if cost_model:
-        remaining = {key: cargo.kg for key, cargo in scenario.cargo.items()}
-        for move in usable:
-            remaining[move.cargo_id] -= move.kg
-        penalty, _ = cost_model.residual(remaining)
-        cost = sum(cost_model.voyage_cost(move) for move in moves) + penalty
+        cost = sum(cost_model.voyage_cost(move) for move in moves)
     return (-sum(not row['satisfied'] for row in report['requirements']),
             -round(sum(row['deficit_t'] for row in report['requirements']), 3), timely, total, -cost)
 

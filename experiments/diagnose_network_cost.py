@@ -25,16 +25,18 @@ def money(result):
     if not rates:
         raise ValueError('Expected tariff version 2')
     by_item = finance['cost_by_unit']
-    total, residual = map(Decimal, (finance['total_cost'], finance['undelivered_penalty']))
+    total = Decimal(finance['total_cost'])
+    residual = Decimal(finance.get('undelivered_penalty', '0'))
+    estimate = finance.get('estimated_undelivered_cost', str(residual))
     return {'currency': finance['currency'], 'price_status': finance['price_status'],
             'unpriced_undelivered_t': finance['unpriced_undelivered_t'],
-            'operating_cost': str(total - residual), 'alternative_delivery': str(residual),
+            'operating_cost': str(total - residual), 'alternative_delivery': estimate,
             'loaded_fuel': by_item.get('loaded_fuel', '0.00'),
             'empty_transition': finance['empty_transition_cost'],
             'port_handling_and_calls': str(sum(Decimal(by_item.get(key, '0'))
                                            for key in ('loading', 'unloading', 'port_call'))),
             'fixed_fleet_cost': None, 'additional_fleet_cost': None,
-            'total_cost': str(total), 'by_item': by_item}
+            'total_cost': str(total - residual), 'by_item': by_item}
 
 
 def compare(left, right):

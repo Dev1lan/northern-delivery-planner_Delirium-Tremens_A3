@@ -171,7 +171,8 @@ def audit_result(result, *, require_cost=True):
     if priced and ('tariff_parameters' in priced or strategy == COST):
         from network.costs import CostModel
         try:
-            expected['financial_evaluation'] = CostModel(scenario, priced['tariff_parameters']).breakdown(moves)
+            expected['financial_evaluation'] = CostModel(scenario, priced['tariff_parameters']).breakdown(
+                moves, legacy='cost_basis' not in priced)
         except (ValueError, KeyError, TypeError) as exc:
             report['schedule_audit'] = {'status': 'FAILED', 'violations': [
                 {'voyage': None, 'code': 'INVALID_TARIFF_PARAMETERS', 'detail': str(exc)}]}
