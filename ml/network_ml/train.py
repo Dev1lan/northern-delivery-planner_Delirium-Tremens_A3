@@ -1,4 +1,7 @@
-"""Обучение сетевого прогноза: доля тоннажа в срок по каждой стратегии и выбор стратегии.
+"""Обучение сетевого прогноза: все итоговые метрики ядра по каждой стратегии и выбор стратегии.
+
+Главная цель — доля тоннажа в срок (по ней выбирается стратегия). Остальные метрики (тонны всего, критичные,
+рейсы, пробеги, стоимость и т. д.) — отдельные модели из EXTRA_TARGETS на тех же признаках.
 
 Вход — data/dataset.csv из build_dataset.py. В обучение идут только строки с аудитом PASSED текущей версии ядра.
 TIME_LIMIT остаётся в данных, помечен признаком `time_limited`, а метрики считаются отдельно для всех строк
@@ -28,11 +31,71 @@ from network import VERSION  # noqa: E402
 STRATEGIES = ("NETWORK_REPOSITION", "NETWORK_SOCIAL", "NETWORK_GREEDY", "NETWORK_FCFS", "NETWORK_COST")
 SEEDS = (0, 1, 2, 3, 4)
 
+# Остальные итоговые метрики ядра. Ключ — имя в ответе predict.py (как в result.metrics / financial_evaluation),
+# значение — (колонка датасета, масштаб). Цель обучения — величина, делённая на масштаб сценария: так стратегии,
+# которые почти ничего не везут (нули), и сети разного размера ложатся в одну шкалу.
+# late_tonne_hours не прогнозируется: на отложенных сценариях ошибка больше самой величины.
+EXTRA_TARGETS = {
+    "delivered_total_t": ("total_t", "demand"),
+    "critical_on_time_t": ("critical_on_time_t", "demand"),
+    "completed_voyages": ("voyages", "voyages"),
+    "repositioning_voyages": ("repositioning_voyages", "voyages"),
+    "loaded_km": ("loaded_km", "voyage_km"),
+    "empty_km": ("empty_km", "voyage_km"),
+    "tonne_km": ("tonne_km", "tonne_km"),
+    "resource_busy_hours": ("busy_hours", "fleet_hours"),
+    # полная стоимость = затраты на перевозку + цена недовоза; прогнозируются слагаемые, сумму собирает predict.py
+    "operating_cost": ("operating_cost_rub", "demand"),
+    "undelivered_penalty": ("undelivered_penalty_rub", "demand"),
+    "empty_transition_cost": ("empty_cost_rub", "voyage_km"),
+}
+
+
+def scales(f):
+    """Масштабы сценария из признаков (f — словарь или DataFrame без префикса f_)."""
+    maximum = np.maximum
+    voyages = maximum(1.0, f["demand_t"] / maximum(1e-9, f["capacity_t"] / maximum(1, f["n_barges"])))
+    km = maximum(1.0, f["mean_path_km"])
+    return {"demand": f["demand_t"], "voyages": voyages, "voyage_km": voyages * km, "tonne_km": f["demand_t"] * km,
+            "fleet_hours": f["season_days"] * 24 * (f["n_tugs"] + f["n_barges"])}
+
+
+def frame_scales(df):
+    return scales({c[2:]: df[c] for c in df.columns if c.startswith("f_")})
+
+
+def target_values(df, column, scale):
+    return pd.to_numeric(df[column], errors="coerce") / frame_scales(df)[scale]
+
+
+def fit_target(df, feats, column, scale):
+    y = target_values(df, column, scale)
+    ok = y.notna()
+    return HistGradientBoostingRegressor(max_iter=300, learning_rate=0.05, max_leaf_nodes=15,
+                                         l2_regularization=1.0, random_state=0).fit(design(df[ok], feats), y[ok])
+
+
+def evaluate_target(model, df, feats, column, scale):
+    """Ошибка одной метрики на отложенных сценариях: в своих единицах и как доля суммы факта (WAPE)."""
+    y = target_values(df, column, scale)
+    d, y = df[y.notna()], y[y.notna()].to_numpy(float)
+    pred = np.clip(model.predict(design(d, feats)), 0, None)
+    size = frame_scales(d)[scale].to_numpy(float)
+    true_nat = y * size
+    err = np.abs(pred - y) * size
+    return {"rows": int(len(d)), "scale": scale, "mae": round(float(err.mean()), 2),
+            "mean_true": round(float(true_nat.mean()), 2),
+            "wape": round(float(err.sum() / max(1e-9, np.abs(true_nat).sum())), 4),
+            # полуширина интервала ≈80% в долях масштаба
+            "q80_abs_residual": round(float(np.quantile(np.abs(pred - y), 0.8)), 5)}
+
 
 def load(path):
     df = pd.read_csv(path)
     df = df[(df["audit"] == "PASSED") & (df["core_version"] == VERSION)].copy()
     feats = [c for c in df.columns if c.startswith("f_")]
+    df["operating_cost_rub"] = (pd.to_numeric(df["cost_rub"], errors="coerce")
+                                - pd.to_numeric(df["undelivered_penalty_rub"], errors="coerce"))
     return df, feats
 
 
@@ -109,12 +172,33 @@ def main():
         per_strategy[s] = {"mae_share": round(float((g["pred"] - g["on_time_share"]).abs().mean()), 4),
                            "mean_true_share": round(float(g["on_time_share"].mean()), 4)}
     report["metrics"], report["per_strategy_holdout"] = metrics, per_strategy
+    # остальные метрики ядра: проверка на тех же отложенных сценариях и перенос на третью базу
+    resid_on_time = np.abs(pred - te["on_time_share"].clip(0, 1).to_numpy(float))
+    all_metrics = {"delivered_on_time_t": {
+        "rows": int(len(te)), "scale": "demand", "mae": metrics["holdout_20pct_scenarios"]["mae_t"],
+        "mean_true": round(float(te["on_time_t"].mean()), 2),
+        "wape": round(float((resid_on_time * te["demand_t"]).sum() / max(1e-9, te["on_time_t"].sum())), 4),
+        "q80_abs_residual": round(float(np.quantile(resid_on_time, 0.8)), 4)}}
+    transfer = {}
+    for name, (column, kind) in EXTRA_TARGETS.items():
+        all_metrics[name] = evaluate_target(fit_target(tr, feats, column, kind), te, feats, column, kind)
+        for base in sorted(df["base"].unique()):
+            a, b = df[df["base"] != base], df[df["base"] == base]
+            transfer.setdefault(f"leave_out_{base}", {})[name] = evaluate_target(
+                fit_target(a, feats, column, kind), b, feats, column, kind)["wape"]
+    report["all_metrics_holdout"] = all_metrics
+    report["all_metrics_transfer_wape"] = transfer
     final = fit(df, feats)
+    extra = {name: {"model": fit_target(df, feats, column, kind), "scale": kind,
+                    "q80": all_metrics[name]["q80_abs_residual"]}
+             for name, (column, kind) in EXTRA_TARGETS.items()}
     lo, hi = df[feats].quantile(0.01), df[feats].quantile(0.99)
     joblib.dump({"models": final, "features": feats, "strategies": STRATEGIES, "core_version": VERSION,
+                 "on_time_q80": all_metrics["delivered_on_time_t"]["q80_abs_residual"], "extra": extra,
                  "ood_lo": lo.to_dict(), "ood_hi": hi.to_dict()}, HERE / "model.joblib")
     (HERE / "metrics.json").write_text(json.dumps(report, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     print(json.dumps(metrics, ensure_ascii=False, indent=1))
+    print(json.dumps(all_metrics, ensure_ascii=False, indent=1))
 
 
 if __name__ == "__main__":

@@ -79,9 +79,9 @@ def builtin_scenarios() -> Dict[str, dict]:
     for ex in sorted((ROOT / "map/examples").glob("*/config.json")):
         try:
             km = sum(float(g["distance_km"]) for g in json.loads(ex.read_text(encoding="utf-8"))["segments"])
-            title = f"Синтетический маршрут, {km:.0f} км"
+            title = f"Маршрут, {km:.0f} км"
         except Exception:
-            title = "Синтетический маршрут"
+            title = "Маршрут"
         out[ex.parent.name] = dict(title=title, folder=ex.parent, config=ex)
     return out
 
@@ -224,6 +224,13 @@ def index():
     return html.replace("/*__APP__*/false", "true")
 
 
+@app.get("/v3", response_class=HTMLResponse, include_in_schema=False)
+def index_v3():
+    """Проба правок по дизайну (слои карты, три вкладки, блок «почему выиграл план»)."""
+    html = (ROOT / "yakutia/network_v3.html").read_text(encoding="utf-8")
+    return html.replace("/*__APP__*/false", "true")
+
+
 @app.get("/v2", include_in_schema=False)
 def index_v2():
     """Старый адрес черновика нового оформления: оно теперь на главной."""
@@ -238,6 +245,23 @@ def geo_context():
     if not path.exists():
         raise HTTPException(404, "Нет yakutia/geo/context_geo.json: соберите его yakutia/geo_context.py")
     return FileResponse(path, media_type="application/json", headers={"Cache-Control": "max-age=86400"})
+
+
+@app.get("/api/geo/relief", include_in_schema=False)
+def geo_relief():
+    """Рамка отмывки рельефа (yakutia/geo_relief.py) в координатах карты — только для отрисовки."""
+    path = ROOT / "yakutia/geo/relief.json"
+    if not path.exists():
+        raise HTTPException(404, "Нет yakutia/geo/relief.json: соберите его yakutia/geo_relief.py")
+    return FileResponse(path, media_type="application/json", headers={"Cache-Control": "max-age=86400"})
+
+
+@app.get("/api/geo/relief.jpg", include_in_schema=False)
+def geo_relief_image():
+    path = ROOT / "yakutia/geo/relief.jpg"
+    if not path.exists():
+        raise HTTPException(404, "Нет yakutia/geo/relief.jpg: соберите его yakutia/geo_relief.py")
+    return FileResponse(path, media_type="image/jpeg", headers={"Cache-Control": "max-age=86400"})
 
 
 @app.get("/yana", include_in_schema=False)
@@ -456,7 +480,7 @@ def network_sample(name: str):
     return FileResponse(files[name], filename=files[name].name)
 
 
-def _network_forecast(raw):
+def _network_forecast(raw, tariffs=None):
     """Быстрый прогноз сетевой ML-модели (ml/network_ml) до расчёта ядра; ошибки модели не мешают расчёту."""
     started = time.perf_counter()
     try:
@@ -466,7 +490,7 @@ def _network_forecast(raw):
             mod = importlib.util.module_from_spec(spec)
             sys.modules["network_ml_predict"] = mod
             spec.loader.exec_module(mod)
-        out = sys.modules["network_ml_predict"].forecast(raw)
+        out = sys.modules["network_ml_predict"].forecast(raw, tariffs)
     except Exception as e:  # noqa: BLE001 — нет sklearn/модели: сайт работает без прогноза
         out = {"status": "UNAVAILABLE", "error": f"{type(e).__name__}: {e}"}
     return out, round((time.perf_counter() - started) * 1000, 1)
@@ -538,7 +562,7 @@ def network_job(req: NetworkRequest):
         JOBS[job_id] = job
     threading.Thread(target=_watch, args=(job,), daemon=True).start()
     _evict()
-    forecast, forecast_ms = _network_forecast(raw)
+    forecast, forecast_ms = _network_forecast(raw, tariffs)
     (job_dir / "forecast.json").write_text(json.dumps(forecast, ensure_ascii=False), encoding="utf-8")
     return dict(job_id=job_id, status="running", kind="network", forecast=forecast, forecast_ms=forecast_ms)
 

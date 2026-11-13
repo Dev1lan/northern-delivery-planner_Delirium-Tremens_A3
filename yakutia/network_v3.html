@@ -1,0 +1,1745 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Северный завоз · сеть</title>
+<style>
+:root{
+  color-scheme:light;
+  --page:#eef1f4; --surface:#ffffff; --surface2:#f4f6f8; --border:#dde2e7; --grid:#e8ecf0;
+  --text:#18212b; --text2:#4d5967; --muted:#6c7682;
+  --land:#f4f5f6; --sea:#dde5ec; --coast:#b8c4cf; --river:#9fb8cf; --river-bg:#c9d6e2;
+  --accent:#1d6fd8; --accent-soft:#e4eefb; --accent-ink:#fff; --signal:#c7860c; --signal-soft:#fbf1dc;
+  --ok:var(--accent); --limit:var(--signal); --closed:#a3acb6; --bad:#cf3f35; --relief-op:.55; --pl0:#bcdcff; --pl1:#0b3f8f; --seaway:var(--accent);
+  --load:var(--text2); --sail:var(--accent); --unload:var(--text2); --empty:var(--accent); --wait:var(--signal); --idle:#a3acb6;
+  --shadow:0 1px 2px rgba(16,24,40,.06),0 6px 18px rgba(16,24,40,.08);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+  color-scheme:dark;
+  --page:#0e1318; --surface:#151b21; --surface2:#1b2229; --border:#29323b; --grid:#212931;
+  --text:#e7ebef; --text2:#a4aeb9; --muted:#8b96a2;
+  --land:#1a2027; --sea:#11161b; --coast:#2f3943; --river:#3c5872; --river-bg:#26374a;
+  --accent:#4f9cf0; --accent-soft:#172a40; --accent-ink:#07111d; --signal:#e8a93a; --signal-soft:#33280f;
+  --ok:var(--accent); --limit:var(--signal); --closed:#525d69; --bad:#f0675c; --relief-op:.5; --pl0:#a9cff7; --pl1:#1554b8; --seaway:var(--accent);
+  --load:var(--text2); --sail:var(--accent); --unload:var(--text2); --empty:var(--accent); --wait:var(--signal); --idle:#525d69;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 8px 22px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --page:#0e1318; --surface:#151b21; --surface2:#1b2229; --border:#29323b; --grid:#212931;
+  --text:#e7ebef; --text2:#a4aeb9; --muted:#8b96a2;
+  --land:#1a2027; --sea:#11161b; --coast:#2f3943; --river:#3c5872; --river-bg:#26374a;
+  --accent:#4f9cf0; --accent-soft:#172a40; --accent-ink:#07111d; --signal:#e8a93a; --signal-soft:#33280f;
+  --ok:var(--accent); --limit:var(--signal); --closed:#525d69; --bad:#f0675c; --relief-op:.5; --pl0:#a9cff7; --pl1:#1554b8; --seaway:var(--accent);
+  --load:var(--text2); --sail:var(--accent); --unload:var(--text2); --empty:var(--accent); --wait:var(--signal); --idle:#525d69;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 8px 22px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--page);color:var(--text);font:13.5px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button,select,input{font:inherit;color:inherit}
+.num{font-variant-numeric:tabular-nums}
+.app{display:grid;grid-template-rows:auto minmax(0,1fr);height:100vh}
+/* верхняя панель */
+.top{display:flex;align-items:center;gap:12px;padding:0 12px;height:56px;background:var(--surface);border-bottom:1px solid var(--border);min-width:0}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.logo{width:30px;height:30px;border-radius:8px;background:var(--text);color:var(--surface);display:grid;place-items:center;flex:none}
+.brand b{display:block;font-size:14px;line-height:1.15;white-space:nowrap}
+.brand span{display:block;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px}
+.spacer{flex:1}
+.vsep{width:1px;align-self:stretch;margin:12px 2px;background:var(--border);flex:none}
+.field{display:flex;align-items:center;gap:8px;min-width:0;flex:none}
+.field.plan{flex:0 1 auto}
+.field>.fl{font-size:12px;color:var(--muted);white-space:nowrap}
+.field select.btn{max-width:340px;text-overflow:ellipsis;overflow:hidden;font-weight:500}
+.btn{display:inline-flex;align-items:center;gap:6px;text-decoration:none;height:34px}
+.btn svg{flex:none}
+.btn.quiet{border-color:transparent;background:transparent;color:var(--text2)}
+.btn.quiet:hover{background:var(--surface2);color:var(--text)}
+.seg{display:inline-flex;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:2px;gap:2px;min-width:0;max-width:100%;overflow-x:auto;scrollbar-width:none}
+.seg::-webkit-scrollbar{display:none}
+.seg button{flex:none;border:0;background:transparent;border-radius:7px;padding:0 11px;height:28px;cursor:pointer;color:var(--text2);white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.seg button small{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+.seg button[aria-pressed="true"] small{color:var(--accent)}
+.seg button .star{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block}
+.btn{border:1px solid var(--border);background:var(--surface);border-radius:8px;padding:6px 11px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.icon{padding:6px 8px;min-width:32px}
+select.btn{appearance:none;-webkit-appearance:none;padding-right:26px;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 13px) 50%,calc(100% - 9px) 50%;background-size:4px 4px;background-repeat:no-repeat}
+/* основная область */
+.main{display:grid;grid-template-columns:minmax(0,1fr) 400px;min-height:0}
+.stage{position:relative;min-width:0;min-height:0;display:grid;grid-template-rows:minmax(0,1fr) auto auto}
+.mapwrap{position:relative;min-height:0;overflow:hidden;background:var(--land)}
+#map{width:100%;height:100%;display:block;cursor:grab;touch-action:none}
+#map.drag{cursor:grabbing}
+.float{position:absolute;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(6px);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow)}
+.kpis{top:12px;left:12px;display:flex;align-items:stretch;gap:0;padding:0;overflow:hidden;max-width:calc(100% - 90px)}
+.kpirow{display:flex;min-width:0;overflow-x:auto;scrollbar-width:none}
+.kmode{display:flex;flex-direction:column;justify-content:center;gap:4px;padding:8px 10px;border-right:1px solid var(--border)}
+.kmode .seg{flex-direction:column;align-items:stretch}
+.kmode .seg button{height:24px;font-size:12.5px;justify-content:flex-start}
+.kpi{padding:9px 16px;border-right:1px solid var(--border);min-width:0;flex:none}
+.kpi.hero .v{font-size:28px;color:var(--accent)}
+.kpi.link{cursor:pointer}.kpi.link:hover{background:var(--surface2)}
+.kpi:last-child{border-right:0}
+.kpi .l{font-size:13px;color:var(--muted);white-space:nowrap}
+.kpi .v{font-size:22px;font-weight:650;line-height:1.2;white-space:nowrap}
+.kpi .v small{font-size:13px;font-weight:500;color:var(--text2)}
+.kpi .s{font-size:12.5px;color:var(--text2);white-space:nowrap}
+.zoom{top:12px;right:12px;display:flex;flex-direction:column;padding:3px;gap:2px}
+.zoom hr{border:0;border-top:1px solid var(--border);margin:2px 4px}
+.zoom button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent)}
+.zoom button{display:grid;place-items:center}
+.zoom button{border:0;background:transparent;width:30px;height:30px;border-radius:7px;cursor:pointer;font-size:16px;color:var(--text2)}
+.zoom button:hover{background:var(--surface2)}
+.legend{right:12px;bottom:34px;padding:10px 12px;font-size:13px;color:var(--text2);display:grid;gap:8px;max-width:300px}
+.legend[hidden]{display:none}
+.legend .hd{font-weight:600;color:var(--text);font-size:12.5px}
+.legend .row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 12px}
+.legend .row>span{white-space:nowrap}
+.legend .grp{color:var(--muted);font-size:12.5px;grid-column:1/-1;margin-top:2px}
+.legend i{display:inline-block;vertical-align:middle;margin-right:6px}
+.legend .ln{width:20px;height:3px;border-radius:2px}
+.layers{top:12px;right:56px;padding:10px 12px;display:grid;gap:6px;font-size:13px;min-width:210px}
+.layers .hd{font-weight:600;font-size:13px}
+.layers label{display:flex;align-items:center;gap:8px;cursor:pointer;white-space:nowrap}
+.layers input{accent-color:var(--accent);width:15px;height:15px;margin:0}
+.layers small{color:var(--muted);font-size:12px;white-space:normal}
+.subtabs{margin:0 0 12px}
+.why{border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin:10px 0 4px;background:var(--surface2)}
+.why p{margin:0 0 8px;font-size:13px;color:var(--text2)}
+.why table{width:100%;border-collapse:collapse;font-size:13px}
+.why th{font-weight:600;color:var(--muted);text-align:right;padding:3px 4px;font-size:12px}
+.why th:first-child,.why td:first-child{text-align:left}
+.why td{padding:4px;text-align:right;border-top:1px solid var(--border);font-variant-numeric:tabular-nums}
+.why td.up{color:var(--accent);font-weight:600}.why td.dn{color:var(--bad);font-weight:600}
+.cmp .r .name{font-size:13.5px}.cmp .r .val{font-size:14px;font-weight:600}
+.attrib{right:12px;bottom:8px;padding:3px 8px;font-size:11px;color:var(--muted);max-width:50%;border-radius:6px}
+.tip{position:absolute;pointer-events:none;z-index:20;padding:8px 10px;font-size:12px;max-width:280px;display:none}
+.tip b{display:block;font-size:13px;margin-bottom:2px}
+.tip .k{color:var(--muted)}
+.tip .pfleet{margin-top:6px;padding-top:6px;border-top:1px solid var(--border);display:grid;gap:3px}
+/* шкала времени */
+.timeline{position:relative;display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;align-items:center;gap:10px;padding:8px 14px 10px;background:var(--surface);border-top:1px solid var(--border)}
+.date{font-weight:650;font-size:14px;min-width:120px}
+.date small{display:block;font-weight:500;color:var(--muted);font-size:12px}
+/* дата на шкале — кнопка с календарём: щелчок открывает выбор дня */
+.datepick{display:flex;align-items:center;gap:8px;padding:3px 10px 3px 8px;border:1px solid transparent;border-radius:8px;cursor:pointer;background:none;text-align:left}
+.datepick:hover,.datepick[aria-expanded="true"]{border-color:var(--border);background:var(--surface2)}
+.datepick svg{flex:none;color:var(--muted)}
+.datepick:hover svg,.datepick[aria-expanded="true"] svg{color:var(--accent)}
+/* свой календарь: открывается над шкалой (системный уходит вниз за край окна) */
+.cal{position:absolute;left:56px;bottom:calc(100% + 6px);z-index:30;width:252px;padding:10px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.28)}
+.cal-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;font-weight:600}
+.cal-h button{border:0;background:none;width:28px;height:28px;border-radius:6px;cursor:pointer;color:var(--text2);font-size:16px}
+.cal-h button:hover:not(:disabled){background:var(--surface2);color:var(--text)}
+.cal-h button:disabled{opacity:.3;cursor:default}
+.cal-g{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
+.cal-g .wd{font-size:11px;color:var(--muted);padding:2px 0}
+.cal-g button{border:0;background:none;height:30px;border-radius:6px;cursor:pointer;color:var(--text);font-variant-numeric:tabular-nums}
+.cal-g button:hover:not(:disabled){background:var(--surface2)}
+.cal-g button:disabled{color:var(--muted);opacity:.4;cursor:default}
+.cal-g button.today{box-shadow:inset 0 0 0 1px var(--border)}
+.cal-g button[aria-current="date"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.cal-g button:focus-visible,.cal-h button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.track{position:relative;height:42px}
+#spark{position:absolute;inset:0 0 14px 0;width:100%;height:28px}
+#slider{position:absolute;left:0;right:0;bottom:0;width:100%;margin:0;accent-color:var(--accent)}
+.months{position:absolute;left:0;right:0;top:28px;height:0;font-size:11.5px;color:var(--muted)}
+.months span{position:absolute;transform:translateX(-50%);top:-2px;pointer-events:none}
+/* боковая панель */
+.side{display:grid;grid-template-rows:auto minmax(0,1fr);grid-template-columns:minmax(0,1fr);background:var(--surface);border-left:1px solid var(--border);min-height:0;min-width:0}
+.tabs{display:flex;gap:0;padding:8px 6px 0;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:none;border:0;background:none;padding:8px 5px;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--text);border-bottom-color:var(--accent);font-weight:600}
+.tabs button .cnt{color:var(--muted);font-size:11px;margin-left:3px}
+.pane{overflow:auto;padding:12px 14px 18px;min-height:0}
+.pane h3{font-size:13px;color:var(--text);font-weight:600;margin:20px 0 8px}
+.pane h3:first-child{margin-top:2px}
+.note{color:var(--muted);font-size:12.5px}
+.callout{border:1px solid var(--border);background:var(--surface2);border-radius:9px;padding:10px 12px;font-size:12.5px;color:var(--text2)}
+.callout b{color:var(--text)}
+.callout.warn{border-color:var(--border);border-left:3px solid var(--signal);background:var(--signal-soft)}
+.callout.good{border-color:var(--border);border-left:3px solid var(--accent);background:var(--surface2)}
+.badge{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.02em;padding:1px 6px;border-radius:5px;background:var(--surface2);border:1px solid var(--border);color:var(--text2);vertical-align:middle}
+.badge.stub{background:color-mix(in srgb,var(--limit) 14%,var(--surface));border-color:color-mix(in srgb,var(--limit) 45%,var(--border));color:var(--text)}
+.badge.ok{color:var(--ok)} .badge.bad{color:var(--bad)}
+.cmp{display:grid;gap:7px}
+.cmp .r{display:grid;grid-template-columns:104px minmax(0,1fr) 62px;gap:8px;align-items:center;cursor:pointer;padding:3px 4px;border-radius:6px}
+.cmp .r:hover{background:var(--surface2)}
+.cmp .r.on{background:var(--accent-soft)}
+.cmp .name{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmp .bar{height:10px;border-radius:5px;background:var(--grid);position:relative;overflow:hidden}
+.cmp .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--accent);border-radius:5px}
+.cmp .bar i.tot{background:color-mix(in srgb,var(--accent) 30%,transparent)}
+.cmp .val{text-align:right;font-size:12px}
+.list{display:grid;gap:4px}
+.item{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:8px;align-items:center;padding:7px 8px;border-radius:8px;cursor:pointer;border:1px solid transparent}
+.item:hover{background:var(--surface2)}
+.item.on{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 35%,transparent)}
+.item .t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .d{font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .r{font-size:12px;text-align:right;white-space:nowrap}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;padding:1px 7px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);white-space:nowrap}
+.pill i{width:7px;height:7px;border-radius:50%}
+.prog{height:5px;border-radius:3px;background:var(--grid);overflow:hidden;margin-top:4px;display:flex}
+.prog i{display:block;height:100%}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.chip{border:1px solid var(--border);background:var(--surface);border-radius:14px;padding:3px 10px;font-size:12px;cursor:pointer;color:var(--text2)}
+.chip[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.card{border:1px solid var(--border);border-radius:10px;padding:12px;background:var(--surface)}
+.card+.card{margin-top:10px}
+.card .hd{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px}
+.card .hd b{font-size:15px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:12.5px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;text-align:right}
+.kv dd.na{color:var(--muted);font-style:italic}
+.back{border:0;background:none;color:var(--accent);cursor:pointer;padding:0;margin-bottom:8px}
+table.t{width:100%;border-collapse:collapse;font-size:12px}
+table.t th{text-align:left;font-weight:600;color:var(--muted);padding:4px 6px;border-bottom:1px solid var(--border)}
+table.t td{padding:5px 6px;border-bottom:1px solid var(--grid)}
+table.t td.n,table.t th.n{text-align:right}
+.fin{display:grid;gap:6px}
+.fin .r{display:grid;grid-template-columns:150px minmax(0,1fr) 92px;gap:8px;align-items:center;font-size:12.5px}
+.fin .bar{height:8px;border-radius:4px;background:var(--grid);overflow:hidden}
+.fin .bar i{display:block;height:100%;background:var(--accent)}
+.big{font-size:24px;font-weight:650;line-height:1.15}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mini{border:1px solid var(--border);border-radius:9px;padding:8px 10px}
+.mini .l{font-size:11px;color:var(--muted)} .mini .v{font-size:16px;font-weight:650}
+/* загрузка */
+.drop{border:1.5px dashed var(--border);border-radius:10px;padding:18px;text-align:center;color:var(--text2);cursor:pointer}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.overlay{position:absolute;inset:0;display:none;place-items:center;background:color-mix(in srgb,var(--page) 60%,transparent);z-index:30}
+.overlay.on{display:grid}
+.overlay .box{padding:16px 20px;max-width:min(880px,94%);max-height:92%;overflow:auto}
+.overlay .box .row{display:flex;gap:12px;align-items:center}
+.overlay .fc{margin-top:12px}
+.overlay .fc:empty{display:none}
+.overlay .fc td small,.fcm td small{display:block;color:var(--muted);font-size:10.5px;white-space:nowrap}
+.overlay .fc th.best{color:var(--accent)}
+.spin{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--accent);animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+/* карта */
+.lbl{font-size:13.5px;fill:var(--text);paint-order:stroke;stroke:var(--land);stroke-width:3px;stroke-linejoin:round;pointer-events:none}
+.lbl.hub{font-weight:650}
+.lbl.river{fill:var(--river);stroke:var(--land);font-style:italic;font-size:12px}
+.lbl.sea{fill:color-mix(in srgb,var(--seaway) 65%,var(--muted));stroke:none;font-style:italic;letter-spacing:.12em;font-size:13px}
+.pcnt{font-weight:700;pointer-events:none;font-variant-numeric:tabular-nums}
+.vlbl{font-size:12px;font-weight:600;fill:var(--text);paint-order:stroke;stroke:var(--surface);stroke-width:3px;pointer-events:none}
+@media (max-width:1380px){.brand>div:last-child,.vsep:first-of-type{display:none}.btn.quiet#uploadBtn{font-size:0;gap:0;padding:0 9px}}
+@media (max-width:1540px){.seg button small{display:none}}
+@media (max-width:1100px){.main{grid-template-columns:minmax(0,1fr) 340px}.tabs button{font-size:12.5px;padding:8px 4px}}
+@media (max-width:820px){
+  .app{height:auto;min-height:100vh}
+  .main{grid-template-columns:1fr}
+  .stage{height:72vh}
+  .side{border-left:0;border-top:1px solid var(--border)}
+  .top{flex-wrap:wrap}
+  .kpis{order:-1;position:static;margin:0;border-radius:0;border-width:0 0 1px;max-width:none;overflow-x:auto;box-shadow:none}
+  .kpi{padding:6px 10px;flex:none}.kpi .v{font-size:15px}
+  .seg{max-width:100%;overflow-x:auto}
+  .mapwrap{display:flex;flex-direction:column}
+  #map{flex:1 1 0;min-height:0;height:auto}
+  .legend{max-width:calc(100% - 70px)}
+  .timeline{grid-template-columns:auto minmax(0,1fr) auto}.timeline .date{display:none}.datepick{padding:6px;gap:0}.cal{left:8px}
+}
+.wiform{display:grid;gap:8px;margin-top:10px}
+.wi{display:grid;grid-template-columns:110px 1fr;gap:8px;align-items:center;font-size:12.5px}
+.wi>span{color:var(--muted)}
+.wi.wide{grid-template-columns:1fr}
+.wi input,.wi select,.wi textarea{width:100%;min-width:0;white-space:normal}
+.wi textarea{font-family:ui-monospace,Menlo,monospace;font-size:12px;resize:vertical}
+.wiform button[type=submit]{justify-self:start}
+.lnk{color:var(--accent);cursor:pointer}
+.item.wp{grid-template-columns:minmax(0,1fr) auto}
+.item.wp .t{white-space:normal;font-weight:500}
+.item .ev{font-size:11.5px;color:var(--text2);white-space:normal;margin-top:3px}
+tr.xv{cursor:pointer} tr.xv:hover td{background:var(--surface2)}
+@media (max-width:520px){.wi{grid-template-columns:1fr}}
+.xt td{font-size:12px;padding:4px 6px}.xt td.n{white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 3 2"/><path d="M5 13l2-6h10l2 6"/><path d="M12 3v4"/></svg></div>
+      <div><b>Северный завоз</b><span id="subtitle">—</span></div>
+    </div>
+    <div class="vsep"></div>
+    <label class="field"><span class="fl">Сценарий</span><select id="scenarioSel" class="btn" hidden></select></label>
+    <div class="vsep"></div>
+    <div class="field plan"><span class="fl">План</span><div class="seg" id="strategies" role="group" aria-label="План"></div></div>
+    <div class="spacer"></div>
+    <a id="yanaBtn" hidden></a>
+    <button class="btn quiet" id="uploadBtn" hidden title="Загрузить свои файлы сценария"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 10.5V2.5M5 5.5l3-3 3 3M2.5 10v2.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V10"/></svg>Загрузить данные</button>
+    <a class="btn primary" id="dlBtn" hidden download title="Скачать расписание выбранного плана в JSON"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5v8M5 7.5l3 3 3-3M2.5 10v2.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V10"/></svg>Скачать план</a>
+    <button class="btn icon quiet" id="themeBtn" title="Светлая / тёмная тема" aria-label="Переключить тему"><svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 2a6 6 0 0 1 0 12z" fill="currentColor"/></svg></button>
+  </header>
+  <div class="main">
+    <div class="stage">
+      <div class="mapwrap" id="mapwrap">
+        <svg id="map" aria-label="Карта сети"></svg>
+        <div class="float kpis"><div class="kmode"><div class="seg" id="kmode" role="group" aria-label="Показатели"><button data-km="season" aria-pressed="true" title="Итоги плана за всю навигацию">За сезон</button><button data-km="date" aria-pressed="false" title="Что сделано к дате на шкале времени">На дату</button></div></div><div class="kpirow" id="kpis"></div></div>
+        <div class="float zoom" role="toolbar" aria-label="Карта">
+          <button id="zin" title="Приблизить" aria-label="Приблизить"><svg width="16" height="16" viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg></button>
+          <button id="zout" title="Отдалить" aria-label="Отдалить"><svg width="16" height="16" viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 8h10"/></svg></button>
+          <button id="zfit" title="Показать всю сеть" aria-label="Показать всю сеть"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10"/></svg></button>
+          <hr>
+          <button id="legBtn" title="Обозначения" aria-label="Обозначения" aria-pressed="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 4h7.5M6 8h7.5M6 12h7.5"/><circle cx="3" cy="4" r=".9" fill="currentColor"/><circle cx="3" cy="8" r=".9" fill="currentColor"/><circle cx="3" cy="12" r=".9" fill="currentColor"/></svg></button>
+          <button id="layBtn" title="Слои карты" aria-label="Слои карты" aria-pressed="false"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M8 2 14 5.2 8 8.4 2 5.2Z"/><path d="m2 8.2 6 3.2 6-3.2M2 11l6 3.2 6-3.2"/></svg></button>
+        </div>
+        <div class="float layers" id="layers" hidden></div>
+        <div class="float legend" id="legend"></div>
+        <div class="float attrib" id="attrib"></div>
+        <div class="float tip" id="tip"></div>
+        <div class="overlay" id="overlay"><div class="float box" style="position:static"><div class="row"><div class="spin"></div><div id="overlayText">Считаем…</div></div><div class="fc" id="overlayFc"></div></div></div>
+      </div>
+            <div class="timeline">
+        <button class="btn icon" id="play" title="Пуск / пауза" aria-label="Пуск">▶</button>
+        <button type="button" class="datepick" id="dateBtn" title="Выбрать дату" aria-haspopup="dialog" aria-expanded="false" aria-controls="cal"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><rect x="2.5" y="3.5" width="11" height="10" rx="1.5"/><path d="M2.5 6.5h11M5.5 2v3M10.5 2v3"/></svg><div class="date num" id="date">—</div></button>
+        <div class="cal" id="cal" role="dialog" aria-label="Выбор даты" hidden></div>
+        <div class="track"><svg id="spark" preserveAspectRatio="none"></svg><div class="months" id="months"></div><input type="range" id="slider" min="0" max="100" step="1" value="0" aria-label="Момент времени"></div>
+        <select id="speed" class="btn" aria-label="Скорость"><option value="1" selected>1 день/с</option><option value="2">2 дня/с</option><option value="5">5 дней/с</option><option value="12">12 дней/с</option></select>
+      </div>
+    </div>
+    <aside class="side">
+      <div class="tabs" role="tablist" id="tabs"></div>
+      <div class="pane" id="pane"></div>
+    </aside>
+  </div>
+</div>
+<input type="file" id="fileIn" accept=".json,application/json" hidden multiple>
+<script>
+"use strict";
+const D0 = /*__DATA__*/null;
+const APP = /*__APP__*/false;
+const $ = s => document.querySelector(s);
+const NS = 'http://www.w3.org/2000/svg';
+const fmt = (v, d = 0) => (v == null || isNaN(v)) ? '—' : Number(v).toLocaleString('ru-RU', {minimumFractionDigits: d, maximumFractionDigits: d});
+const pct = (a, b) => b ? Math.round(100 * a / b) : 0;
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+const STATUS = {
+  load: {ru: 'Погрузка', c: '--load'}, sail: {ru: 'Идёт с грузом', c: '--sail'}, unload: {ru: 'Выгрузка', c: '--unload'},
+  empty: {ru: 'Перегон порожним', c: '--empty'}, back: {ru: 'Возвращается порожним', c: '--empty'}, wait: {ru: 'Ждёт воды/окна', c: '--wait'}, queue: {ru: 'В очереди к причалу', c: '--bad'}, idle: {ru: 'Стоит в порту', c: '--idle'}
+};
+const CT = {fuel: 'топливо', coal: 'уголь', general: 'генгруз', food: 'продовольствие', concentrate: 'концентрат'};
+const MONTHS = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+const MONTHS_N = ['янв', 'фев', 'март', 'апр', 'май', 'июнь', 'июль', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+let D = null, cur = null, T = 0, tab = 'overview', sel = null, playing = false, lastTs = 0, jobId = null;
+let view = null, want = null, fitBox = null;
+const ui = {fleetFilter: 'all', cargoFilter: 'all', kpiMode: 'season'};
+/* слои карты: что показывать (панель «Слои») */
+const layers = {relief: true, ports: true, minor: false, vessels: true, vlabels: false, flow: true, limits: true};
+const LAYERS = [['relief', 'Рельеф', 'хребты и долины — легче читать, где идут реки'], ['ports', 'Порты', 'крупные подписаны всегда'], ['minor', 'Все подписи портов', 'иначе — только те, что не налезают друг на друга'], ['vessels', 'Суда', ''],
+  ['vlabels', 'Номера судов', 'иначе — при приближении и наведении'], ['flow', 'Грузопоток', 'ширина линии — сколько тонн провезено'], ['limits', 'Ограничения глубин', 'выключите, чтобы увидеть обычную сеть']];
+function kFit() { const r = map.getBoundingClientRect(); return fitBox ? Math.max(fitBox[2], fitBox[3] * r.width / Math.max(1, r.height)) / Math.max(1, r.width) : 1; }
+
+/* ---------- время ---------- */
+function t0() { return new Date(D.start); }
+function at(h) { return new Date(t0().getTime() + h * 3600e3); }
+function isoDay(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+function dstr(h, withTime) {
+  const d = at(h);
+  const s = d.getDate() + ' ' + MONTHS[d.getMonth()];
+  return withTime ? s + ', ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') : s;
+}
+function dayIndex(h) { return Math.max(0, Math.floor((h + t0().getHours() + t0().getMinutes() / 60) / 24)); }
+
+/* ---------- данные стратегии ---------- */
+function S() { return D.strategies[cur]; }
+function cargoRu(t) { return (D.cargo_types_ru && D.cargo_types_ru[t]) ? D.cargo_types_ru[t].replace(/ \(.*\)/, '') : (CT[t] || t); }
+function fleetById(id) { return D.fleet.find(f => f.vessel_id === id); }
+function linkById(id) { return D.links[id]; }
+
+function vesselState(id, h) {
+  // последнее событие, начавшееся до h
+  const ev = S()._byVessel[id] || [];
+  let prev = null;
+  for (const e of ev) {
+    if (e[7] <= h && h < e[8]) return {ev: e, st: e[4], frac: (h - e[7]) / Math.max(1e-6, e[8] - e[7])};
+    if (e[8] <= h) prev = e;
+  }
+  const f = fleetById(id);
+  const port = prev ? prev[6] : f.current_port;
+  return {ev: null, st: 'idle', port, prev};
+}
+
+function prepare() {
+  for (const k of Object.keys(D.strategies)) {
+    const s = D.strategies[k];
+    s._byVessel = {};
+    for (const e of s.events) {
+      if (!STATUS[e[4]]) e[4] = 'wait';   // неизвестное состояние ядра — показываем как ожидание
+      for (const v of [e[1], e[2]]) if (v) (s._byVessel[v] = s._byVessel[v] || []).push(e);
+    }
+    for (const v in s._byVessel) s._byVessel[v].sort((a, b) => a[7] - b[7]);
+    s._warnVoy = new Set(s.warnings.map(w => w.voyage));
+  }
+  D._maxFullDraft = Math.max(...D.fleet.filter(f => f.draft_full_m).map(f => f.draft_full_m), 0.1);
+  D._states = new Set(['idle']);
+  for (const k in D.strategies) for (const e of D.strategies[k].events) D._states.add(e[4]);
+  D._linear = D.kind === 'linear';
+  D._minDraft = Math.min(...D.fleet.map(f => f.draft_empty_m || 9));
+  D._demand = D.cargo.reduce((a, c) => a + c.volume_t, 0);
+}
+
+/* ---------- геометрия ---------- */
+function pathOf(xy) { return xy.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + (-p[1]).toFixed(1)).join(''); }
+function portXY(id) { const p = D.ports.find(q => q.id === id); return p ? p.xy : [0, 0]; }
+function linkXY(l) { return l.xy || [portXY(l.a), portXY(l.b)]; }
+function cumLen(xy) { const c = [0]; for (let i = 1; i < xy.length; i++) c.push(c[i - 1] + Math.hypot(xy[i][0] - xy[i - 1][0], xy[i][1] - xy[i - 1][1])); return c; }
+function along(l, from, frac) {
+  let xy = linkXY(l);
+  if (from !== l.a) xy = xy.slice().reverse();
+  const c = l._cum && l._cumFrom === from ? l._cum : (l._cum = cumLen(xy), l._cumFrom = from, l._cum);
+  const target = frac * c[c.length - 1];
+  let i = 1; while (i < c.length - 1 && c[i] < target) i++;
+  const a = xy[i - 1], b = xy[i], seg = (c[i] - c[i - 1]) || 1, f = (target - c[i - 1]) / seg;
+  return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, Math.atan2(-(b[1] - a[1]), b[0] - a[0])];
+}
+
+/* ---------- состояние участка ---------- */
+function linkState(l, h) {
+  const di = dayIndex(h);
+  const depth = l.depth ? l.depth[Math.min(di, l.depth.length - 1)] : null;
+  const draft = l.draft ? l.draft[Math.min(di, l.draft.length - 1)] : null;
+  if (depth == null) return {k: 'closed', depth, draft};
+  const need = D._maxFullDraft + (D.underkeel || 0);
+  if (draft >= D._maxFullDraft && depth >= need) return {k: 'ok', depth, draft};
+  if (draft >= D._minDraft) return {k: 'limit', depth, draft};
+  return {k: 'closed', depth, draft};
+}
+function tonnageOnLink(h) {
+  const t = {};
+  for (const e of S().events) {
+    if (e[4] !== 'sail' || e[9] == null || e[7] >= h) continue;
+    const f = Math.min(1, (h - e[7]) / Math.max(1e-6, e[8] - e[7]));
+    t[e[9]] = (t[e[9]] || 0) + e[11] * (f >= 1 ? 1 : 0);
+  }
+  return t;
+}
+
+/* ---------- карта ---------- */
+const map = $('#map');
+function el(tag, attrs, parent) {
+  const n = document.createElementNS(NS, tag);
+  for (const k in attrs) n.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(n);
+  return n;
+}
+let L = {};
+function buildMap() {
+  map.innerHTML = '';
+  const xs = [], ys = [];
+  for (const p of D.ports) { xs.push(p.xy[0]); ys.push(-p.xy[1]); }
+  for (const l of D.links) for (const p of linkXY(l)) { xs.push(p[0]); ys.push(-p[1]); }
+  const pad = Math.max(60, (Math.max(...xs) - Math.min(...xs)) * 0.06);
+  fitBox = [Math.min(...xs) - pad, Math.min(...ys) - pad * 1.6, Math.max(...xs) - Math.min(...xs) + 2 * pad, Math.max(...ys) - Math.min(...ys) + pad * 2.6];
+  want = fitBox.slice();
+  const land = el('rect', {x: -1e5, y: -1e5, width: 2e5, height: 2e5, fill: 'var(--land)'}, map);
+  L.ctx = el('g', {}, map);
+  L.relief = el('g', {'pointer-events': 'none'}, map);
+  L.base = el('g', {}, map);
+  L.veil = el('g', {'pointer-events': 'none'}, map);
+  if (CTX && (D.geo.land || []).length) {
+    land.setAttribute('fill', 'var(--sea)');
+    drawCtx();
+    drawRelief();
+  } else if ((D.geo.land || []).length) {
+    // фон — море, поверх — суша (полигоны Natural Earth, обрезанные по рамке региона)
+    land.setAttribute('fill', 'var(--sea)');
+    for (const poly of D.geo.land) el('path', {d: pathOf(poly) + 'Z', fill: 'var(--land)', stroke: 'none'}, L.base);
+    for (const c of D.geo.coast) el('path', {d: pathOf(c), fill: 'none', stroke: 'var(--coast)', 'stroke-width': 1.1, 'vector-effect': 'non-scaling-stroke'}, L.base);
+  } else {
+    land.setAttribute('fill', 'var(--land)');
+  }
+  for (const r of D.geo.rivers) {
+    if (CTX && !r.navigable) continue;
+    el('path', {d: pathOf(r.xy), fill: 'none', stroke: r.navigable ? 'var(--river)' : 'var(--river-bg)', 'stroke-width': r.weight >= 3 ? 2.2 : r.weight == 2 ? 1.6 : 1, 'stroke-linejoin': 'round', 'vector-effect': 'non-scaling-stroke'}, L.base);
+  }
+  L.glabels = el('g', {}, map);
+  for (const g of (D.geo.labels || [])) {
+    const t = el('text', {class: 'lbl ' + g.kind, 'data-x': g.xy[0], 'data-y': -g.xy[1], 'text-anchor': 'middle'}, L.glabels);
+    t.textContent = g.text;
+  }
+  L.links = el('g', {}, map);
+  L.track = el('g', {}, map);
+  L.ports = el('g', {}, map);
+  L.vessels = el('g', {}, map);
+  L.labels = el('g', {}, map);
+  for (const l of D.links) {
+    const d = pathOf(linkXY(l));
+    l._hit = el('path', {d, fill: 'none', stroke: 'transparent', 'stroke-width': 14, 'vector-effect': 'non-scaling-stroke', style: 'cursor:pointer'}, L.links);
+    l._load = el('path', {d, fill: 'none', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'vector-effect': 'non-scaling-stroke', opacity: .28, 'pointer-events': 'none'}, L.links);
+    l._el = el('path', {d, fill: 'none', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'vector-effect': 'non-scaling-stroke', 'pointer-events': 'none'}, L.links);
+    l._hit.addEventListener('mousemove', ev => showTip(ev, linkTip(l)));
+    l._hit.addEventListener('mouseleave', hideTip);
+    l._hit.addEventListener('click', () => { const r = l.river; if (r) { tab = 'rivers'; sel = {type: 'river', id: r}; renderSide(); renderMap(); } });
+  }
+  for (const p of D.ports) {
+    const g = el('g', {style: 'cursor:pointer'}, L.ports);
+    p._g = g;
+    p._c = el('circle', {r: 4, fill: 'var(--surface)', stroke: 'var(--text)', 'stroke-width': 1.5, 'vector-effect': 'non-scaling-stroke'}, g);
+    p._n = el('text', {class: 'pcnt', 'text-anchor': 'middle', 'dominant-baseline': 'central'}, g);
+    p._t = el('text', {class: 'lbl' + (p.kind === 'hub' || p.kind === 'sea' ? ' hub' : '')}, L.labels);
+    p._t.textContent = p.id;
+    g.addEventListener('mousemove', ev => showTip(ev, portTip(p)));
+    g.addEventListener('mouseleave', hideTip);
+    g.addEventListener('click', () => { if (NET.on) { sel = {type: 'port', id: p.id}; renderSide(); return; } tab = 'cargo'; ui.cargoFilter = 'port:' + p.id; sel = null; renderSide(); });
+  }
+  applyView();
+}
+/* фон: суша и реки за пределами региона; всё дальше ~300 км от сети приглушено вуалью */
+let CTX = null, RELIEF = null;
+/* рельеф: отмывка Natural Earth, нейтраль 128 — режим hard-light темнит тени и светлит склоны, равнины и море не меняет */
+function drawRelief() {
+  if (!L.relief) return;
+  L.relief.innerHTML = '';
+  if (!RELIEF || !layers.relief) return;
+  const [x, y, w, h] = RELIEF.box_svg;
+  el('image', {href: '/api/geo/relief.jpg', x, y, width: w, height: h, preserveAspectRatio: 'none', opacity: css('--relief-op') || .8, style: 'mix-blend-mode:hard-light'}, L.relief);
+}
+fetch('/api/geo/relief').then(r => r.ok ? r.json() : null).then(j => { if (j && j.box_svg) { RELIEF = j; drawRelief(); } }).catch(() => {});
+function drawCtx() {
+  if (!L.ctx || !CTX) return;
+  L.ctx.innerHTML = ''; L.veil.innerHTML = '';
+  for (const poly of CTX.land) el('path', {d: pathOf(poly) + 'Z', fill: 'var(--land)', stroke: 'none'}, L.ctx);
+  for (const poly of CTX.lakes) el('path', {d: pathOf(poly) + 'Z', fill: 'var(--sea)', stroke: 'var(--coast)', 'stroke-width': .8, 'vector-effect': 'non-scaling-stroke'}, L.ctx);
+  for (const c of CTX.coast) el('path', {d: pathOf(c), fill: 'none', stroke: 'var(--coast)', 'stroke-width': 1.1, 'vector-effect': 'non-scaling-stroke'}, L.ctx);
+  for (const r of CTX.rivers) el('path', {d: pathOf(r.xy), fill: 'none', stroke: 'var(--river-bg)', 'stroke-width': r.w > 1 ? 1.4 : .9, 'stroke-linejoin': 'round', 'vector-effect': 'non-scaling-stroke'}, L.ctx);
+  drawVeil();
+}
+/* Вуаль рисуется один раз в картинку: при перемещении браузер только сдвигает её.
+   Раньше это была SVG-маска из ~260 толстых линий, которая пересчитывалась на каждом кадре. */
+function drawVeil() {
+  if (!L.veil || !CTX || !fitBox) return;
+  L.veil.innerHTML = '';
+  const [fx, fy, fw, fh] = fitBox;
+  const m = 1.4 * Math.max(fw, fh * 2.2);          // запас под предельное отдаление и сдвиг
+  const B = [fx - m, fy - m, fw + 2 * m, fh + 2 * m];
+  const W = 1600, H = Math.round(W * B[3] / B[2]), k = W / B[2];
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const c = cv.getContext('2d');
+  c.fillStyle = css('--page'); c.globalAlpha = .62; c.fillRect(0, 0, W, H);
+  const lines = D.links.map(l => linkXY(l)).concat(D.geo.rivers.filter(r => r.navigable).map(r => r.xy))
+    .map(xy => xy.map(p => [(p[0] - B[0]) * k, (-p[1] - B[1]) * k]));
+  const step = document.createElement('canvas'); step.width = W; step.height = H;
+  const sc = step.getContext('2d');
+  sc.lineCap = sc.lineJoin = 'round'; sc.strokeStyle = '#000';
+  const span = Math.max(fw, fh), steps = 9;
+  c.globalCompositeOperation = 'destination-out';
+  for (let i = 0; i < steps; i++) {
+    // кольцо i: всё внутри него стирается на долю 1/(steps−i) — к центру вуаль убывает линейно до нуля
+    sc.clearRect(0, 0, W, H);
+    sc.lineWidth = span * (0.34 - 0.3 * i / (steps - 1)) * k;
+    sc.beginPath();
+    for (const xy of lines) xy.forEach((p, j) => j ? sc.lineTo(p[0], p[1]) : sc.moveTo(p[0], p[1]));
+    sc.stroke();
+    c.globalAlpha = i === steps - 1 ? 1 : 1 / (steps - i);
+    c.drawImage(step, 0, 0);
+  }
+  el('image', {href: cv.toDataURL('image/png'), x: B[0], y: B[1], width: B[2], height: B[3], preserveAspectRatio: 'none'}, L.veil);
+  // за пределами картинки — сплошная вуаль (рамка с дыркой), на случай очень широкого окна
+  const o = 1e5;
+  el('path', {d: `M${-o} ${-o}H${o}V${o}H${-o}Z M${B[0]} ${B[1]}V${B[1] + B[3]}H${B[0] + B[2]}V${B[1]}Z`, 'fill-rule': 'evenodd', fill: 'var(--page)', opacity: .62}, L.veil);
+}
+// цвет вуали берётся из темы — перерисовать при её смене
+new MutationObserver(() => drawVeil()).observe(document.documentElement, {attributes: true, attributeFilter: ['data-theme']});
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => drawVeil());
+fetch('/api/geo/context').then(r => r.ok ? r.json() : null).then(j => {
+  if (!j || !j.land) return;
+  CTX = j;
+  if (D && (D.geo.land || []).length) { L.base.innerHTML = ''; buildMap(); }
+}).catch(() => {});
+
+/* ограничение: отдалять не дальше полутора «всей сети», уводить центр не дальше её края */
+function clampView(v) {
+  if (!fitBox) return v;
+  const cx = v[0] + v[2] / 2, cy = v[1] + v[3] / 2;
+  const nx = Math.min(fitBox[0] + fitBox[2] * 1.15, Math.max(fitBox[0] - fitBox[2] * .15, cx));
+  const ny = Math.min(fitBox[1] + fitBox[3] * 1.15, Math.max(fitBox[1] - fitBox[3] * .15, cy));
+  return [nx - v[2] / 2, ny - v[3] / 2, v[2], v[3]];
+}
+function scale() { const r = map.getBoundingClientRect(); return view[2] / Math.max(1, r.width); }
+function applyView() {
+  const r = map.getBoundingClientRect();
+  // показать запрошенную рамку want целиком, сохранив пропорции окна
+  if (r.width < 20 || r.height < 20) { view = want.slice(); map.setAttribute('viewBox', view.join(' ')); return; }
+  const ar = r.width / r.height;
+  const cx = want[0] + want[2] / 2, cy = want[1] + want[3] / 2;
+  let w = want[2], h = want[3];
+  if (w / h > ar) h = w / ar; else w = h * ar;
+  view = [cx - w / 2, cy - h / 2, w, h];
+  map.setAttribute('viewBox', view.join(' '));
+  placeLabels();
+  renderMap();
+}
+function placeLabels() {
+  const k = scale();
+  const fs = (innerWidth > 820 ? 13.5 : 12.5) * k;
+  for (const t of L.glabels.children) {
+    t.setAttribute('x', t.dataset.x); t.setAttribute('y', t.dataset.y);
+    t.style.fontSize = (t.classList.contains('sea') ? 13 : 12) * k + 'px';
+    t.style.strokeWidth = 3 * k + 'px';
+  }
+  // подписи портов с пропуском пересечений
+  // крупные порты (узлы, морские и самые загруженные) подписаны всегда; остальные — везде, где подпись
+  // не налезает на соседнюю (с приближением места больше — подписей больше); слой «все подписи» — без отбора
+  const placed = [];
+  const order = D.ports.filter(p => p.kind !== 'junction').sort((a, b) => rank(b) - rank(a));
+  order.forEach((p, i) => {
+    const major = p.kind === 'hub' || p.kind === 'sea' || i < 8;
+    const x = p.xy[0] + 8 * k, y = -p.xy[1] + 4.5 * k;
+    const w = p.id.length * 7.6 * k, h = 15 * k;
+    const box = [x - 2 * k, y - h, x + w, y + 2 * k];
+    const hit = placed.some(b => !(box[2] < b[0] || box[0] > b[2] || box[3] < b[1] || box[1] > b[3]));
+    p._t.setAttribute('x', x); p._t.setAttribute('y', y);
+    p._t.style.fontSize = fs + 'px'; p._t.style.strokeWidth = 3.5 * k + 'px';
+    const show = major || layers.minor || !hit;
+    p._t.style.display = show ? '' : 'none';
+    if (show) placed.push(box);
+  });
+}
+function rank(p) {
+  const s = S(); const n = s.voyages.filter(v => v.origin_port === p.id || v.destination_port === p.id).length;
+  return (p.kind === 'hub' ? 5 : p.kind === 'sea' ? 4 : p.kind === 'junction' ? -1 : 0) + Math.min(3, n);
+}
+
+function renderMap() {
+  if (!D) return;
+  const k = scale();
+  const tons = tonnageOnLink(T);
+  const maxT = Math.max(1, ...D.links.map(l => (S()._linkTotal = S()._linkTotal || linkTotals())[l.id] || 0));
+  const selLinks = selectedLinks();
+  for (const l of D.links) {
+    const st = linkState(l, T);
+    const col = l.kind === 'sea' ? 'var(--seaway)' : st.k === 'ok' || (st.k === 'limit' && !layers.limits) ? 'var(--ok)' : st.k === 'limit' ? 'var(--limit)' : 'var(--closed)';
+    const dim = selLinks && !selLinks.has(l.id);
+    l._el.setAttribute('stroke', st.k === 'closed' ? (l.kind === 'sea' ? 'color-mix(in srgb,var(--seaway) 45%,var(--closed))' : 'var(--closed)') : col);
+    l._el.setAttribute('stroke-width', st.k === 'closed' ? (l.kind === 'sea' ? 2 : 1.6) : 2.6);
+    l._el.setAttribute('stroke-dasharray', st.k === 'closed' ? '4 4' : l.kind === 'sea' ? '7 4' : '');
+    l._el.setAttribute('opacity', dim ? .25 : 1);
+    const t = tons[l.id] || 0;
+    l._load.setAttribute('stroke', l.kind === 'sea' ? 'var(--seaway)' : 'var(--accent)');
+    l._load.setAttribute('stroke-width', t > 0 && layers.flow ? 3 + 15 * Math.sqrt(t / maxT) : 0);
+    l._load.setAttribute('opacity', dim ? .08 : .25);
+  }
+  for (const p of D.ports) {
+    p._g.setAttribute('transform', `translate(${p.xy[0]},${-p.xy[1]})`);
+    const big = p.kind === 'hub' || p.kind === 'sea';
+    const r = (p.kind === 'junction' ? 2.5 : big ? 6 : 4.2) * k;
+    p._c.setAttribute('r', r);
+    p._c.setAttribute('stroke-width', big ? 2.2 : 1.5); p._c.setAttribute('stroke', 'var(--text)');
+    p._c.setAttribute('fill', p.kind === 'junction' ? 'var(--text2)' : big ? 'var(--text)' : 'var(--surface)');
+    const dimP = sel && sel.type === 'cargo' && !(sel.from === p.id || sel.to === p.id);
+    p._g.setAttribute('opacity', dimP ? .35 : 1);
+    if (p.kind === 'junction') p._t.style.display = 'none';
+  }
+  L.ports.style.display = L.labels.style.display = layers.ports ? '' : 'none';
+  L.vessels.style.display = layers.vessels ? '' : 'none';
+  renderTrack();
+  renderVessels(k);
+  renderKpis();
+  renderSpark();
+}
+function linkTotals() {
+  const t = {};
+  for (const e of S().events) if (e[4] === 'sail' && e[9] != null) t[e[9]] = (t[e[9]] || 0) + e[11];
+  return t;
+}
+function selectedLinks() {
+  if (!sel) return null;
+  if (sel.type === 'vessel') {
+    const ev = S()._byVessel[sel.id] || [];
+    return new Set(ev.filter(e => e[9] != null).map(e => e[9]));
+  }
+  if (sel.type === 'river') return new Set(D.links.filter(l => l.river === sel.id).map(l => l.id));
+  if (sel.type === 'cargo') return new Set(S().events.filter(e => e[3] === sel.id && e[9] != null).map(e => e[9]));
+  return null;
+}
+function renderTrack() {
+  L.track.innerHTML = '';
+  if (!sel || sel.type !== 'vessel') return;
+  const ev = (S()._byVessel[sel.id] || []).filter(e => e[9] != null);
+  for (const e of ev) {
+    const l = linkById(e[9]);
+    let xy = linkXY(l); if (e[5] !== l.a) xy = xy.slice().reverse();
+    const past = e[8] <= T;
+    el('path', {d: pathOf(xy), fill: 'none', stroke: `var(${STATUS[e[4]]?.c || '--text2'})`, 'stroke-width': past ? 3.2 : 2, 'stroke-dasharray': past ? '' : '2 4', opacity: past ? .95 : .7, 'stroke-linecap': 'round', 'vector-effect': 'non-scaling-stroke', 'pointer-events': 'none'}, L.track);
+  }
+}
+function vesselPos(id) {
+  const s = vesselState(id, T);
+  if (s.ev && s.ev[9] != null && (s.st === 'sail' || s.st === 'empty' || s.st === 'back')) {
+    const p = along(linkById(s.ev[9]), s.ev[5], s.frac);
+    return {x: p[0], y: p[1], ang: p[2], s};
+  }
+  const port = s.ev ? s.ev[5] : s.port;
+  const xy = portXY(port);
+  return {x: xy[0], y: xy[1], ang: null, s, port};
+}
+let PORT_FLEET = {};
+const PORT_CAP = 5;  // столько судов в порту — уже самый тёмный синий
+function renderPortLoad(k) {
+  for (const p of D.ports) {
+    if (p.kind === 'junction') { p._n.textContent = ''; continue; }
+    const n = (PORT_FLEET[p.id] || []).length, big = p.kind === 'hub' || p.kind === 'sea';
+    p._n.textContent = n || '';
+    if (!n) continue;  // без судов — обычный значок из renderMap
+    const t = Math.min(1, n / PORT_CAP);
+    const r = (big ? 7.5 : 6.5) + Math.min(3, n * .6);
+    p._c.setAttribute('r', r * k);
+    p._c.setAttribute('fill', `color-mix(in srgb, var(--pl1) ${Math.round(15 + 85 * t)}%, var(--pl0))`);
+    p._c.setAttribute('stroke', 'var(--pl1)'); p._c.setAttribute('stroke-width', 1.4);
+    p._n.style.fontSize = (n > 9 ? 8.5 : 10) * k + 'px';
+    p._n.setAttribute('fill', t > .45 ? '#fff' : 'var(--pl1)');
+  }
+}
+function renderVessels(k) {
+  L.vessels.innerHTML = '';
+  const tugs = D.fleet.filter(f => f.kind === 'tug');
+  // суда в порту не раскладываем вокруг него: значок порта сам показывает загруженность
+  // (светло-синий → тёмно-синий), а список судов — в подсказке при наведении
+  const atPort = {};
+  const items = tugs.map(f => ({f, p: vesselPos(f.vessel_id)}));
+  for (const it of items) if (it.p.ang == null) (atPort[it.p.port] = atPort[it.p.port] || []).push(it);
+  PORT_FLEET = atPort;
+  renderPortLoad(k);
+  for (const it of items) {
+    if (it.p.ang == null && !(sel && sel.type === 'vessel' && sel.id === it.f.vessel_id)) continue;
+    if (it.p.ang == null) it.p.y += 11 * k;  // выбранное судно в порту — чуть ниже значка
+    const {f, p} = it;
+    const st = p.s.st;
+    const color = `var(${STATUS[st].c})`;
+    const on = sel && sel.type === 'vessel' && sel.id === f.vessel_id;
+    const dim = sel && sel.type === 'vessel' && !on;
+    const g = el('g', {transform: `translate(${p.x},${-p.y})`, style: 'cursor:pointer', opacity: dim ? .35 : 1}, L.vessels);
+    const warn = p.s.ev && S()._warnVoy.has(p.s.ev[0]);
+    const r = (on ? 8 : 6.2) * k;
+    if (p.ang != null) {
+      const a = p.ang * 180 / Math.PI;
+      el('path', {d: `M${1.5 * r} 0 L${-r} ${-r * .85} L${-.45 * r} 0 L${-r} ${r * .85}Z`, transform: `rotate(${a})`, fill: st === 'empty' || st === 'back' ? 'var(--surface)' : color, stroke: color, 'stroke-width': 1.8, 'vector-effect': 'non-scaling-stroke'}, g);
+    } else {
+      el('rect', {x: -r * .8, y: -r * .8, width: r * 1.6, height: r * 1.6, rx: r * .3, fill: st === 'idle' ? 'var(--surface)' : color, stroke: st === 'idle' ? 'var(--text2)' : color, 'stroke-width': 1.6, 'vector-effect': 'non-scaling-stroke'}, g);
+    }
+    if (warn) el('circle', {r: r * 1.7, fill: 'none', stroke: 'var(--bad)', 'stroke-width': 1.6, 'stroke-dasharray': '3 2', 'vector-effect': 'non-scaling-stroke'}, g);
+    if (on || layers.vlabels || k < kFit() * 0.45) {  // номера — у выбранного, по слою или при сильном приближении
+      const t = el('text', {class: 'vlbl', x: r * 1.4, y: -r * 1.1}, g);
+      t.textContent = f.vessel_id; t.style.fontSize = 12 * k + 'px'; t.style.strokeWidth = 3 * k + 'px';
+    }
+    g.addEventListener('mousemove', ev => showTip(ev, vesselTip(f.vessel_id)));
+    g.addEventListener('mouseleave', hideTip);
+    g.addEventListener('click', ev => { ev.stopPropagation(); selectVessel(f.vessel_id); });
+  }
+}
+
+/* ---------- подсказки ---------- */
+const tip = $('#tip');
+function showTip(ev, html) {
+  tip.innerHTML = html; tip.style.display = 'block';
+  const r = $('#mapwrap').getBoundingClientRect();
+  let x = ev.clientX - r.left + 14, y = ev.clientY - r.top + 14;
+  if (x + 290 > r.width) x = ev.clientX - r.left - 290;
+  if (y + tip.offsetHeight > r.height) y = ev.clientY - r.top - tip.offsetHeight - 10;
+  tip.style.left = x + 'px'; tip.style.top = y + 'px';
+}
+function hideTip() { tip.style.display = 'none'; }
+function linkTip(l) {
+  const st = linkState(l, T);
+  const tot = (S()._linkTotal || {})[l.id] || 0;
+  const done = tonnageOnLink(T)[l.id] || 0;
+  const what = st.k === 'closed' ? 'закрыт (лёд или нет воды)' : l.kind === 'sea' ? 'морской переход открыт' : st.k === 'ok' ? 'проходим с полной загрузкой' : 'проходим только с недогрузом';
+  return `<b>${esc(l.a)} — ${esc(l.b)}</b><span class="k">${esc(l.river || 'участок')} · ${fmt(l.km)} км</span><br>
+  ${dstr(T)}: ${what}${st.depth != null ? `<br><span class="k">глубина</span> ${fmt(st.depth, 2)} м · <span class="k">допустимая осадка</span> ${fmt(st.draft, 2)} м` : ''}
+  <br><span class="k">провезено с грузом</span> ${fmt(done)} из ${fmt(tot)} т за сезон`;
+}
+function portTip(p) {
+  const s = S();
+  const out = D.cargo.filter(c => c.origin_port === p.id).reduce((a, c) => a + c.volume_t, 0);
+  const inn = D.cargo.filter(c => c.destination_port === p.id).reduce((a, c) => a + c.volume_t, 0);
+  const got = s.voyages.filter(v => v.destination_port === p.id && delivEnd(v) <= T).reduce((a, v) => a + v.volume_t, 0);
+  const here = (PORT_FLEET[p.id] || []).map(it => ({id: it.f.vessel_id, st: it.p.s.st, cls: it.f.card?.class}));
+  const fleetList = here.length ? `<div class="pfleet"><div class="k">В порту ${here.length} ${plural(here.length, 'судно', 'судна', 'судов')}</div>${here.map(v => `<div><span class="pill"><i style="background:var(${STATUS[v.st]?.c || '--idle'})"></i>${esc(v.id)}</span> <span class="k">${esc(STATUS[v.st]?.ru || '')}${v.cls ? ' · ' + esc(v.cls) : ''}</span></div>`).join('')}</div>` : '<br><span class="k">судов в порту нет</span>';
+  return `<b>${esc(p.id)}</b><span class="k">${esc(p.river || '')}${p.known ? '' : ' · координаты условные'}</span>
+  ${inn ? `<br><span class="k">завоз сюда</span> ${fmt(got)} из ${fmt(inn)} т` : ''}${out ? `<br><span class="k">отгрузка отсюда</span> ${fmt(out)} т` : ''}
+  ${fleetList}`;
+}
+function delivEnd(v) {
+  const e = S().events.find(e => e[0] === v.voyage_id && e[4] === 'unload');
+  return e ? e[8] : Infinity;
+}
+function vesselTip(id) {
+  const f = fleetById(id), s = vesselState(id, T), st = STATUS[s.st];
+  let where = '';
+  if (s.ev) where = s.ev[5] === s.ev[6] ? 'в порту ' + s.ev[5] : s.ev[5] + ' → ' + s.ev[6];
+  else where = 'в порту ' + s.port;
+  const barge = s.ev ? s.ev[2] : '';
+  const cargo = s.ev && s.ev[3] ? D.cargo.find(c => c.cargo_id === s.ev[3]) : null;
+  return `<b>${esc(id)} <span class="k" style="font-weight:400">${esc(f.card?.class || 'буксир')}</span></b>
+  <span class="pill"><i style="background:var(${st.c})"></i>${st.ru}</span> ${esc(where)}
+  ${barge ? `<br><span class="k">баржа</span> ${esc(barge)}` : ''}${cargo && s.st !== 'empty' && s.st !== 'back' ? `<br><span class="k">груз</span> ${fmt(s.ev[11])} т, ${cargoRu(cargo.cargo_type)} → ${esc(cargo.destination_port)}` : ''}
+  ${s.ev ? `<br><span class="k">до</span> ${dstr(s.ev[8], true)}` : ''}
+  ${s.ev && S()._warnVoy.has(s.ev[0]) ? '<br><span style="color:var(--bad)">речное судно на морском участке</span>' : ''}`;
+}
+
+/* ---------- KPI и шкала ---------- */
+function deliveredBy(h) {
+  let on = 0, tot = 0;
+  for (const v of S().voyages) { if (delivEnd(v) <= h) { tot += v.volume_t; if (v.on_time) on += v.volume_t; } }
+  return {on, tot};
+}
+function renderKpis() {
+  const s = S(), m = s.metrics, now = deliveredBy(T);
+  const fin = s.financial;
+  const cost = fin ? Number(fin.total_cost) : null;
+  // «За сезон» — итоги плана; «На дату» — что сделано к моменту на шкале времени
+  const season = ui.kpiMode !== 'date', when = season ? 'за сезон' : 'к ' + dstr(T);
+  const onT = season ? m.delivered_on_time_t : now.on;
+  const und = season ? m.undelivered_t : Math.max(0, m.demand_t - now.tot);
+  const voy = season ? m.completed_voyages : s.voyages.filter(v => delivEnd(v) <= T).length;
+  $('#kpis').innerHTML = `
+  <div class="kpi hero" title="Доля спроса, довезённая в срок"><div class="l">План в срок</div><div class="v num">${pct(onT, m.demand_t)}%</div><div class="s">${when}</div></div>
+  <div class="kpi"><div class="l">Вовремя</div><div class="v num">${fmt(onT)} <small>т</small></div><div class="s">из ${fmt(m.demand_t)} т спроса</div></div>
+  <div class="kpi"><div class="l">${season ? 'Недовоз' : 'Осталось довезти'}</div><div class="v num" style="color:${season && und > 0 ? 'var(--bad)' : season ? 'var(--ok)' : 'var(--text)'}">${fmt(und)} <small>т</small></div><div class="s">${season ? (und > 0 ? 'не успели за навигацию' : 'всё довезено') : 'до конца сезона'}</div></div>
+  <div class="kpi"><div class="l">Рейсов</div><div class="v num">${voy}${!D._linear && season ? ` <small>перегонов ${m.repositioning_voyages}</small>` : ''}</div><div class="s">${season ? `порожний ход ${fmt(m.empty_km)} км` : 'завершено ' + when}</div></div>
+  ${cost != null ? `<div class="kpi link" data-goto="finance" title="Посчитано по сценарным ставкам, а не по фактическим затратам. Щёлкните, чтобы увидеть ставки"><div class="l">Сценарная стоимость ⓘ</div><div class="v num">${fmt(cost / Math.max(1, m.delivered_total_t))} <small>${curSign()}/т</small></div><div class="s">${moneyFmt(cost)} за сезон</div></div>` : ''}`;
+  const g = $('#kpis [data-goto]'); if (g) g.onclick = () => { tab = 'finance'; sel = null; renderSide(); };
+}
+function renderSpark() {
+  const svg = $('#spark'); const W = svg.clientWidth || 600, H = 28;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const hz = D.horizon_h, s = S();
+  const pts = [];
+  const steps = 160;
+  const sorted = s.voyages.map(v => [delivEnd(v), v.volume_t]).sort((a, b) => a[0] - b[0]);
+  let acc = 0, j = 0;
+  for (let i = 0; i <= steps; i++) {
+    const h = hz * i / steps;
+    while (j < sorted.length && sorted[j][0] <= h) acc += sorted[j++][1];
+    pts.push([W * i / steps, H - 2 - (H - 4) * acc / Math.max(1, D._demand)]);
+  }
+  const x = W * T / hz;
+  svg.innerHTML = `<path d="M0 ${H} ${pts.map(p => 'L' + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ')} L${W} ${H}Z" fill="var(--accent-soft)"/>
+  <path d="${pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="1.5"/>
+  <line x1="0" x2="${W}" y1="2" y2="2" stroke="var(--border)" stroke-dasharray="3 3"/>
+  <line x1="${x}" x2="${x}" y1="0" y2="${H}" stroke="var(--text)" stroke-width="1"/>`;
+  svg.setAttribute('aria-label', 'Доставка нарастающим итогом');
+}
+function renderMonths() {
+  const box = $('#months'); box.innerHTML = '';
+  const s = t0(), hz = D.horizon_h;
+  const d = new Date(s.getFullYear(), s.getMonth() + 1, 1);
+  while ((d - s) / 3600e3 < hz) {
+    const h = (d - s) / 3600e3;
+    const sp = document.createElement('span'); sp.style.left = (100 * h / hz) + '%'; sp.textContent = MONTHS_N[d.getMonth()];
+    box.appendChild(sp); d.setMonth(d.getMonth() + 1);
+  }
+}
+function setT(h) {
+  T = Math.max(0, Math.min(D.horizon_h, h));
+  $('#slider').value = Math.round(T);
+  const d = at(T);
+  $('#date').innerHTML = `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}<small>${String(d.getHours()).padStart(2, '0')}:00 · день ${dayIndex(T) + 1}</small>`;
+  renderMap();
+  if (tab !== 'finance' && !(sel && sel.type === 'vessel-card-static')) renderSide(true);
+}
+
+/* ---------- боковая панель ---------- */
+/* три главные вкладки; внутри «Результатов» и «Флота» — подвкладки (tab хранит подвкладку) */
+const GROUPS = [['results', 'Результаты', ['overview', 'cargo']], ['fleetg', 'Флот', ['fleet', 'rivers']], ['econ', 'Экономика', ['finance']]];
+const SUB = {overview: 'Сводка', cargo: 'Заявки', fleet: 'Суда', rivers: 'Реки'};
+function groupOf(t) { const g = GROUPS.find(g => g[2].includes(t)); return g ? g[0] : t; }
+function renderTabs() {
+  const tabs = NET.on ? [...GROUPS, ['whatif', 'Что, если?', ['whatif']]] : GROUPS;
+  if (!tabs.some(t => t[2].includes(tab))) tab = 'overview';
+  const html = tabs.map(([k, n, subs]) => {
+    const cnt = k === 'fleetg' ? D.fleet.length : k === 'results' && S().warnings.length ? '⚠' : '';
+    return `<button role="tab" aria-selected="${subs.includes(tab)}" data-t="${k}">${n}${cnt !== '' ? `<span class="cnt">${cnt}</span>` : ''}</button>`;
+  }).join('');
+  // во время проигрывания панель перерисовывается каждый кадр: пересоздавать кнопки только при изменении,
+  // иначе кнопка меняется между нажатием и отпусканием и клик теряется
+  if (html === tabsHTML) return;
+  tabsHTML = html; $('#tabs').innerHTML = html;
+  for (const b of $('#tabs').children) b.onclick = () => { const g = tabs.find(t => t[0] === b.dataset.t); if (!g[2].includes(tab)) tab = g[2][0]; if (sel && (sel.type === 'vessel' && tab !== 'fleet' || sel.type === 'port')) sel = null; renderSide(); renderMap(); };
+}
+let sideKey = '', tabsHTML = '', sideHeld = false;
+// пока кнопка мыши зажата в боковой панели, мягкую перерисовку (от шкалы времени) пропускаем, чтобы клик дошёл
+$('.side').addEventListener('pointerdown', () => { sideHeld = true; });
+window.addEventListener('pointerup', () => setTimeout(() => { sideHeld = false; }, 0));
+window.addEventListener('pointercancel', () => { sideHeld = false; });
+function renderSide(soft) {
+  if (soft && sideHeld) return;
+  renderTabs();
+  const pane = $('#pane');
+  const key = tab + '|' + cur + '|' + JSON.stringify(sel) + '|' + ui.fleetFilter + '|' + ui.cargoFilter + '|' + (soft ? Math.floor(T / 12) : Math.random());
+  if (soft && key === sideKey) return;
+  if (soft && tab === 'whatif') return;   // не сбрасывать форму изменения при движении шкалы
+  sideKey = key;
+  const top = pane.scrollTop;
+  const grp = GROUPS.find(g => g[2].includes(tab));
+  const sub = !(sel && sel.type === 'port') && grp && grp[2].length > 1 ? `<div class="seg subtabs" role="group" aria-label="Раздел">${grp[2].map(t => `<button data-sub="${t}" aria-pressed="${t === tab}">${SUB[t]}${t === 'cargo' ? `<small>${D.cargo.length}</small>` : ''}</button>`).join('')}</div>` : '';
+  pane.innerHTML = sub + (sel && sel.type === 'port' ? portCardHTML(sel.id) : tab === 'whatif' ? whatifHTML() : tab === 'overview' ? overviewHTML() : tab === 'fleet' ? fleetHTML() : tab === 'cargo' ? cargoHTML() : tab === 'rivers' ? riversHTML() : financeHTML());
+  if (soft) pane.scrollTop = top;
+  bindSide(); bindContract();
+}
+function overviewHTML() {
+  const s = S(), m = s.metrics, maxD = D._demand;
+  const rc = s.reposition_comparison;
+  let h = `<h3 style="margin-top:0">Стратегии</h3><div class="cmp">` + D.order.map(k => {
+    const q = D.strategies[k].metrics;
+    return `<div class="r ${k === cur ? 'on' : ''}" data-s="${k}" title="${esc(D.strategies[k].hint)}"><div class="name">${esc(D.strategies[k].label)}${k === D.best ? ' <span class="badge" style="color:var(--accent)">лучший</span>' : ''}</div>
+    <div class="bar"><i class="tot" style="width:${100 * q.delivered_total_t / maxD}%"></i><i style="width:${100 * q.delivered_on_time_t / maxD}%"></i></div><div class="val num">${pct(q.delivered_on_time_t, maxD)}%</div></div>`;
+  }).join('') + `</div><p class="note" style="margin:6px 0 0">Доля спроса, довезённая в срок. Наведите на название, чтобы увидеть, как работает стратегия.</p>` + whyHTML();
+  h += compareHTML();
+  h += forecastHTML();
+  if (D.ml) h += mlHTML();
+  if (D._linear) h += `<h3>Как считает</h3><div class="callout">Одна река, линейная матмодель: состав грузится в ${esc(D.ports[0].id)}, идёт вверх до ${esc(D.ports[D.ports.length - 1].id)}, выгружается и возвращается порожним. Расписание каждой стратегии проверено по контракту 1.0.0.</div>`;
+  if (rc && rc.selected_repositioning) {
+    h += `<h3>Зачем перегон</h3><div class="callout good">Без перегона судно остаётся там, где выгрузилось, и ${fmt(rc.baseline_metrics.delivered_on_time_t)} т успевают в срок. С перегоном порожние суда идут к заявкам в других портах и даже на другие реки: <b>+${fmt(rc.delta_on_time_t)} т в срок</b> ценой ${fmt(m.empty_km)} км порожнего хода.</div>`;
+  } else if (rc) {
+    h += `<h3>Перегон</h3><div class="callout">Перегон не улучшил план (${esc(rc.decision_reason || '')}), выбран план без порожних переходов.</div>`;
+  }
+  const back = s.voyages.filter(v => { const prev = s.voyages.filter(w => w.tug_id === v.tug_id && w.voyage_id < v.voyage_id).pop(); return prev && prev.destination_port === v.origin_port && v.empty_km === 0; });
+  if (back.length) {
+    h += `<h3>Попутная загрузка</h3><div class="callout">${back.length} ${plural(back.length, 'рейс начат', 'рейса начаты', 'рейсов начаты')} там, где состав только что выгрузился, без порожнего хода: ${back.slice(0, 4).map(v => `${esc(v.tug_id)} ${esc(v.origin_port)} → ${esc(v.destination_port)}`).join('; ')}${back.length > 4 ? '…' : ''}.</div>`;
+  }
+  if (s.warnings.length) {
+    const vs = [...new Set(s.warnings.map(w => w.vessel))];
+    h += `<h3>Требует проверки</h3><div class="callout warn"><b>Речные суда на морском участке: ${vs.map(esc).join(', ')}.</b> Ядро 3.0.0 не ограничивает класс судна на ребре, поэтому план формально допустим, но так ходить нельзя. Кандидат в доработку ядра: допуск классов «М-СП» / «О-ПР» на морские рёбра.</div>`;
+  }
+  h += `<h3>Проверка расписания</h3><div class="kv"><dt>Аудит ядра</dt><dd><span class="badge ${s.audit.status === 'PASSED' ? 'ok' : 'bad'}">${esc(s.audit.status)}</span></dd>
+  <dt>Поиск</dt><dd>${s.termination_reason === 'SEARCH_LIMIT' ? 'остановлен по лимиту поиска' : s.termination_reason === 'TIME_LIMIT' ? 'остановлен по бюджету времени' : 'завершён'}</dd>
+  ${s.seconds != null ? `<dt>Время расчёта</dt><dd class="num">${fmt(s.seconds, 1)} с</dd>` : ''}
+  <dt>Модель</dt><dd>${D._linear ? 'матмодель ' : 'сетевое ядро '}${esc(D.core.algorithm_version)} · контракт ${esc(D.core.schema_version)}</dd>
+  ${D.data_status && D.data_status !== 'SYNTHETIC' ? `<dt>Данные</dt><dd>${esc(D.data_status)}</dd>` : ''}</div>`;
+  return h;
+}
+function mlHTML() {
+  const ml = D.ml;
+  if (!ml.available) return `<h3>Прогноз нейросети</h3><p class="note">${esc(ml.reason || 'Недоступен')}</p>`;
+  if (ml.out_of_distribution) return `<h3>Прогноз нейросети</h3><div class="callout">Сценарий не похож на обучающие — нейросеть не гадает, сразу считает матмодель.</div>`;
+  const dem = D._demand;
+  const rows = D.order.filter(k => ml.expected_on_time_share && k in ml.expected_on_time_share).map(k => {
+    const e = ml.expected_on_time_share[k], iv = (ml.on_time_share_interval90 || {})[k] || [e, e], act = D.strategies[k].metrics.delivered_on_time_t / Math.max(1, dem);
+    const inside = act >= iv[0] - 1e-9 && act <= iv[1] + 1e-9;
+    return `<tr${k === cur ? ' style="font-weight:600"' : ''}><td>${esc(D.strategies[k].label)}</td><td class="n num">${Math.round(e * 100)}%</td><td class="n num">${Math.round(iv[0] * 100)}–${Math.round(iv[1] * 100)}%</td><td class="n num">${Math.round(act * 100)}%</td><td class="n">${inside ? '<span class="badge ok">в интервале</span>' : '<span class="badge bad">мимо</span>'}</td></tr>`;
+  }).join('');
+  return `<h3>Прогноз нейросети и расчёт</h3><table class="t"><tr><th>Стратегия</th><th class="n">прогноз</th><th class="n">90%</th><th class="n">расчёт</th><th></th></tr>${rows}</table>
+  <p class="note">Доля груза в срок. Прогноз приходит за доли секунды до расчёта; расписание строит и проверяет матмодель.</p>`;
+}
+function plural(n, a, b, c) { const m10 = n % 10, m100 = n % 100; return m10 === 1 && m100 !== 11 ? a : m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20) ? b : c; }
+function fleetHTML() {
+  if (sel && sel.type === 'vessel') return vesselCard(sel.id);
+  const items = D.fleet.filter(f => ui.fleetFilter === 'all' || f.kind === ui.fleetFilter);
+  const counts = {}; for (const f of D.fleet.filter(f => f.kind === 'tug')) { const s = vesselState(f.vessel_id, T).st; counts[s] = (counts[s] || 0) + 1; }
+  const hasB = D.fleet.some(f => f.kind === 'barge');
+  let h = `${hasB ? `<div class="filters">${[['all', 'Все'], ['tug', 'Буксиры'], ['barge', 'Баржи']].map(([k, n]) => `<button class="chip" data-ff="${k}" aria-pressed="${ui.fleetFilter === k}">${n}</button>`).join('')}</div>` : ''}
+  <div class="note" style="margin-bottom:8px">${dstr(T)}: ${Object.entries(counts).map(([k, n]) => `<span class="pill"><i style="background:var(${STATUS[k].c})"></i>${STATUS[k].ru} ${n}</span>`).join(' ')}</div><div class="list">`;
+  for (const f of items) {
+    const s = vesselState(f.vessel_id, T), st = STATUS[s.st];
+    const where = s.ev ? (s.ev[5] === s.ev[6] ? s.ev[5] : s.ev[5] + ' → ' + s.ev[6]) : s.port;
+    const n = (S()._byVessel[f.vessel_id] || []).filter(e => e[4] === 'unload').length;
+    h += `<div class="item" data-v="${esc(f.vessel_id)}"><svg width="18" height="18" viewBox="-9 -9 18 18">${f.kind === 'tug' ? `<rect x="-6" y="-6" width="12" height="12" rx="3" fill="${s.st === 'idle' ? 'none' : `var(${st.c})`}" stroke="var(${st.c})" stroke-width="1.6"/>` : `<rect x="-7" y="-4" width="14" height="8" rx="1.5" fill="none" stroke="var(${st.c})" stroke-width="1.6"/>`}</svg>
+    <div><div class="t">${esc(f.vessel_id)} <span class="note" style="font-weight:400">${esc(D._linear ? '' : f.card?.class || (f.kind === 'tug' ? 'буксир' : 'баржа'))}</span></div><div class="d">${st.ru} · ${esc(where)}</div></div>
+    <div class="r num">${n} ${plural(n, 'рейс', 'рейса', 'рейсов')}${f.capacity_t ? `<div class="note">${fmt(f.capacity_t)} т</div>` : ''}</div></div>`;
+  }
+  return h + '</div>';
+}
+function vesselCard(id) {
+  const f = fleetById(id), c = f.card || {}, s = S();
+  const res = (s.resources || []).find(r => r.vessel_id === id);
+  const busy = res ? res.busy_seconds / Math.max(1, res.busy_seconds + res.idle_seconds) : 0;
+  const voy = s.voyages.filter(v => v.tug_id === id || v.barge_id === id);
+  const st = vesselState(id, T);
+  const fin = (s.final_resources || []).find(r => r.vessel_id === id);
+  const na = '<dd class="na">нет данных</dd>';
+  const row = (k, v, u = '') => `<dt>${k}</dt>${v == null ? na : `<dd class="num">${typeof v === 'number' ? fmt(v, v % 1 ? 2 : 0) : esc(v)}${u}</dd>`}`;
+  let h = `<button class="back" data-back>← Все суда</button>
+  <div class="card"><div class="hd"><svg width="34" height="34" viewBox="0 0 34 34"><rect width="34" height="34" rx="8" fill="var(--accent-soft)"/><path d="${f.kind === 'tug' ? 'M8 20h18l-3 5H11z M13 20v-6h8v6 M16 14v-4' : 'M6 15h22v7H6z'}" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linejoin="round"/></svg>
+  <div><b>${esc(id)}</b><div class="note">${esc(c.class || (f.kind === 'tug' ? 'буксир-толкач' : 'баржа'))}</div></div><span class="spacer"></span><span class="pill"><i style="background:var(${STATUS[st.st].c})"></i>${STATUS[st.st].ru}</span></div>
+  <dl class="kv">
+  ${row('Порт базирования', c.home_port || f.current_port)}
+  ${c.power_hp != null ? row('Мощность', c.power_hp, ' л.с.') : ''}${f.speed_upstream_kmh != null ? row('Скорость вверх / вниз', `${f.speed_upstream_kmh} / ${f.speed_downstream_kmh}`, ' км/ч') : ''}
+  ${f.capacity_t != null ? row('Грузоподъёмность', f.capacity_t, ' т') : ''}
+  ${f.draft_full_m != null ? row('Осадка порожней / в грузу', `${fmt(f.draft_empty_m, 2)} / ${fmt(f.draft_full_m, 2)}`, ' м') : row('Осадка', f.draft_empty_m, ' м')}
+  ${f.tug_draft_m != null ? row('Осадка буксира', f.tug_draft_m, ' м') : ''}${f.handling_tph != null ? row('Обработка', f.handling_tph, ' т/ч') : ''}
+  ${f.cargo_types_allowed ? row('Грузы', f.cargo_types_allowed.map(cargoRu).join(', ')) : ''}
+  <dt>Выход в море</dt><dd>${c.sea_allowed == null ? '—' : c.sea_allowed ? 'разрешён' : 'нет, только река'}</dd>
+  ${row('Проект', c.project)}${row('Год постройки', c.built)}${row('Оператор', c.operator)}${row('Номер в реестре', c.registry_id)}
+  </dl>
+  <p class="note" style="margin:8px 0 0"><span class="badge stub">заглушка</span> Проект, год, оператор и номер подтянутся из реестра судов.</p></div>
+  <div class="card"><div class="grid2"><div class="mini"><div class="l">Занятость за сезон</div><div class="v num">${Math.round(busy * 100)}%</div></div><div class="mini"><div class="l">Конец сезона</div><div class="v" style="font-size:13px">${esc(fin ? fin.current_port : '—')}</div></div></div>
+  <h3>Рейсы (${voy.length})</h3>`;
+  if (!voy.length) h += '<p class="note">В этой стратегии не задействован.</p>';
+  else h += `<table class="t"><tr><th>Рейс</th><th>Груз</th><th class="n">т</th><th class="n">${D._linear ? '' : 'порожн.'}</th></tr>` + voy.map(v => `<tr${s._warnVoy.has(v.voyage_id) ? ' style="color:var(--bad)"' : ''}${NET.on ? ` class="xv" data-xv="${v.voyage_id}" title="Подробности рейса"` : ''}><td>${esc(v.origin_port)} → ${esc(v.destination_port)}<div class="note">${D._linear ? '' : f.kind === 'tug' ? 'баржа ' + esc(v.barge_id) : 'буксир ' + esc(v.tug_id)}</div></td><td>${cargoRu(v.cargo_type)}${v.on_time ? '' : ' <span class="badge bad">поздно</span>'}</td><td class="n num">${fmt(v.volume_t)}</td><td class="n num">${D._linear ? '' : v.empty_km ? fmt(v.empty_km) + ' км' : '—'}</td></tr>${NET.on && ui.explainVoy === v.voyage_id ? `<tr><td colspan="4">${explainHTML(v.voyage_id)}</td></tr>` : ''}`).join('') + '</table>' + (NET.on ? '<p class="note">Клик по рейсу — маршрут, проверки ядра и стоимость.</p>' : '');
+  return h + '</div>';
+}
+function cargoHTML() {
+  const s = S();
+  const ports = [...new Set(D.cargo.flatMap(c => [c.origin_port, c.destination_port]))];
+  let rows = D.cargo;
+  const f = ui.cargoFilter;
+  if (f.startsWith('port:')) { const p = f.slice(5); rows = rows.filter(c => c.origin_port === p || c.destination_port === p); }
+  else if (f !== 'all') rows = rows.filter(c => c.cargo_type === f);
+  const types = [...new Set(D.cargo.map(c => c.cargo_type))];
+  const dg = diagFor(cur), why = dg ? Object.fromEntries(dg.cargo.map(x => [x.cargo_id, x])) : {};
+  let h = queuesHTML(dg) + `<div class="filters"><button class="chip" data-cf="all" aria-pressed="${f === 'all'}">Все</button>${types.map(t => `<button class="chip" data-cf="${t}" aria-pressed="${f === t}">${cargoRu(t)}</button>`).join('')}${f.startsWith('port:') ? `<button class="chip" data-cf="${esc(f)}" aria-pressed="true">${esc(f.slice(5))} ✕</button>` : ''}</div><div class="list">`;
+  for (const c of rows) {
+    const vs = s.voyages.filter(v => v.cargo_id === c.cargo_id);
+    const done = vs.filter(v => delivEnd(v) <= T).reduce((a, v) => a + v.volume_t, 0);
+    const plan = vs.reduce((a, v) => a + v.volume_t, 0);
+    const onTime = vs.filter(v => v.on_time).reduce((a, v) => a + v.volume_t, 0);
+    const late = T > c.due_h && done < c.volume_t;
+    const on = sel && sel.type === 'cargo' && sel.id === c.cargo_id;
+    h += `<div class="item ${on ? 'on' : ''}" data-c="${esc(c.cargo_id)}"><svg width="18" height="18" viewBox="0 0 18 18"><circle cx="9" cy="9" r="6" fill="none" stroke="${plan < c.volume_t ? 'var(--bad)' : 'var(--ok)'}" stroke-width="2"/>${c.critical_category ? '<circle cx="9" cy="9" r="2.4" fill="var(--bad)"/>' : ''}</svg>
+    <div><div class="t">${esc(c.origin_port)} → ${esc(c.destination_port)}</div><div class="d">${cargoRu(c.cargo_type)}${c.critical_category ? ' · критичный' : ''} · срок ${dstr(c.due_h)}</div>
+    <div class="prog"><i style="width:${100 * done / c.volume_t}%;background:var(--ok)"></i><i style="width:${100 * Math.max(0, plan - done) / c.volume_t}%;background:color-mix(in srgb,var(--ok) 30%,transparent)"></i></div>${why[c.cargo_id] ? evidenceHTML(why[c.cargo_id]) : ''}</div>
+    <div class="r num">${fmt(done)} / ${fmt(c.volume_t)} т<div class="note" style="color:${plan < c.volume_t ? 'var(--bad)' : late ? 'var(--limit)' : 'var(--muted)'}">${plan < c.volume_t ? 'не довезут ' + fmt(c.volume_t - plan) : onTime < plan ? 'часть поздно' : 'в срок'}</div></div></div>`;
+  }
+  return h + `</div><p class="note">Светлая полоса — запланировано, тёмная — уже выгружено к ${dstr(T)}. Клик по заявке — её путь на карте.${NET.on ? ' Причины недовоза и опоздания — от ядра: «доказано» — проверено по графу и флоту, «наблюдение» — видно в плане, «не установлено» — доказательства нет.' : ''}</p>`;
+}
+function riversHTML() {
+  const groups = {};
+  for (const l of D.links) { const r = l.river || 'Участки'; (groups[r] = groups[r] || []).push(l); }
+  const di = dayIndex(T);
+  let h = `<p class="note" style="margin-top:0">Цвет участка на карте — можно ли пройти ${dstr(T)} с полностью гружёной баржей (осадка до ${fmt(D._maxFullDraft, 1)} м): <span style="color:var(--ok)">полностью</span>, <span style="color:var(--limit)">с недогрузом</span>, <span style="color:var(--closed)">закрыт</span>.</p>`;
+  for (const [r, ls] of Object.entries(groups)) {
+    const on = sel && sel.type === 'river' && sel.id === r;
+    const km = ls.reduce((a, l) => a + l.km, 0);
+    const d0 = ls[0];
+    const openDays = d0.depth ? d0.depth.map((v, i) => v == null ? null : i) : [];
+    const first = openDays.find(v => v != null), last = [...openDays].reverse().find(v => v != null);
+    const tons = Math.max(0, ...ls.map(l => (S()._linkTotal || {})[l.id] || 0));
+    h += `<div class="card ${on ? 'on' : ''}" data-r="${esc(r)}" style="cursor:pointer;${on ? 'border-color:var(--accent)' : ''}"><div class="hd" style="margin-bottom:4px"><div><b style="font-size:14px">${esc(r)}</b><div class="note">${ls.length} ${plural(ls.length, 'участок', 'участка', 'участков')} · ${fmt(km)} км · ${first != null ? `навигация ${dstr(first * 24)} — ${dstr(last * 24)}` : 'закрыт'}</div></div><span class="spacer"></span><div class="num" style="text-align:right;font-size:12px">${fmt(tons)} т<div class="note">через самый загруженный участок</div></div></div>
+    ${depthSpark(ls, di)}
+    ${on ? `<table class="t" style="margin-top:6px"><tr><th>Участок</th><th class="n">км</th><th class="n">глубина</th><th class="n">осадка</th></tr>${ls.map(l => { const st = linkState(l, T); return `<tr><td><i style="display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;background:var(--${st.k === 'ok' ? 'ok' : st.k === 'limit' ? 'limit' : 'closed'})"></i>${esc(l.a)} — ${esc(l.b)}</td><td class="n num">${fmt(l.km)}</td><td class="n num">${st.depth == null ? 'закрыт' : fmt(st.depth, 2)}</td><td class="n num">${st.draft == null ? '—' : fmt(st.draft, 2)}</td></tr>`; }).join('')}</table>` : ''}</div>`;
+  }
+  h += `<p class="note">${esc(D.geo.length_note || '')}. ${esc(D.geo.source || '')}.</p>`;
+  return h;
+}
+function depthSpark(ls, di) {
+  const W = 340, H = 46;
+  const arr = ls.map(l => l.depth || []);
+  const n = Math.max(...arr.map(a => a.length));
+  const min = i => { let v = null; for (const a of arr) { const x = a[i]; if (x == null) return null; v = v == null ? x : Math.min(v, x); } return v; };
+  const vals = Array.from({length: n}, (_, i) => min(i));
+  const mx = Math.max(D._maxFullDraft + 0.6, ...vals.filter(v => v != null));
+  const y = v => H - 4 - (H - 10) * v / mx;
+  let d = '', open = false;
+  vals.forEach((v, i) => { const x = W * i / (n - 1); if (v == null) { open = false; return; } d += (open ? 'L' : 'M') + x.toFixed(1) + ' ' + y(v).toFixed(1); open = true; });
+  const yf = y(D._maxFullDraft + (D.underkeel || 0));
+  const xi = W * di / Math.max(1, n - 1);
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none" aria-label="Глубина по сезону">
+  <rect x="0" y="0" width="${W}" height="${H}" fill="var(--surface2)" rx="5"/>
+  <line x1="0" x2="${W}" y1="${yf}" y2="${yf}" stroke="var(--limit)" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>
+  <path d="${d}" fill="none" stroke="var(--river)" stroke-width="2" vector-effect="non-scaling-stroke"/>
+  <line x1="${xi}" x2="${xi}" y1="0" y2="${H}" stroke="var(--text)" vector-effect="non-scaling-stroke"/></svg>
+  <div class="note" style="display:flex;justify-content:space-between"><span>мин. глубина по реке</span><span style="color:var(--limit)">- - нужно для полной загрузки</span></div>`;
+}
+/* валюта и суммы: тарифы v1/v2 приходят в своей валюте (RUB или условная DEMO) */
+function curSign() { const c = (D.tariffs && D.tariffs.currency) || 'RUB'; return c === 'RUB' ? '₽' : c; }
+function moneyFmt(v) { return Math.abs(v) >= 1e6 ? `${fmt(v / 1e6, 1)} млн ${curSign()}` : `${fmt(v)} ${curSign()}`; }
+function financeHTML() {
+  const s = S();
+  if (!s.financial) return `<div class="callout">Тарифы не заданы, денежная оценка не считалась. Ядро выдаёт натуральные показатели для финансового расчёта: км в грузу и порожнём, часы работы, простоя и ожидания.</div>` + finInputs(s);
+  const f = s.financial, tot = Number(f.total_cost), m = s.metrics;
+  const NAMES = COST_NAMES;
+  const items = Object.entries(f.cost_by_unit).map(([k, v]) => [k, Number(v)]).sort((a, b) => b[1] - a[1]);
+  const mx = Math.max(...items.map(i => i[1]), 1);
+  let h = `<div class="callout" style="margin-bottom:10px"><span class="badge stub">заглушка</span> Ставки условные${f.source_status && !/SYNTHETIC/i.test(f.source_status) ? ` (${esc(f.source_status)})` : ''}. Когда появится финансовое ядро, сюда придут его ставки и статьи; расчёт и формат не поменяются.</div>
+  <div class="grid2"><div class="mini"><div class="l">Стоимость сезона</div><div class="v num">${moneyFmt(tot)}</div></div><div class="mini"><div class="l">За тонну в срок</div><div class="v num">${fmt(tot / Math.max(1, m.delivered_on_time_t))} ${curSign()}</div></div></div>
+  <h3>Статьи затрат</h3><div class="fin">${items.map(([k, v]) => `<div class="r"><span>${NAMES[k] || k}</span><div class="bar"><i style="width:${100 * v / mx}%"></i></div><span class="num" style="text-align:right">${moneyFmt(v)}</span></div>`).join('')}</div>
+  <h3>Сравнение стратегий</h3><table class="t"><tr><th>Стратегия</th><th class="n">в срок, т</th><th class="n">стоимость</th><th class="n">${curSign()}/т</th></tr>${D.order.map(k => { const q = D.strategies[k]; const c = q.financial ? Number(q.financial.total_cost) : null; return `<tr${k === cur ? ' style="font-weight:600"' : ''}><td>${esc(q.label)}</td><td class="n num">${fmt(q.metrics.delivered_on_time_t)}</td><td class="n num">${c == null ? '—' : moneyFmt(c)}</td><td class="n num">${c == null ? '—' : fmt(c / Math.max(1, q.metrics.delivered_on_time_t))}</td></tr>`; }).join('')}</table>
+  <p class="note">${D._linear ? 'Порожний ход — возврат состава после каждого рейса.' : 'План с перегоном дороже в рублях, но каждая доставленная в срок тонна обходится по-разному.'} ${f.undelivered_penalty != null ? 'Недовоз оценён по тарифу альтернативной доставки (зимник, авиация).' : 'Цена недовоза (зимник, авиация) появится с финансовым ядром.'}</p>`;
+  return h + finInputs(s);
+}
+function finInputs(s) {
+  const t = s.financial_totals;
+  return `<h3>Натуральные показатели (вход финансового ядра)</h3><dl class="kv">
+  <dt>Ход с грузом</dt><dd class="num">${fmt(t.loaded_km)} км</dd><dt>Порожний ход</dt><dd class="num">${fmt(t.empty_km)} км</dd>
+  <dt>Транспортная работа</dt><dd class="num">${fmt(t.tonne_km / 1e6, 2)} млн т·км</dd><dt>В пути</dt><dd class="num">${fmt(t.transit_seconds / 3600)} ч</dd>
+  <dt>Погрузка + выгрузка</dt><dd class="num">${fmt((t.loading_seconds + t.unloading_seconds) / 3600)} ч</dd><dt>Ожидание</dt><dd class="num">${fmt(t.waiting_seconds / 3600)} ч</dd>
+  <dt>Не довезено</dt><dd class="num">${fmt(t.undelivered_t)} т</dd></dl>`;
+}
+function bindSide() {
+  const pane = $('#pane');
+  pane.querySelectorAll('[data-sub]').forEach(n => n.onclick = () => { tab = n.dataset.sub; if (sel && sel.type === 'vessel' && tab !== 'fleet') sel = null; renderSide(); renderMap(); });
+  pane.querySelectorAll('[data-s]').forEach(n => n.onclick = () => setStrategy(n.dataset.s));
+  pane.querySelectorAll('[data-v]').forEach(n => n.onclick = () => selectVessel(n.dataset.v));
+  pane.querySelectorAll('[data-back]').forEach(n => n.onclick = () => { sel = null; renderSide(); renderMap(); });
+  pane.querySelectorAll('[data-ff]').forEach(n => n.onclick = () => { ui.fleetFilter = n.dataset.ff; renderSide(); });
+  pane.querySelectorAll('[data-cf]').forEach(n => n.onclick = () => { ui.cargoFilter = n.getAttribute('aria-pressed') === 'true' && n.dataset.cf.startsWith('port:') ? 'all' : n.dataset.cf; renderSide(); });
+  pane.querySelectorAll('[data-c]').forEach(n => n.onclick = () => {
+    const c = D.cargo.find(x => x.cargo_id === n.dataset.c);
+    sel = sel && sel.type === 'cargo' && sel.id === c.cargo_id ? null : {type: 'cargo', id: c.cargo_id, from: c.origin_port, to: c.destination_port};
+    renderSide(); renderMap();
+  });
+  pane.querySelectorAll('[data-r]').forEach(n => n.onclick = () => {
+    const r = n.dataset.r; sel = sel && sel.type === 'river' && sel.id === r ? null : {type: 'river', id: r};
+    renderSide(); renderMap(); if (sel) zoomTo(D.links.filter(l => l.river === r));
+  });
+}
+function selectVessel(id) {
+  sel = sel && sel.type === 'vessel' && sel.id === id ? null : {type: 'vessel', id};
+  tab = 'fleet'; renderSide(); renderMap();
+}
+function zoomTo(links) {
+  const pts = links.flatMap(l => linkXY(l)).map(p => [p[0], -p[1]]);
+  if (!pts.length) return;
+  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+  const pad = Math.max(80, (Math.max(...xs) - Math.min(...xs)) * .15);
+  want = [Math.min(...xs) - pad, Math.min(...ys) - pad, Math.max(...xs) - Math.min(...xs) + 2 * pad, Math.max(...ys) - Math.min(...ys) + 2 * pad];
+  applyView();
+}
+
+/* ---------- ручки контракта ядра v3: «Что, если?», сравнение, причины, рейс, порт ---------- */
+const NET = {on: false, scenario: null, presets: [], diag: {}, explain: {}, cmp: {}, whatif: [], port: {}, portLoad: {}, busy: false, exp: null, expCmp: {}};
+function netReset() {
+  Object.assign(NET, {on: !!(jobId && D && !D._linear), scenario: null, presets: [], diag: {}, explain: {}, cmp: {}, whatif: [], port: {}, portLoad: {}, busy: false, exp: null, expCmp: {}});
+  if (!NET.on) return;
+  const id = jobId;
+  Promise.all([api(`/api/network/jobs/${id}/scenario`), api(`/api/network/jobs/${id}/presets`)])
+    .then(([sc, pr]) => { if (id !== jobId) return; NET.scenario = sc; NET.presets = pr; if (tab === 'whatif') renderSide(); })
+    .catch(() => {});
+  api('/api/network/experiments').then(r => { if (id !== jobId) return; NET.exp = r; if (tab === 'whatif') renderSide(); }).catch(() => {});
+}
+const J = p => `/api/network/jobs/${jobId}/${p}`;
+function qs(o) { return new URLSearchParams(o).toString(); }
+function isoAt(h) {
+  const d = at(Math.max(0, Math.min(D.horizon_h, h))), p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+function hOf(iso) { return (new Date(iso) - t0()) / 3600e3; }
+function dIso(iso) { return iso ? dstr(hOf(iso), true) : '—'; }
+function baseVariant() { return cur && cur.startsWith('NETWORK_') ? cur : D.best; }
+const COST_NAMES = {loaded_km: 'Ход с грузом', empty_km: 'Порожний ход', loading_hour: 'Погрузка', unloading_hour: 'Выгрузка', waiting_hour: 'Ожидание', tug_busy_hour: 'Работа буксиров', barge_busy_hour: 'Работа барж',
+  loaded_fuel: 'Топливо с грузом', empty_fuel: 'Топливо порожнём', tug_operation: 'Работа буксиров', barge_operation: 'Работа барж', loading: 'Погрузка', unloading: 'Выгрузка', port_call: 'Портовые сборы', waiting: 'Ожидание', repositioning: 'Перегон', alternative_delivery: 'Недовоз: альтернативная доставка'};
+const V3_STATE = {IDLE: 'стоит', UNAVAILABLE: 'недоступно', WAITING: 'ждёт', PORT_QUEUE: 'в очереди к причалу', LOADING: 'погрузка', UNLOADING: 'выгрузка', EMPTY_TRANSIT: 'идёт порожним', LOADED_TRANSIT: 'идёт с грузом'};
+const BERTH = {OPEN: ['свободен', 'ok'], OCCUPIED: ['занят', 'bad'], CLOSED: ['закрыт', '']};
+const EVIDENCE = {
+  NO_DIRECTED_PATH: 'нет пути по направлениям участков', NO_COMPATIBLE_PAIR: 'нет совместимой пары буксир + баржа для этого груза',
+  NO_ADMITTED_PATH: 'нет пути с допуском судов на морские участки', NO_PATH_WITH_NAVIGATION_WINDOWS: 'нет пути в окна навигации',
+  READY_AFTER_SEASON: 'груз готов после конца сезона', EXPIRED_BEFORE_DISPATCH: 'срок годности истёк до отправки',
+  LATE_UNLOADING: 'выгрузка позже срока', EXPIRED_BY_UNLOADING: 'срок годности истёк к выгрузке',
+  RESIDUAL_WITHOUT_PROVEN_CAUSE: 'остаток без доказанной причины: не хватило флота или времени в найденном плане'};
+const EV_KIND = {PROVEN: ['доказано', 'bad'], OBSERVED: ['наблюдение', 'stub'], UNDETERMINED: ['не установлено', '']};
+const CONSTRAINTS = {resource_availability: 'суда доступны в эти даты', cargo_compatibility: 'груз совместим с баржей',
+  draft_and_navigation_windows: 'осадка и окна навигации', marine_admission_if_applicable: 'морской допуск, если путь идёт морем',
+  berth_reservations_if_modelled: 'брони причалов, если они моделируются'};
+// метрика: подпись, направление (+1 — больше лучше, −1 — меньше лучше, 0 — нейтрально), формат
+const DELTA = [['delivered_on_time_t', 'В срок', 1, 't'], ['delivered_total_t', 'Довезено всего', 1, 't'], ['critical_on_time_t', 'Критичные в срок', 1, 't'],
+  ['undelivered_t', 'Не довезено', -1, 't'], ['social_deficit_t', 'Дефицит соцминимумов', -1, 't'], ['satisfied_requirements', 'Выполнено минимумов', 1, 'n'],
+  ['empty_km', 'Порожний ход', -1, 'km'], ['completed_voyages', 'Рейсов', 0, 'n'], ['resource_busy_hours', 'Занятость флота', 0, 'h'],
+  ['port_waiting_seconds', 'Ожидание в портах', -1, 's'], ['cost', 'Стоимость', -1, 'money'], ['cost_per_t_on_time', 'Цена тонны в срок', -1, 'money']];
+function deltaHTML(d) {
+  const rows = DELTA.map(([k, name, dir, u]) => {
+    let v = d[k];
+    if (v == null) return k.startsWith('cost') ? `<tr><td>${name}</td><td class="n note">нет: тарифы не сопоставимы</td></tr>` : '';
+    v = Number(v); if (u === 's') v /= 3600;
+    const zero = Math.abs(v) < 1e-9, good = dir * v > 0, bad = dir * v < 0;
+    const unit = {t: ' т', km: ' км', h: ' ч', s: ' ч', n: '', money: ''}[u];
+    const txt = zero ? '0' : (v > 0 ? '+' : '−') + (u === 'money' ? moneyFmt(Math.abs(v)) : fmt(Math.abs(v), u === 'h' || u === 's' ? 1 : 0) + unit);
+    return `<tr><td>${name}</td><td class="n num" style="color:${zero ? 'var(--muted)' : good ? 'var(--ok)' : bad ? 'var(--bad)' : 'var(--text)'}">${txt}</td></tr>`;
+  }).join('');
+  return `<table class="t">${rows}</table>`;
+}
+function edgeName(id) { const e = NET.scenario && NET.scenario.edges.find(x => x.edge_id === id); return e ? `${e.origin_port} → ${e.destination_port}` : id; }
+function changeRu(ch) {
+  const tph = v => typeof v === 'object' ? Object.entries(v).map(([k, x]) => `${cargoRu(k)} ${fmt(x)}`).join(', ') + ' т/ч' : fmt(v) + ' т/ч';
+  switch (ch.kind) {
+    case 'marine_reposition': return ch.enabled ? 'Разрешить порожний перегон морем' : 'Запретить порожний перегон морем';
+    case 'unlimited_port': return `Снять ограничение причалов: ${ch.port}`;
+    case 'add_berth': return `Добавить причал ${ch.berth.berth_id} в ${ch.port} (${tph(ch.berth.handling_tph)})`;
+    case 'close_berth': return `Закрыть причал ${ch.berth_id} в ${ch.port}`;
+    case 'handling_tph': return `Причал ${ch.berth_id} в ${ch.port}: обработка ${tph(ch.value)}`;
+    case 'close_edge': return `Закрыть участок ${edgeName(ch.edge_id)}`;
+    case 'cargo': return `Заявка ${ch.cargo_id}:` + (ch.volume_t != null ? ` объём ${fmt(ch.volume_t)} т` : '') + (ch.due_at ? ` срок ${dIso(ch.due_at)}` : '');
+    case 'move_vessel': return `Перевести ${ch.vessel_id} в ${ch.port} к началу сезона`;
+    case 'remove_vessel': return `Убрать судно ${ch.vessel_id}`;
+    case 'add_vessel': return `Добавить судно ${ch.vessel && ch.vessel.vessel_id}`;
+    default: return JSON.stringify(ch);
+  }
+}
+
+/* сравнение двух планов задания (GET compare) */
+/* «Почему выиграл»: выбранный план против ближайшей альтернативы по тоннам в срок */
+function whyHTML() {
+  if (D.order.length < 2) return '';
+  const a = D.strategies[cur], m = a.metrics;
+  const alt = D.order.filter(k => k !== cur).sort((x, y) => D.strategies[y].metrics.delivered_on_time_t - D.strategies[x].metrics.delivered_on_time_t)[0];
+  const b = D.strategies[alt], q = b.metrics;
+  const rows = [['Тонн в срок', 'delivered_on_time_t', 1, 'т'], ['Довезено всего', 'delivered_total_t', 1, 'т'], ['Критичные грузы в срок', 'critical_on_time_t', 1, 'т'],
+    ['Дефицит соцминимумов', 'social_deficit_t', -1, 'т'], ['Рейсов', 'completed_voyages', 0, ''], ['Из них перегонов', 'repositioning_voyages', 0, ''], ['Порожний ход', 'empty_km', -1, 'км']]
+    .filter(r => m[r[1]] != null && q[r[1]] != null);
+  const tr = rows.map(([n, f, dir, u]) => {
+    const d = m[f] - q[f], cls = !d || !dir ? '' : d * dir > 0 ? 'up' : 'dn';
+    return `<tr><td>${n}</td><td>${fmt(m[f])}</td><td>${fmt(q[f])}</td><td class="${cls}">${d > 0 ? '+' : d < 0 ? '−' : ''}${d ? fmt(Math.abs(d)) : '0'}${u && d ? ' ' + u : ''}</td></tr>`;
+  }).join('');
+  const gap = m.delivered_on_time_t - q.delivered_on_time_t;
+  const head = cur === D.best ? 'Почему этот план лучший' : 'Чем этот план отличается от лучшей альтернативы';
+  return `<div class="why"><h3 style="margin:0 0 6px">${head}</h3>
+  <p><b>«${esc(a.label)}»</b> — ${esc((a.hint || '').toLowerCase())}. Ближайшая альтернатива <b>«${esc(b.label)}»</b> — ${esc((b.hint || '').toLowerCase())}.</p>
+  <p>${gap > 0 ? `Разница <b>+${fmt(gap)} т в срок</b> (${pct(m.delivered_on_time_t, m.demand_t)}% против ${pct(q.delivered_on_time_t, q.demand_t)}%).` : gap < 0 ? `Альтернатива довозит в срок на ${fmt(-gap)} т больше.` : 'По тоннам в срок планы равны, решают остальные цели.'} Оба плана посчитаны на одном сценарии: те же заявки, флот и даты навигации.</p>
+  <table><thead><tr><th></th><th>${esc(a.label)}</th><th>${esc(b.label)}</th><th>Разница</th></tr></thead><tbody>${tr}</tbody></table></div>`;
+}
+function compareHTML() {
+  if (!NET.on || D.order.length < 2) return '';
+  const a = ui.cmpFrom && D.strategies[ui.cmpFrom] ? ui.cmpFrom : (D.order.find(k => k !== cur) || D.order[0]);
+  const b = ui.cmpTo && D.strategies[ui.cmpTo] ? ui.cmpTo : cur;
+  const key = a + '>' + b, d = NET.cmp[key];
+  if (d === undefined && a !== b) { NET.cmp[key] = null; api(J('compare?' + qs({from: a, to: b}))).then(r => { NET.cmp[key] = r; renderSide(true); }).catch(e => { NET.cmp[key] = {error: e.message}; renderSide(true); }); }
+  const opt = sel => D.order.map(k => `<option value="${esc(k)}"${k === sel ? ' selected' : ''}>${esc(D.strategies[k].label)}</option>`).join('');
+  return `<h3>Сравнить планы</h3><div class="filters"><select class="btn" data-cmp="from" aria-label="Что сравнить">${opt(a)}</select><span class="note" style="align-self:center">→</span><select class="btn" data-cmp="to" aria-label="С чем сравнить">${opt(b)}</select></div>
+  ${a === b ? '<p class="note">Выберите разные планы.</p>' : !d ? '<p class="note">Считаем разницу…</p>' : d.error ? `<div class="callout warn">${esc(d.error)}</div>` : deltaHTML(d) + `<p class="note">Разница «${esc(D.strategies[b].label)}» минус «${esc(D.strategies[a].label)}»; зелёным — лучше.</p>`}`;
+}
+
+/* вкладка «Что, если?» (POST what-if) */
+function wiFields(k) {
+  const sc = NET.scenario, opt = (arr, f, l) => arr.map(x => `<option value="${esc(f(x))}">${esc(l(x))}</option>`).join('');
+  const ports = sc.ports, berthPorts = Object.keys(sc.port_operations || {});
+  const vessels = [...sc.tugs.map(v => ({...v, k: 'буксир'})), ...sc.barges.map(v => ({...v, k: 'баржа'}))];
+  const berths = berthPorts.flatMap(p => sc.port_operations[p].berths.map(b => ({p, b: b.berth_id})));
+  const row = (label, input) => `<label class="wi"><span>${label}</span>${input}</label>`;
+  switch (k) {
+    case 'marine_reposition': return row('Перегон морем', `<select class="btn" name="enabled"><option value="false">запретить</option><option value="true">разрешить</option></select>`);
+    case 'close_edge': return row('Участок', `<select class="btn" name="edge_id">${opt(sc.edges, e => e.edge_id, e => `${e.origin_port} → ${e.destination_port} · ${fmt(e.distance_km)} км`)}</select>`);
+    case 'cargo': {
+      const c = sc.cargo.find(x => x.cargo_id === ui.wiCargo) || sc.cargo[0];
+      return row('Заявка', `<select class="btn" name="cargo_id" data-wicargo>${sc.cargo.map(x => `<option value="${esc(x.cargo_id)}"${x === c ? ' selected' : ''}>${esc(x.cargo_id)}: ${esc(x.origin_port)} → ${esc(x.destination_port)}, ${fmt(x.volume_t)} т</option>`).join('')}</select>`)
+        + row('Объём, т', `<input class="btn" type="number" min="0" step="0.001" name="volume_t" value="${c.volume_t}">`)
+        + row('Срок', `<input class="btn" type="datetime-local" name="due_at" value="${esc(c.due_at.slice(0, 16))}">`);
+    }
+    case 'move_vessel': return row('Судно', `<select class="btn" name="vessel_id">${opt(vessels, v => v.vessel_id, v => `${v.vessel_id} · ${v.k}, сейчас ${v.current_port}`)}</select>`) + row('Порт', `<select class="btn" name="port">${opt(ports, p => p, p => p)}</select>`);
+    case 'remove_vessel': return row('Судно', `<select class="btn" name="vessel_id">${opt(vessels, v => v.vessel_id, v => `${v.vessel_id} · ${v.k}`)}</select>`);
+    case 'unlimited_port': return row('Порт', `<select class="btn" name="port">${opt(berthPorts, p => p, p => p)}</select>`);
+    case 'close_berth': return row('Причал', `<select class="btn" name="berth">${opt(berths, x => x.p + '|' + x.b, x => `${x.b} · ${x.p}`)}</select>`);
+    case 'handling_tph': return row('Причал', `<select class="btn" name="berth">${opt(berths, x => x.p + '|' + x.b, x => `${x.b} · ${x.p}`)}</select>`) + row('Обработка, т/ч', `<input class="btn" type="number" min="1" step="1" name="value" value="150">`);
+    case 'add_berth': return row('Порт', `<select class="btn" name="port">${opt(berthPorts, p => p, p => p)}</select>`) + row('Номер причала', `<input class="btn" name="berth_id" value="NEW-1" maxlength="40">`) + row('Обработка, т/ч', `<input class="btn" type="number" min="1" step="1" name="tph" value="100">`);
+    default: return `<label class="wi wide"><span>Изменение в формате контракта</span><textarea class="btn" name="json" rows="5" spellcheck="false">{"kind": "close_edge", "edge_id": "${esc(sc.edges[0].edge_id)}"}</textarea></label>`;
+  }
+}
+function wiRead(k, f) {
+  const v = n => f.querySelector(`[name="${n}"]`).value;
+  switch (k) {
+    case 'marine_reposition': return {kind: k, enabled: v('enabled') === 'true'};
+    case 'close_edge': return {kind: k, edge_id: v('edge_id')};
+    case 'cargo': return {kind: k, cargo_id: v('cargo_id'), volume_t: Number(v('volume_t')), due_at: v('due_at').length === 16 ? v('due_at') + ':00' : v('due_at')};
+    case 'move_vessel': return {kind: k, vessel_id: v('vessel_id'), port: v('port')};
+    case 'remove_vessel': return {kind: k, vessel_id: v('vessel_id')};
+    case 'unlimited_port': return {kind: k, port: v('port')};
+    case 'close_berth': { const [port, berth_id] = v('berth').split('|'); return {kind: k, port, berth_id}; }
+    case 'handling_tph': { const [port, berth_id] = v('berth').split('|'); return {kind: k, port, berth_id, value: Number(v('value'))}; }
+    case 'add_berth': return {kind: k, port: v('port'), berth: {berth_id: v('berth_id').trim(), operations: ['LOADING', 'UNLOADING'], handling_tph: Number(v('tph')), initial_occupancy: [], source: 'Изменение пользователя в интерфейсе', data_status: 'SYNTHETIC'}};
+    default: return JSON.parse(v('json'));
+  }
+}
+function whatifHTML() {
+  if (!NET.scenario) return '<p class="note">Загружаем сценарий…</p>';
+  const hasBerths = Object.keys(NET.scenario.port_operations || {}).length > 0;
+  const kinds = [['close_edge', 'Закрыть участок'], ['cargo', 'Изменить заявку'], ['move_vessel', 'Перевести судно'], ['remove_vessel', 'Убрать судно'], ['marine_reposition', 'Перегон морем'],
+    ...(hasBerths ? [['add_berth', 'Добавить причал'], ['close_berth', 'Закрыть причал'], ['handling_tph', 'Скорость причала'], ['unlimited_port', 'Снять ограничение порта']] : []), ['json', 'Своё (JSON)']];
+  const k = kinds.some(x => x[0] === ui.wiKind) ? ui.wiKind : kinds[0][0];
+  const base = baseVariant();
+  let h = seaExpHTML() + `<div class="callout" style="margin-bottom:10px">Одно изменение сценария — и ядро пересчитывает план заново относительно «${esc(D.strategies[base].label)}». Каждый новый план проходит аудит; исходный расчёт не меняется.</div>`;
+  if (NET.presets.length) h += `<h3>Готовые изменения</h3><div class="list">${NET.presets.map((p, i) => `<div class="item wp" data-wp="${i}"><div><div class="t">${esc(changeRu(p))}</div></div><div class="r"><span class="btn">Посчитать</span></div></div>`).join('')}</div>`;
+  h += `<h3>Своё изменение</h3><div class="card"><div class="filters">${kinds.map(([v, n]) => `<button class="chip" data-wk="${v}" aria-pressed="${v === k}">${n}</button>`).join('')}</div>
+  <form id="wiForm" class="wiform" data-kind="${k}">${wiFields(k)}<button class="btn" type="submit"${NET.busy ? ' disabled' : ''}>${NET.busy ? 'Считаем…' : 'Посчитать'}</button></form></div>`;
+  if (NET.whatif.length) h += `<h3>Результаты</h3>` + NET.whatif.slice().reverse().map(w => {
+    if (w.error) return `<div class="card"><b>${esc(changeRu(w.change))}</b><div class="callout warn" style="margin-top:6px">${esc(w.error)}</div></div>`;
+    const a = w.report.alternatives[0], shown = !!D.strategies[w.report.variant];
+    const unmet = a.explanation.unmet_requirements;
+    return `<div class="card"><div class="hd"><div><b>${esc(changeRu(a.change))}</b><div class="note">${esc(w.report.variant)} · от «${esc(D.strategies[w.report.base]?.label || w.report.base)}»</div></div><span class="spacer"></span><span class="badge ${a.improved ? 'ok' : 'bad'}">${a.improved ? 'лучше' : 'не лучше'}</span></div>
+    ${deltaHTML(a.delta)}${unmet.length ? `<p class="note" style="color:var(--bad)">Не выполнены минимумы: ${unmet.map(esc).join(', ')}</p>` : ''}
+    <div style="margin-top:8px"><button class="btn" data-wshow="${esc(w.report.variant)}">${cur === w.report.variant ? 'Открыт на карте' : shown ? 'Открыть на карте' : 'Показать на карте'}</button></div></div>`;
+  }).join('');
+  return h;
+}
+async function runWhatIf(body, change) {
+  if (NET.busy) return;
+  NET.busy = true; busy(true, 'Пересчитываем изменение…'); renderSide();
+  const id = jobId;
+  try {
+    const r = await api(J('what-if'), {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({...body, base: baseVariant()})});
+    if (id !== jobId) return;
+    NET.whatif.push({change: r.alternatives[0].change, report: r});
+    addVariant(r.variant, r.view);
+  } catch (e) { if (id === jobId) NET.whatif.push({change, error: e.message}); }
+  finally { NET.busy = false; busy(false); if (id === jobId) renderSide(); }
+}
+function addVariant(key, view) {
+  if (!view || D.strategies[key]) return;
+  for (const f of view.extra_fleet || []) if (!fleetById(f.vessel_id)) D.fleet.push(f);
+  D.strategies[key] = view; D.order.push(key);
+  prepare(); renderTop(); setStrategy(cur);
+}
+
+/* проверенные эксперименты с морским флотом (GET /api/network/experiments, POST jobs/{id}/experiments/{name}) */
+const SEA_SHORT = {E1: 'обычное планирование (реки углублены, +4 Р-153)', E1P: 'тот же флот, морские заявки получают Р-153 первыми',
+  E2: 'дополнительный морской флот: +16 Р-153, +16 барж'};
+function seaExpOn() { return NET.exp && NET.exp.shown && NET.exp.shown.length && NET.scenario && String(NET.scenario.scenario_id || '').startsWith('yakutia_real'); }
+function seaRow(name) { return NET.exp.experiments.find(r => r.name === name); }
+function seaExpHTML() {
+  if (!seaExpOn()) return '';
+  const names = NET.exp.shown, rows = names.map(seaRow), st = NET.exp.settings && NET.exp.settings.base || {};
+  const t = v => v == null ? '—' : fmt(v) + ' т', m = v => v == null ? '<span class="note">неизвестно</span>' : moneyFmt(v);
+  const line = (name, f) => `<tr><td>${name}</td>${rows.map(r => `<td class="n num">${f(r)}</td>`).join('')}</tr>`;
+  const soc = NET.exp.experiments.filter(r => r.name.endsWith('S'));
+  const socRow = n => soc.find(r => r.name === n + 'S');
+  let h = `<h3>Морской флот: проверенные эксперименты</h3>
+  <div class="callout" style="margin-bottom:8px">Заранее посчитанные планы на одинаковых заявках (65 заявок, ${fmt(rows[0].demand_t)} т), лимитах и тарифах v2; стратегия «С перегоном», бюджет ${esc(st.budget_seconds ?? 45)} с, политика ${esc(st.policy ? st.policy.mode : 'RESEARCH')} с восстановлением недовоза; ядро ${esc(rows[0].core_version || '')}, коммит ${esc((st.repo_commit || '').slice(0, 7))}. <b>Углубление рек и дополнительные суда — допущения «что если»</b>, а не фактическое состояние акватории. E1P — два прохода вне ядра: сначала морские заявки на всём флоте, затем остальное.</div>
+  <div class="note" style="margin-bottom:6px">${rows.map(r => `<div><b>${esc(r.name)}</b> — ${esc(SEA_SHORT[r.name] || r.title)}</div>`).join('')}</div>
+  <div style="overflow-x:auto"><table class="t xt"><tr><td></td>${rows.map(r => `<td class="n"><b>${esc(r.name)}</b></td>`).join('')}</tr>
+  ${line('Довезено всего', r => t(r.delivered_total_t))}${line('из них в срок', r => t(r.delivered_on_time_t))}
+  ${line('Морем', r => t(r.sea_delivered_t))}${line('По реке', r => t(r.delivered_total_t - r.sea_delivered_t))}
+  ${line('Недовоз', r => t(r.undelivered_t))}${line('— морской / речной', r => `${fmt(r.undelivered_sea_t / 1000)} / ${fmt(r.undelivered_river_t / 1000)} тыс.`)}
+  ${line('Рейсов', r => fmt(r.voyages))}${line('Р-153 рейсов', r => fmt(r.r153_voyages))}${line('Р-153 занято', r => `${r.r153_tugs_used} из ${r.r153_tugs_total}`)}
+  ${line('Р-153 река / море', r => `${fmt(r.r153_river_t / 1000)} / ${fmt(r.r153_sea_t / 1000)} тыс. т`)}
+  ${line('Эксплуатация', r => m(r.finance && r.finance.operating_rub))}${line('Альтернативная доставка недовоза', r => m(r.finance && r.finance.alternative_delivery_rub))}
+  ${line('Дополнительный флот', r => r.finance && r.finance.extra_fleet.vessels_used ? `<span class="note">${r.finance.extra_fleet.vessels_used} судов, ставка неизвестна</span>` : m(0))}
+  ${line('Итого', r => r.finance && r.finance.total_rub != null ? m(r.finance.total_rub) : `<span class="note">≥ ${moneyFmt(r.finance ? r.finance.total_known_rub : r.total_cost_rub)} + флот</span>`)}
+  ${soc.length ? line('Соцминимумы № 326-р', r => { const x = socRow(r.name); return x ? `${x.requirements.filter(q => q.satisfied).length} из ${x.requirements.length}, дефицит ${fmt(x.social_deficit_t)} т` : '—'; }) : ''}
+  ${line('Время расчёта', r => fmt(r.seconds, 1) + ' с')}${line('Завершение', r => esc(String(r.termination).replace('TWO_PASS:', '').replace('SEARCH_LIMIT', 'поиск').replace('TIME_LIMIT', 'время').replace('SEARCH_FINISHED', 'полностью')))}
+  ${line('Аудит', r => `<span class="badge ${r.audit === 'PASSED' ? 'ok' : 'bad'}">${r.audit === 'PASSED' ? 'пройден' : esc(r.audit)}</span>`)}
+  <tr><td></td>${rows.map(r => `<td class="n"><button class="btn" data-xshow="${esc(r.name)}"${r.saved ? '' : ' disabled title="План не сохранён"'}>${cur === 'X_' + r.name ? 'На карте' : 'На карту'}</button></td>`).join('')}</tr></table></div>`;
+  const pairs = [['E1', 'E1P'], ['E1', 'E2'], ['E1P', 'E2']].filter(([a, b]) => names.includes(a) && names.includes(b));
+  h += `<div class="filters" style="margin-top:8px">${pairs.map(([a, b]) => `<button class="chip" data-xcmp="${a}>${b}" aria-pressed="${ui.xCmp === a + '>' + b}">До ${a} → после ${b}</button>`).join('')}</div>`;
+  if (ui.xCmp) {
+    const [a, b] = ui.xCmp.split('>'), d = NET.expCmp[ui.xCmp];
+    h += !d ? '<p class="note">Загружаем планы и считаем разницу…</p>' : d.error ? `<div class="callout warn">${esc(d.error)}</div>`
+      : deltaHTML(d) + `<p class="note">«${esc(b)}» минус «${esc(a)}», зелёным — лучше. На карте: <button class="btn" data-wshow="X_${esc(a)}">до (${esc(a)})</button> <button class="btn" data-wshow="X_${esc(b)}">после (${esc(b)})</button></p>`;
+  }
+  return h;
+}
+async function loadExp(name) {
+  const key = 'X_' + name;
+  if (D.strategies[key]) return key;
+  const r = await api(J('experiments/' + name), {method: 'POST'});
+  addVariant(r.variant, r.view);
+  return key;
+}
+async function showExp(name) {
+  if (NET.busy) return;
+  NET.busy = true; busy(true, 'Загружаем план эксперимента…');
+  const id = jobId;
+  try { const key = await loadExp(name); if (id === jobId) setStrategy(key); }
+  catch (e) { alert(e.message); }
+  finally { NET.busy = false; busy(false); if (id === jobId) renderSide(); }
+}
+async function compareExp(pair) {
+  ui.xCmp = pair; renderSide();
+  if (NET.expCmp[pair]) return;
+  const [a, b] = pair.split('>'), id = jobId;
+  NET.busy = true; busy(true, 'Загружаем планы экспериментов…');
+  try {
+    const ka = await loadExp(a), kb = await loadExp(b);
+    NET.expCmp[pair] = await api(J('compare?' + qs({from: ka, to: kb})));
+    if (id === jobId) setStrategy(kb);
+  } catch (e) { NET.expCmp[pair] = {error: e.message}; }
+  finally { NET.busy = false; busy(false); if (id === jobId) renderSide(); }
+}
+
+/* причины недовоза (GET diagnose) */
+function diagFor(k) {
+  if (!NET.on) return null;
+  if (NET.diag[k] === undefined) { NET.diag[k] = null; api(J('diagnose?' + qs({variant: k}))).then(r => { NET.diag[k] = r; if (tab === 'cargo') renderSide(true); }).catch(() => {}); }
+  return NET.diag[k];
+}
+function evidenceHTML(c) {
+  return c.evidence.map(e => `<div class="ev"><span class="badge ${EV_KIND[e.kind]?.[1] || ''}">${EV_KIND[e.kind]?.[0] || esc(e.kind)}</span> ${esc(EVIDENCE[e.code] || e.code)}${e.late_t ? `, ${fmt(e.late_t)} т` : ''}${e.expired_t ? `, ${fmt(e.expired_t)} т` : ''}</div>`).join('');
+}
+function queuesHTML(d) {
+  if (!d || !d.queues.length) return '';
+  return `<div class="callout" style="margin-bottom:8px">Очереди к причалам в этом плане: ${d.queues.map(q => `${esc(q.port)} ${fmt(q.seconds / 3600, 1)} ч`).join(', ')}. Это наблюдение, а не доказанная причина недовоза: влияние очереди видно только сравнением сценариев (вкладка «Что, если?»).</div>`;
+}
+
+/* рейс (GET explain) */
+function explainHTML(vid) {
+  const key = cur + '|' + vid, x = NET.explain[key];
+  if (x === undefined) { NET.explain[key] = null; api(J('explain?' + qs({voyage: vid, variant: cur}))).then(r => { NET.explain[key] = r; renderSide(true); }).catch(e => { NET.explain[key] = {error: e.message}; renderSide(true); }); }
+  if (!x) return '<p class="note">Загружаем рейс…</p>';
+  if (x.error) return `<div class="callout warn">${esc(x.error)}</div>`;
+  const legs = (arr, label) => arr.length ? `<dt>${label}</dt><dd>${arr.map(l => esc(edgeName(l.edge_id))).join('<br>')}</dd>` : '';
+  const items = x.cost ? Object.entries(x.cost.cost_by_item).filter(([, v]) => Number(v)).sort((a, b) => b[1] - a[1]) : [];
+  return `<dl class="kv"><dt>Состав</dt><dd>${esc(x.tug_id)} + ${esc(x.barge_id)}</dd><dt>Выход из</dt><dd>${esc(x.departure_port)}</dd>
+  ${legs(x.empty, 'Порожним')}<dt>Погрузка</dt><dd>${esc(x.pickup)}</dd>${legs(x.loaded, 'С грузом')}
+  <dt>Выгрузка до</dt><dd>${dIso(x.unloading_end)}</dd><dt>Срок заявки</dt><dd>${dIso(x.due_at)} ${x.on_time ? '<span class="badge ok">в срок</span>' : '<span class="badge bad">поздно</span>'}</dd>
+  <dt>Аудит</dt><dd><span class="badge ${x.audit === 'PASSED' ? 'ok' : 'bad'}">${esc(x.audit)}</span></dd></dl>
+  <p class="note" style="margin:6px 0 2px">Проверено ядром: ${x.checked_constraints.map(c => esc(CONSTRAINTS[c] || c)).join('; ')}.</p>
+  ${x.cost ? `<h3>Стоимость рейса · ${moneyFmt(Number(x.cost.total_cost))}</h3><table class="t">${items.map(([k, v]) => `<tr><td>${esc(COST_NAMES[k] || k)}</td><td class="n num">${moneyFmt(Number(v))}</td></tr>`).join('')}</table>` : '<p class="note">Тарифы не заданы — стоимость рейса не считалась.</p>'}`;
+}
+
+/* порт: состояние на момент (GET state) и загрузка за сезон (GET port-load) */
+function portCardHTML(id) {
+  const p = D.ports.find(q => q.id === id);
+  const hk = Math.floor(T), sk = cur + '|' + hk;
+  if (!NET.port[sk] && !NET.portInflight) {
+    NET.portInflight = true;
+    api(J('state?' + qs({moment: isoAt(T), variant: cur}))).then(r => { NET.port[sk] = r; NET.portLast = r; }).catch(e => { NET.portLast = {error: e.message}; })
+      .finally(() => { NET.portInflight = false; if (sel && sel.type === 'port') renderSide(true); });
+  }
+  const st = NET.port[sk] || NET.portLast, ps = st && !st.error ? st.ports[id] : null;
+  if (NET.portLoad[cur + '|' + id] === undefined) {
+    NET.portLoad[cur + '|' + id] = null;
+    api(J('port-load?' + qs({port: id, start: D.start, end: D.end, variant: cur}))).then(r => { NET.portLoad[cur + '|' + id] = r || 'none'; renderSide(true); }).catch(e => { NET.portLoad[cur + '|' + id] = {error: e.message}; renderSide(true); });
+  }
+  const pl = NET.portLoad[cur + '|' + id];
+  let h = `<button class="back" data-back>← Назад</button><div class="card"><div class="hd"><div><b>${esc(id)}</b><div class="note">${esc(p?.river || '')}</div></div><span class="spacer"></span><button class="btn" data-portcargo="${esc(id)}">Заявки порта</button></div>`;
+  if (!ps) h += st && st.error ? `<div class="callout warn">${esc(st.error)}</div>` : '<p class="note">Загружаем состояние…</p>';
+  else {
+    const tugs = ps.vessels.filter(v => !fleetById(v.vessel_id) || fleetById(v.vessel_id).kind === 'tug');
+    h += `<h3>На ${dIso(ps.time)}</h3><div class="grid2"><div class="mini"><div class="l">Судов в порту</div><div class="v num">${ps.vessels.length}</div></div><div class="mini"><div class="l">Буксиров в очереди</div><div class="v num" style="color:${ps.queued_tugs.length ? 'var(--bad)' : 'inherit'}">${ps.queued_tugs.length}</div></div></div>`;
+    if (ps.vessels.length) h += `<table class="t" style="margin-top:8px">${ps.vessels.map(v => `<tr><td><span class="lnk" data-v="${esc(v.vessel_id)}">${esc(v.vessel_id)}</span></td><td class="n">${esc(V3_STATE[v.state] || v.state)}</td></tr>`).join('')}</table>`;
+    if (!ps.capacity_modelled) h += `<p class="note">Причалы порта не моделируются: обработка идёт по скорости баржи, очереди нет.</p>`;
+    else h += `<h3>Причалы</h3><table class="t"><tr><th>Причал</th><th>Статус</th><th class="n">освободится</th></tr>${ps.berths.map(b => `<tr><td>${esc(b.berth_id)}</td><td><span class="badge ${BERTH[b.status]?.[1] || ''}">${BERTH[b.status]?.[0] || esc(b.status)}</span>${b.operation ? `<div class="note">${esc(V3_STATE[b.operation.state] || b.operation.state)} · ${esc(b.operation.tug_id)} + ${esc(b.operation.barge_id)}</div>` : b.status === 'OCCUPIED' ? '<div class="note">внешняя бронь</div>' : ''}</td><td class="n">${b.expected_release ? dIso(b.expected_release) : '—'}</td></tr>`).join('')}</table>`;
+  }
+  h += '</div>';
+  if (pl && pl !== 'none' && !pl.error) {
+    h += `<div class="card"><h3 style="margin-top:0">За сезон</h3><dl class="kv"><dt>Рейсов обработано</dt><dd class="num">${fmt(pl.handled_voyages)}</dd><dt>Погружено / выгружено</dt><dd class="num">${fmt(pl.loaded_t)} / ${fmt(pl.unloaded_t)} т</dd>
+    <dt>Ожидание всего</dt><dd class="num">${fmt(pl.waiting_seconds / 3600, 1)} ч</dd><dt>Среднее ожидание</dt><dd class="num">${pl.mean_wait_seconds == null ? '—' : fmt(pl.mean_wait_seconds / 3600, 1) + ' ч'}</dd>
+    <dt>Пиковая очередь</dt><dd class="num">${fmt(pl.peak_queue)}</dd><dt>Средняя операция</dt><dd class="num">${pl.mean_operation_seconds == null ? '—' : fmt(pl.mean_operation_seconds / 3600, 1) + ' ч'}</dd></dl>
+    ${pl.berths.length ? `<h3>Занятость причалов</h3><div class="fin">${pl.berths.map(b => `<div class="r"><span>${esc(b.berth_id)}</span><div class="bar"><i style="width:${100 * (b.utilization || 0)}%"></i></div><span class="num" style="text-align:right">${b.utilization == null ? '—' : Math.round(100 * b.utilization) + '%'}</span></div>`).join('')}</div>` : ''}</div>`;
+  } else if (pl && pl.error) h += `<div class="callout warn">${esc(pl.error)}</div>`;
+  return h;
+}
+function bindContract() {
+  const pane = $('#pane');
+  pane.querySelectorAll('[data-cmp]').forEach(n => n.onchange = () => { ui[n.dataset.cmp === 'from' ? 'cmpFrom' : 'cmpTo'] = n.value; renderSide(); });
+  pane.querySelectorAll('[data-wk]').forEach(n => n.onclick = () => { ui.wiKind = n.dataset.wk; renderSide(); });
+  pane.querySelectorAll('[data-wicargo]').forEach(n => n.onchange = () => { ui.wiCargo = n.value; renderSide(); });
+  pane.querySelectorAll('[data-wp]').forEach(n => n.onclick = () => runWhatIf({preset: +n.dataset.wp}, NET.presets[+n.dataset.wp]));
+  pane.querySelectorAll('[data-wshow]').forEach(n => n.onclick = () => setStrategy(n.dataset.wshow));
+  pane.querySelectorAll('[data-xshow]').forEach(n => n.onclick = () => showExp(n.dataset.xshow));
+  pane.querySelectorAll('[data-xcmp]').forEach(n => n.onclick = () => compareExp(n.dataset.xcmp));
+  pane.querySelectorAll('[data-xv]').forEach(n => n.onclick = () => { const v = +n.dataset.xv; ui.explainVoy = ui.explainVoy === v ? null : v; renderSide(); });
+  pane.querySelectorAll('[data-portcargo]').forEach(n => n.onclick = () => { tab = 'cargo'; ui.cargoFilter = 'port:' + n.dataset.portcargo; sel = null; renderSide(); });
+  const f = $('#wiForm');
+  if (f) f.onsubmit = e => {
+    e.preventDefault();
+    let change;
+    try { change = wiRead(f.dataset.kind, f); } catch (err) { alert('Не разобрать изменение: ' + err.message); return; }
+    runWhatIf({change}, change);
+  };
+}
+
+/* ---------- легенда ---------- */
+let legendOpen = false;  // по умолчанию свёрнута: не закрывает карту
+function renderLegend() {
+  const lg = $('#legend'); lg.hidden = !legendOpen; $('#legBtn').setAttribute('aria-pressed', legendOpen);
+  const vs = [['sail', 'идёт с грузом', 'var(--accent)', 'var(--accent)', '50%'], ['empty', 'идёт порожним', 'transparent', 'var(--accent)', '50%'], ['load', 'грузится / выгружается', 'var(--text2)', 'var(--text2)', '2px'], ['wait', 'ждёт воды', 'var(--signal)', 'var(--signal)', '2px'], ['idle', 'стоит', 'transparent', 'var(--muted)', '2px']]
+    .filter(([k]) => !D || D._states.has(k) || (k === 'load' && D._states.has('unload')) || (k === 'empty' && D._states.has('back')));
+  lg.innerHTML = `<div class="hd">Обозначения</div>
+  <div class="row"><span class="grp">Участок реки на выбранный день</span>
+  <span><i class="ln" style="background:var(--accent)"></i>проходим</span><span><i class="ln" style="background:var(--signal)"></i>с недогрузом</span>
+  <span><i class="ln" style="background:repeating-linear-gradient(90deg,var(--closed) 0 4px,transparent 4px 7px)"></i>закрыт</span><span><i class="ln" style="background:repeating-linear-gradient(90deg,var(--accent) 0 7px,transparent 7px 10px)"></i>море</span>
+  <span style="grid-column:1/-1"><i class="ln" style="height:8px;width:20px;background:color-mix(in srgb,var(--accent) 30%,transparent)"></i>ширина — сколько тонн провезено</span></div>
+  <div class="row"><span class="grp">${D && D._linear ? 'Состав' : 'Буксир'}</span>${vs.map(([k, n, f, b, r]) => `<span><i style="width:9px;height:9px;border-radius:${r};background:${f};border:1.6px solid ${b}"></i>${n}</span>`).join('')}</div>`;
+}
+$('#legBtn').onclick = () => { legendOpen = !legendOpen; renderLegend(); };
+function renderLayers() {
+  $('#layers').innerHTML = `<div class="hd">Слои карты</div>` + LAYERS.map(([k, n, h]) => `<label><input type="checkbox" data-layer="${k}"${layers[k] ? ' checked' : ''}><span>${n}${h ? `<br><small>${h}</small>` : ''}</span></label>`).join('');
+  $('#layers').querySelectorAll('[data-layer]').forEach(i => i.onchange = () => { layers[i.dataset.layer] = i.checked; if (i.dataset.layer === 'relief') drawRelief(); placeLabels(); renderMap(); });
+}
+$('#layBtn').onclick = () => { const o = $('#layers').hidden; $('#layers').hidden = !o; $('#layBtn').setAttribute('aria-pressed', o); if (o) renderLayers(); };
+for (const b of $('#kmode').children) b.onclick = () => { ui.kpiMode = b.dataset.km; for (const x of $('#kmode').children) x.setAttribute('aria-pressed', x === b); renderKpis(); };
+
+/* ---------- стратегии и верх ---------- */
+function setStrategy(k) {
+  cur = k; sel = sel && sel.type === 'vessel' ? sel : null;
+  for (const b of $('#strategies').children) b.setAttribute('aria-pressed', b.dataset.s === k);
+  if (jobId) { $('#dlBtn').href = `/api/network/jobs/${jobId}/result/${k}`; $('#dlBtn').hidden = false; }
+  placeLabels(); renderMap(); renderSide();
+}
+function renderTop() {
+  { const ss = $('#scenarioSel'), o = ss.options[ss.selectedIndex]; if (o) ss.title = o.textContent; }
+  $('#subtitle').textContent = `${D.ports.length} портов, ${fmt(D.links.reduce((a, l) => a + l.km, 0))} км сети`;
+  $('#strategies').innerHTML = D.order.map(k => {
+    const s = D.strategies[k];
+    return `<button data-s="${k}" aria-pressed="${k === cur}" title="${esc(s.hint)} · ${pct(s.metrics.delivered_on_time_t, s.metrics.demand_t)}% спроса в срок">${k === D.best ? '<span class="star" title="Лучший план"></span>' : ''}${esc(s.label)}<small class="num">${pct(s.metrics.delivered_on_time_t, s.metrics.demand_t)}%</small></button>`;
+  }).join('');
+  for (const b of $('#strategies').children) b.onclick = () => setStrategy(b.dataset.s);
+  $('#attrib').textContent = D.geo.source ? (D.geo.source.split(';')[0]) : '';
+}
+function load(data) {
+  D = data; prepare();
+  cur = D.best; sel = null; tab = 'overview'; netReset();
+  $('#slider').max = Math.round(D.horizon_h); $('#slider').step = D.horizon_h < 96 ? 0.25 : 6;
+  renderTop(); buildMap(); renderMonths(); renderLegend();
+  // стартовый момент: середина июля, если есть, иначе начало
+  const mid = D.horizon_h * .35;
+  setT(D.horizon_h > 24 * 60 ? mid : 0);
+  renderSide();
+}
+
+/* ---------- управление картой ---------- */
+let drag = null;
+map.addEventListener('pointerdown', e => { drag = {x: e.clientX, y: e.clientY, v: view.slice(), moved: false}; map.setPointerCapture(e.pointerId); });
+map.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const k = scale(), dx = (e.clientX - drag.x) * k, dy = (e.clientY - drag.y) * k;
+  if (Math.abs(dx) + Math.abs(dy) > 2 * k) { drag.moved = true; map.classList.add('drag'); hideTip(); }
+  view = clampView([drag.v[0] - dx, drag.v[1] - dy, view[2], view[3]]);
+  want = view.slice();
+  map.setAttribute('viewBox', view.join(' '));
+});
+map.addEventListener('pointerup', e => { if (drag && !drag.moved && e.target === map) { /* клик по пустому месту */ } drag = null; map.classList.remove('drag'); });
+/* шаг зума пропорционален прокрутке: колесо мыши (~100 px за щелчок) — ~20 %, тачпад и щипок — плавно */
+map.addEventListener('wheel', e => {
+  e.preventDefault();
+  const dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 400 : 1);
+  const k = e.ctrlKey ? 0.006 : 0.0018;  // ctrlKey — щипок на тачпаде
+  zoom(Math.exp(Math.max(-0.4, Math.min(0.4, dy * k))), e);
+}, {passive: false});
+function zoom(f, e) {
+  const r = map.getBoundingClientRect();
+  const px = e ? (e.clientX - r.left) / r.width : .5, py = e ? (e.clientY - r.top) / r.height : .5;
+  if (!view || !fitBox) return;  // карта ещё не построена
+  const r0 = map.getBoundingClientRect(), ar0 = r0.width / Math.max(1, r0.height);
+  const maxW = 1.5 * Math.max(fitBox[2], fitBox[3] * ar0);  // дальше полутора «всей сети» не отдаляем
+  const w = Math.min(maxW, Math.max(40, view[2] * f));
+  if (w === view[2]) return;
+  const ff = w / view[2];
+  const h = view[3] * ff;
+  view = clampView([view[0] + (view[2] - w) * px, view[1] + (view[3] - h) * py, w, h]);
+  want = view.slice();
+  map.setAttribute('viewBox', view.join(' '));
+  placeLabels(); renderMap();
+}
+$('#zin').onclick = () => zoom(.7); $('#zout').onclick = () => zoom(1.4); $('#zfit').onclick = () => { want = fitBox.slice(); applyView(); };
+window.addEventListener('resize', () => { if (D) applyView(); });
+
+/* ---------- время ---------- */
+$('#slider').oninput = e => setT(+e.target.value);
+/* выбор дня в календаре: состояние на полдень этого дня (в 00:00 большинство рейсов ещё не начато) */
+const MONTHS_FULL = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+let calYM = null;  // [год, месяц], который показан в календаре
+function renderCal() {
+  const [y, m] = calYM, lo = isoDay(t0()), hi = isoDay(at(Math.max(0, D.horizon_h - 1))), curIso = isoDay(at(T));
+  const first = new Date(y, m, 1), lead = (first.getDay() + 6) % 7, n = new Date(y, m + 1, 0).getDate();
+  const ym = (yy, mm) => `${yy}-${String(mm + 1).padStart(2, '0')}`;
+  let cells = '';
+  for (let i = 0; i < lead; i++) cells += '<span></span>';
+  for (let d = 1; d <= n; d++) {
+    const iso = isoDay(new Date(y, m, d)), off = iso < lo || iso > hi;
+    cells += `<button type="button" data-d="${d}"${off ? ' disabled' : ''}${iso === curIso ? ' aria-current="date"' : ''}>${d}</button>`;
+  }
+  $('#cal').innerHTML = `<div class="cal-h"><button type="button" data-m="-1" aria-label="Предыдущий месяц"${ym(y, m) <= lo.slice(0, 7) ? ' disabled' : ''}>‹</button><span>${MONTHS_FULL[m]} ${y}</span><button type="button" data-m="1" aria-label="Следующий месяц"${ym(y, m) >= hi.slice(0, 7) ? ' disabled' : ''}>›</button></div>`
+    + `<div class="cal-g">${['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map(w => `<span class="wd">${w}</span>`).join('')}${cells}</div>`;
+}
+function openCal(open) {
+  if (open && !D) return;
+  $('#cal').hidden = !open; $('#dateBtn').setAttribute('aria-expanded', open);
+  if (!open) return;
+  const d = at(T); calYM = [d.getFullYear(), d.getMonth()]; renderCal();
+  ($('#cal [aria-current="date"]') || $('#cal .cal-g button:not(:disabled)'))?.focus();
+}
+$('#dateBtn').onclick = () => openCal($('#cal').hidden);
+$('#cal').onclick = e => {
+  const b = e.target.closest('button'); if (!b || b.disabled) return;
+  if (b.dataset.m) { const d = new Date(calYM[0], calYM[1] + +b.dataset.m, 1); calYM = [d.getFullYear(), d.getMonth()]; renderCal(); return; }
+  /* выбранный день — на полдень (в 00:00 большинство рейсов ещё не начато) */
+  if (playing) $('#play').click();
+  setT((new Date(calYM[0], calYM[1], +b.dataset.d, 12) - t0()) / 3600e3);
+  openCal(false); $('#dateBtn').focus();
+};
+document.addEventListener('pointerdown', e => { if (!$('#cal').hidden && !e.target.closest('#cal, #dateBtn')) openCal(false); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#cal').hidden) { openCal(false); $('#dateBtn').focus(); } }, true);
+$('#play').onclick = () => { playing = !playing; $('#play').textContent = playing ? '❚❚' : '▶'; if (playing) { if (T >= D.horizon_h) setT(0); lastTs = 0; requestAnimationFrame(tick); } };
+function tick(ts) {
+  if (!playing) return;
+  if (lastTs) setT(T + (ts - lastTs) / 1000 * 24 * +$('#speed').value);
+  lastTs = ts;
+  if (T >= D.horizon_h) { playing = false; $('#play').textContent = '▶'; return; }
+  requestAnimationFrame(tick);
+}
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' && e.target.type !== 'range' || e.target.tagName === 'SELECT') return;
+  if (e.target.closest && e.target.closest('#cal')) return;  // в календаре пробел и стрелки — его собственные
+  if (e.key === ' ') { e.preventDefault(); $('#play').click(); }
+  if (e.key === 'ArrowRight') setT(T + 24); if (e.key === 'ArrowLeft') setT(T - 24);
+  if (e.key === 'Escape') { sel = null; renderSide(); renderMap(); }
+});
+
+/* ---------- тема ---------- */
+$('#themeBtn').onclick = () => {
+  const r = document.documentElement, dark = r.dataset.theme ? r.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  r.dataset.theme = dark ? 'light' : 'dark';
+  try { localStorage.setItem('a3theme', r.dataset.theme); } catch (e) {}
+};
+try { const t = localStorage.getItem('a3theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+
+/* ---------- приложение: сценарии и загрузка ---------- */
+function busy(on, text) { $('#overlay').classList.toggle('on', on); if (text) $('#overlayText').textContent = text; if (!on || text) $('#overlayFc').innerHTML = ''; }
+async function api(path, opt) { const r = await fetch(path, opt); const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.detail || j.error || r.statusText); return j; }
+let jobSeq = 0, netForecast = null;
+const FC_SHORT = {NETWORK_REPOSITION: 'с перегоном', NETWORK_COST: 'по цене', NETWORK_SOCIAL: 'соцминимумы', NETWORK_GREEDY: 'жадная', NETWORK_FCFS: 'по очереди'};
+function forecastLine(fc) {
+  const top = Object.entries(fc.by_strategy).sort((a, b) => b[1].on_time_t - a[1].on_time_t).slice(0, 2);
+  const ood = fc.status !== 'OK';
+  return `прогноз ML за ${Math.round(fc.ms || 0)} мс: ${top.map(([k, v]) => `${FC_SHORT[k] || k} ≈${fmt(v.on_time_t / 1000)} тыс. т (${Math.round(v.on_time_share * 100)}%)`).join(', ')}${ood ? ' — сценарий крупнее обучающих, грубый ориентир' : ''}; ядро уточняет`;
+}
+/* все метрики прогноза: [ключ, подпись, делитель, знаков, лучше меньше] — ключи как в metrics / financial ядра */
+const FC_ROWS = [
+  ['delivered_on_time_t', 'В срок, т', 1, 0], ['delivered_total_t', 'Доставлено всего, т', 1, 0], ['undelivered_t', 'Недовоз, т', 1, 0],
+  ['critical_on_time_t', 'Критичных в срок, т', 1, 0], ['completed_voyages', 'Рейсов', 1, 0], ['repositioning_voyages', 'Перегонов', 1, 0],
+  ['loaded_km', 'Пробег с грузом, км', 1, 0], ['empty_km', 'Порожний пробег, км', 1, 0], ['tonne_km', 'Грузооборот, млн т·км', 1e6, 1],
+  ['resource_busy_hours', 'Занятость флота, ч', 1, 0],
+  ['total_cost', 'Стоимость, млн ₽', 1e6, 1], ['operating_cost', 'в т. ч. перевозка, млн ₽', 1e6, 1], ['cost_per_t_on_time', 'Цена тонны в срок, ₽', 1, 0],
+  ['undelivered_penalty', 'в т. ч. цена недовоза, млн ₽', 1e6, 1], ['empty_transition_cost', 'Порожние переходы, млн ₽', 1e6, 1]];
+const fcHas = fc => fc && fc.by_strategy && Object.values(fc.by_strategy).some(v => v.metrics);
+function fcOodNote(fc) {
+  return fc.status !== 'OK' ? ' <b>Сценарий выходит за обучающие данные</b> (' + esc((fc.outside_features || []).map(x => x.replace('f_', '')).join(', ')) + ') — это грубый ориентир, стратегия не рекомендуется.' : '';
+}
+/* пока ядро считает: таблица «метрика × стратегия» с интервалом ≈80% */
+function forecastWaitHTML(fc) {
+  const ks = Object.keys(fc.by_strategy).filter(k => fc.by_strategy[k].metrics);
+  const rows = FC_ROWS.filter(([key]) => ks.some(k => fc.by_strategy[k].metrics[key])).map(([key, name, div, dec]) => `<tr><td>${name}</td>${ks.map(k => {
+    const v = fc.by_strategy[k].metrics[key];
+    return !v || v.value == null ? '<td class="n">—</td>' : `<td class="n num">${fmt(v.value / div, dec)}<small>${fmt(v.lo / div, dec)}–${fmt(v.hi / div, dec)}</small></td>`;
+  }).join('')}</tr>`).join('');
+  return `<div class="callout" style="margin-bottom:8px"><b>Прогноз ML за ${Math.round(fc.ms || 0)} мс — оценка, не расчёт.</b> Мелким шрифтом — интервал, в который попадают ≈80% проверочных сценариев.${fcOodNote(fc)}${fc.money === 'SKIPPED_OTHER_TARIFFS' ? ' Деньги не оцениваются: тарифы отличаются от обучающих.' : ''} Точные числа и аудит даст ядро.</div>
+  <table class="t"><tr><th></th>${ks.map(k => `<th class="n${k === fc.recommended ? ' best' : ''}">${esc(FC_SHORT[k] || k)}${k === fc.recommended ? ' ★' : ''}</th>`).join('')}</tr>${rows}</table>`;
+}
+/* после расчёта: прогноз против ядра по всем метрикам выбранной стратегии */
+function forecastAllHTML(fc) {
+  const f = fc.by_strategy[cur], s = D.strategies[cur];
+  if (!f || !f.metrics || !s) return '';
+  const fin = s.financial || {};
+  const rows = FC_ROWS.filter(([key]) => f.metrics[key] && f.metrics[key].value != null).map(([key, name, div, dec]) => {
+    const p = f.metrics[key], raw = key === 'operating_cost' ? (fin.total_cost != null ? fin.total_cost - fin.undelivered_penalty : null) : s.metrics[key] != null ? s.metrics[key] : fin[key];
+    if (raw == null) return '';
+    const a = Number(raw), inside = a >= p.lo - 1e-6 && a <= p.hi + 1e-6;
+    return `<tr><td>${name}</td><td class="n num">${fmt(p.value / div, dec)}<small>${fmt(p.lo / div, dec)}–${fmt(p.hi / div, dec)}</small></td><td class="n num">${fmt(a / div, dec)}</td><td class="n"><span class="badge ${inside ? 'ok' : 'bad'}">${inside ? 'в интервале' : 'вне интервала'}</span></td></tr>`;
+  }).join('');
+  return `<h3>Все метрики: прогноз и ядро · ${esc(s.label)}</h3><table class="t fcm"><tr><td></td><td class="n note">прогноз</td><td class="n note">ядро</td><td></td></tr>${rows}</table>`;
+}
+function forecastHTML() {
+  const fc = D && D._forecast;
+  if (!fc) return '';
+  const rows = D.order.filter(k => fc.by_strategy[k]).map(k => {
+    // ошибка — в процентах спроса: у стратегий с малым тоннажем относительная ошибка «по себе» обманчиво велика
+    const p = fc.by_strategy[k].on_time_t, a = D.strategies[k].metrics.delivered_on_time_t, err = (p - a) / (D._demand || 1);
+    return `<tr><td>${esc(D.strategies[k].label)}</td><td class="n num">${fmt(p)} т</td><td class="n num">${fmt(a)} т</td><td class="n num" style="color:${Math.abs(err) <= 0.05 ? 'var(--ok)' : 'var(--signal)'}">${err >= 0 ? '+' : '−'}${fmt(Math.abs(err) * 100, 1)} п. п.</td></tr>`;
+  }).join('');
+  return `<h3>Прогноз ML до расчёта</h3><div class="callout" style="margin-bottom:8px">Сетевая модель (ml/network_ml) дала оценку за ${Math.round(fc.ms || 0)} мс, до запуска ядра.${fc.status !== 'OK' ? ' <b>Сценарий выходит за обучающие данные</b> (' + esc((fc.outside_features || []).map(x => x.replace('f_', '')).join(', ')) + ') — это грубый ориентир, стратегия не рекомендуется.' : fc.recommended ? ' Рекомендованная стратегия: ' + esc(FC_SHORT[fc.recommended] || fc.recommended) + '.' : ''} Итог и аудит — только ядро.</div>
+  <table class="t"><tr><td></td><td class="n note">прогноз</td><td class="n note">ядро</td><td class="n note">ошибка, % спроса</td></tr>${rows}</table>` + forecastAllHTML(fc);
+}
+async function runJob(body, label) {
+  const my = ++jobSeq;
+  busy(true, `Считаем «${label}»…`);
+  try {
+    const j = await api('/api/network/jobs', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
+    if (my !== jobSeq) return;
+    const id = j.job_id;
+    const fc = j.forecast;
+    netForecast = fc && fc.by_strategy ? {...fc, ms: j.forecast_ms} : null;
+    if (netForecast) {
+      $('#overlayText').textContent = label;
+      if (fcHas(netForecast)) { $('#overlayFc').innerHTML = forecastWaitHTML(netForecast); label += ' · ядро считает'; }
+      else label += ' · ' + forecastLine(netForecast);
+    } else if (fc && fc.available && !fc.out_of_distribution && fc.expected_on_time_share) {
+      const best = fc.strategy_to_run || Object.keys(fc.expected_on_time_share)[0];
+      const iv = (fc.on_time_share_interval90 || {})[best];
+      label += ` · нейросеть за ${Math.round(j.forecast_ms || 0)} мс: в срок ≈${Math.round(fc.expected_on_time_share[best] * 100)}%${iv ? ` (${Math.round(iv[0] * 100)}–${Math.round(iv[1] * 100)}%)` : ''}, матмодель уточняет`;
+    }
+    for (;;) {
+      await new Promise(r => setTimeout(r, 700));
+      if (my !== jobSeq) return;       // запущен другой расчёт — этот больше не показываем
+      const s = await api(`/api/network/jobs/${id}`);
+      if (s.status === 'done') break;
+      if (s.status !== 'running') throw new Error(s.error || s.status);
+      $('#overlayText').textContent = `${label} · ${Math.round(s.elapsed_s)} с`;
+    }
+    const data = await api(`/api/network/jobs/${id}/data`);
+    if (my !== jobSeq) return;
+    jobId = id; load(data); D._forecast = netForecast; setStrategy(cur);
+  } catch (e) { if (my === jobSeq) alert('Не удалось посчитать: ' + e.message); }
+  finally { if (my === jobSeq) busy(false); }
+}
+async function initApp() {
+  const sc = await api('/api/network/scenarios');
+  const sel_ = $('#scenarioSel');
+  const groups = [['network', 'Сеть рек · сетевое ядро'], ['linear', 'Одна река · матмодель и нейросеть']];
+  sel_.innerHTML = groups.map(([k, n]) => `<optgroup label="${n}">${sc.builtin.filter(b => (b.kind || 'network') === k).map(b => `<option value="${esc(b.name)}">${esc(b.title)}</option>`).join('')}</optgroup>`).join('');
+  const want = new URLSearchParams(location.search).get('scenario');
+  if (want && sc.builtin.some(b => b.name === want)) sel_.value = want;
+  sel_.hidden = false;
+  sel_.insertAdjacentHTML('beforeend', '<optgroup label="Свои данные"><option value="__new">Загрузить свои файлы…</option></optgroup>');
+  let prevVal = sel_.value;
+  sel_.onchange = () => {
+    if (sel_.value === '__new') { sel_.value = prevVal; $('#uploadBtn').click(); return; }
+    prevVal = sel_.value;
+    if (sel_.value !== '__upload') runJob({builtin: sel_.value}, sel_.selectedOptions[0].textContent);
+  };
+  $('#uploadBtn').onclick = () => { tab = 'upload'; $('#pane').innerHTML = uploadHTML(); renderTabs(); bindUpload(); };
+  runJob({builtin: sel_.value}, sel_.selectedOptions[0].textContent);
+}
+function uploadHTML() {
+  return `<h3>Свой сценарий</h3>
+  <div class="drop" id="drop">Перетащите файлы сюда<br><span class="note">или нажмите, чтобы выбрать; имена файлов любые</span></div>
+  <h3>Сеть рек</h3>
+  <p class="note">Один JSON, как <code>data/yakutia/yakutia_network.json</code>: порты, участки с глубинами по дням, буксиры, баржи, заявки «откуда — куда». Можно добавить пределы поиска и тарифы. Порты из геоосновы Якутии встанут на свои места, остальные — схемой.</p>
+  <p><a class="btn" href="/api/network/sample/yakutia" download="yakutia_network.json">Пример: Якутия</a> <a class="btn" href="/api/network/sample/demo" download="network_demo.json">Пример: порты A–D</a></p>
+  <h3>Одна река</h3>
+  <p class="note">Три CSV — <code>cargo</code>, <code>units</code>, <code>conditions</code> — и по желанию <code>config.json</code> с участками маршрута (без него — Нижнеянск — Усть-Куйга). Сначала придёт прогноз нейросети, затем расчёт матмодели.</p>
+  <p><a class="btn" href="/api/sample/cargo.csv" download>cargo.csv</a> <a class="btn" href="/api/sample/units.csv" download>units.csv</a> <a class="btn" href="/api/sample/conditions.csv" download>conditions.csv</a> <a class="btn" href="/api/sample/config.json" download>config.json</a></p>`;
+}
+function bindUpload() {
+  const drop = $('#drop'), inp = $('#fileIn');
+  drop.onclick = () => inp.click();
+  drop.ondragover = e => { e.preventDefault(); drop.classList.add('over'); };
+  drop.ondragleave = () => drop.classList.remove('over');
+  drop.ondrop = e => { e.preventDefault(); drop.classList.remove('over'); takeFiles(e.dataTransfer.files); };
+  inp.onchange = () => takeFiles(inp.files);
+}
+function markUploaded(name) {
+  const sel_ = $('#scenarioSel');
+  let o = sel_.querySelector('option[value="__upload"]');
+  if (!o) { o = document.createElement('option'); o.value = '__upload'; sel_.prepend(o); }
+  o.textContent = 'Загружено: ' + name; sel_.value = '__upload';
+}
+async function takeFiles(files) {
+  const body = {}, csv = {};
+  for (const f of files) {
+    const text = await f.text();
+    const head = text.replace(/^\ufeff/, '').split(/\r?\n/, 1)[0].toLowerCase();
+    if (!text.trim().startsWith('{')) {
+      if (head.includes('cargo_id') && head.includes('due_date')) csv.cargo = text;
+      else if (head.includes('unit_id')) csv.units = text;
+      else if (head.includes('segment_id') && head.includes('usable_depth_m')) csv.conditions = text;
+      else { alert(`${f.name}: не узнал файл. Нужны cargo / units / conditions (CSV) или JSON`); return; }
+      continue;
+    }
+    let j; try { j = JSON.parse(text); } catch (e) { alert(`${f.name}: не JSON`); return; }
+    if (j.segments && !j.edges) { csv.config = text; continue; }
+    if (j.edges && j.cargo) body.scenario = j;
+    else if (j.rates) body.tariffs = j;
+    else if ('max_actions' in j || 'beam_width' in j) body.limits = j;
+    else { alert(`${f.name}: не узнал файл (нужен сценарий с edges и cargo, limits или тарифы с rates)`); return; }
+  }
+  if (Object.keys(csv).length) {
+    const miss = ['cargo', 'units', 'conditions'].filter(k => !csv[k]);
+    if (miss.length) { alert('Для одной реки не хватает: ' + miss.join(', ')); return; }
+    markUploaded('одна река');
+    return runJob({files: csv}, 'свой сценарий одной реки');
+  }
+  if (!body.scenario) { alert('Нужен JSON сети (с полями edges и cargo) или три CSV одной реки'); return; }
+  markUploaded(body.scenario.scenario_id || 'сеть');
+  runJob(body, body.scenario.scenario_id || 'свой сценарий');
+}
+
+if (D0) load(D0); else if (APP) initApp().catch(e => { busy(false); alert(e.message); });
+</script>
+</body>
+</html>

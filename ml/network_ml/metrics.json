@@ -41,101 +41,240 @@
   "holdout_20pct_scenarios": {
    "rows": 600,
    "scenarios": 120,
-   "mae_share": 0.0569,
-   "mae_t": 6677.2,
-   "r2": 0.9287,
-   "mae_share_without_time_limit": 0.0556,
-   "time_limited_rows": 20,
-   "mae_share_time_limited": 0.0956,
-   "best_strategy_accuracy": 0.9667,
-   "mean_regret_t": 299.9,
-   "mean_regret_share": 0.0016
+   "mae_share": 0.0578,
+   "mae_t": 6635.0,
+   "r2": 0.9267,
+   "mae_share_without_time_limit": 0.0568,
+   "time_limited_rows": 23,
+   "mae_share_time_limited": 0.0845,
+   "best_strategy_accuracy": 0.975,
+   "mean_regret_t": 461.7,
+   "mean_regret_share": 0.0008
   },
   "baseline_fluid_holdout": {
    "rows": 600,
    "scenarios": 120,
-   "mae_share": 0.465,
-   "mae_t": 75701.1,
-   "r2": -1.6264,
-   "mae_share_without_time_limit": 0.4759,
-   "time_limited_rows": 20,
-   "mae_share_time_limited": 0.151,
-   "best_strategy_accuracy": 0.8667,
-   "mean_regret_t": 756.6,
-   "mean_regret_share": 0.0048
+   "mae_share": 0.4652,
+   "mae_t": 75787.7,
+   "r2": -1.6281,
+   "mae_share_without_time_limit": 0.4771,
+   "time_limited_rows": 23,
+   "mae_share_time_limited": 0.1659,
+   "best_strategy_accuracy": 0.875,
+   "mean_regret_t": 745.8,
+   "mean_regret_share": 0.0047
   },
   "holdout_trained_without_time_limit": {
    "rows": 600,
    "scenarios": 120,
-   "mae_share": 0.0588,
-   "mae_t": 6944.0,
-   "r2": 0.9245,
-   "mae_share_without_time_limit": 0.0567,
-   "time_limited_rows": 20,
+   "mae_share": 0.0595,
+   "mae_t": 7051.5,
+   "r2": 0.9235,
+   "mae_share_without_time_limit": 0.0571,
+   "time_limited_rows": 23,
    "mae_share_time_limited": 0.12,
-   "best_strategy_accuracy": 0.9333,
-   "mean_regret_t": 714.6,
-   "mean_regret_share": 0.0026
+   "best_strategy_accuracy": 0.9583,
+   "mean_regret_t": 699.5,
+   "mean_regret_share": 0.0025
   },
   "leave_out_deep": {
    "rows": 1000,
    "scenarios": 200,
-   "mae_share": 0.0794,
-   "mae_t": 15424.7,
-   "r2": 0.8793,
-   "mae_share_without_time_limit": 0.0773,
-   "time_limited_rows": 50,
-   "mae_share_time_limited": 0.1177,
-   "best_strategy_accuracy": 0.98,
-   "mean_regret_t": 150.6,
+   "mae_share": 0.078,
+   "mae_t": 14733.5,
+   "r2": 0.8784,
+   "mae_share_without_time_limit": 0.0767,
+   "time_limited_rows": 56,
+   "mae_share_time_limited": 0.1012,
+   "best_strategy_accuracy": 0.975,
+   "mean_regret_t": 231.8,
    "mean_regret_share": 0.0006
   },
   "leave_out_real": {
    "rows": 1000,
    "scenarios": 200,
-   "mae_share": 0.0664,
-   "mae_t": 15320.0,
-   "r2": 0.774,
-   "mae_share_without_time_limit": 0.0634,
-   "time_limited_rows": 65,
-   "mae_share_time_limited": 0.1102,
-   "best_strategy_accuracy": 0.985,
-   "mean_regret_t": 121.8,
-   "mean_regret_share": 0.0004
+   "mae_share": 0.0651,
+   "mae_t": 14856.7,
+   "r2": 0.7787,
+   "mae_share_without_time_limit": 0.0637,
+   "time_limited_rows": 59,
+   "mae_share_time_limited": 0.0878,
+   "best_strategy_accuracy": 0.97,
+   "mean_regret_t": 607.8,
+   "mean_regret_share": 0.0016
   },
   "leave_out_syn": {
    "rows": 1000,
    "scenarios": 200,
-   "mae_share": 0.3189,
-   "mae_t": 5128.5,
-   "r2": -0.5744,
-   "mae_share_without_time_limit": 0.3189,
+   "mae_share": 0.3211,
+   "mae_t": 5173.4,
+   "r2": -0.587,
+   "mae_share_without_time_limit": 0.3211,
    "time_limited_rows": 0,
-   "best_strategy_accuracy": 0.91,
-   "mean_regret_t": 58.6,
-   "mean_regret_share": 0.0041
+   "best_strategy_accuracy": 0.915,
+   "mean_regret_t": 48.7,
+   "mean_regret_share": 0.0038
   }
  },
  "per_strategy_holdout": {
   "NETWORK_COST": {
-   "mae_share": 0.0908,
-   "mean_true_share": 0.6909
+   "mae_share": 0.089,
+   "mean_true_share": 0.6903
   },
   "NETWORK_FCFS": {
-   "mae_share": 0.0296,
+   "mae_share": 0.032,
    "mean_true_share": 0.1323
   },
   "NETWORK_GREEDY": {
-   "mae_share": 0.0354,
+   "mae_share": 0.0381,
    "mean_true_share": 0.1333
   },
   "NETWORK_REPOSITION": {
-   "mae_share": 0.0911,
+   "mae_share": 0.0907,
    "mean_true_share": 0.6862
   },
   "NETWORK_SOCIAL": {
-   "mae_share": 0.0376,
+   "mae_share": 0.0392,
    "mean_true_share": 0.1564
+  }
+ },
+ "all_metrics_holdout": {
+  "delivered_on_time_t": {
+   "rows": 600,
+   "scale": "demand",
+   "mae": 6635.0,
+   "mean_true": 35437.04,
+   "wape": 0.1872,
+   "q80_abs_residual": 0.0936
+  },
+  "delivered_total_t": {
+   "rows": 600,
+   "scale": "demand",
+   "mae": 6618.64,
+   "mean_true": 35445.91,
+   "wape": 0.1867,
+   "q80_abs_residual": 0.0913
+  },
+  "critical_on_time_t": {
+   "rows": 600,
+   "scale": "demand",
+   "mae": 5154.42,
+   "mean_true": 16626.27,
+   "wape": 0.31,
+   "q80_abs_residual": 0.04697
+  },
+  "completed_voyages": {
+   "rows": 600,
+   "scale": "voyages",
+   "mae": 7.82,
+   "mean_true": 30.49,
+   "wape": 0.2564,
+   "q80_abs_residual": 0.16848
+  },
+  "repositioning_voyages": {
+   "rows": 600,
+   "scale": "voyages",
+   "mae": 7.44,
+   "mean_true": 27.03,
+   "wape": 0.2752,
+   "q80_abs_residual": 0.13285
+  },
+  "loaded_km": {
+   "rows": 600,
+   "scale": "voyage_km",
+   "mae": 6621.62,
+   "mean_true": 25774.41,
+   "wape": 0.2569,
+   "q80_abs_residual": 0.13934
+  },
+  "empty_km": {
+   "rows": 600,
+   "scale": "voyage_km",
+   "mae": 6325.9,
+   "mean_true": 21899.13,
+   "wape": 0.2889,
+   "q80_abs_residual": 0.0963
+  },
+  "tonne_km": {
+   "rows": 600,
+   "scale": "tonne_km",
+   "mae": 7529691.75,
+   "mean_true": 33046998.0,
+   "wape": 0.2278,
+   "q80_abs_residual": 0.11011
+  },
+  "resource_busy_hours": {
+   "rows": 600,
+   "scale": "fleet_hours",
+   "mae": 2759.88,
+   "mean_true": 9565.02,
+   "wape": 0.2885,
+   "q80_abs_residual": 0.02371
+  },
+  "operating_cost": {
+   "rows": 600,
+   "scale": "demand",
+   "mae": 15886792.42,
+   "mean_true": 61876498.69,
+   "wape": 0.2568,
+   "q80_abs_residual": 328.41619
+  },
+  "undelivered_penalty": {
+   "rows": 600,
+   "scale": "demand",
+   "mae": 197153665.08,
+   "mean_true": 2084461297.07,
+   "wape": 0.0946,
+   "q80_abs_residual": 2362.41334
+  },
+  "empty_transition_cost": {
+   "rows": 600,
+   "scale": "voyage_km",
+   "mae": 759520.73,
+   "mean_true": 2627896.0,
+   "wape": 0.289,
+   "q80_abs_residual": 11.55658
+  }
+ },
+ "all_metrics_transfer_wape": {
+  "leave_out_deep": {
+   "delivered_total_t": 0.2593,
+   "critical_on_time_t": 0.3858,
+   "completed_voyages": 0.4518,
+   "repositioning_voyages": 0.3216,
+   "loaded_km": 0.5586,
+   "empty_km": 0.377,
+   "tonne_km": 0.3586,
+   "resource_busy_hours": 0.3227,
+   "operating_cost": 0.4294,
+   "undelivered_penalty": 0.1312,
+   "empty_transition_cost": 0.3768
+  },
+  "leave_out_real": {
+   "delivered_total_t": 0.348,
+   "critical_on_time_t": 0.5787,
+   "completed_voyages": 0.3834,
+   "repositioning_voyages": 0.394,
+   "loaded_km": 0.4298,
+   "empty_km": 0.4263,
+   "tonne_km": 0.5332,
+   "resource_busy_hours": 0.4082,
+   "operating_cost": 0.3939,
+   "undelivered_penalty": 0.1468,
+   "empty_transition_cost": 0.4263
+  },
+  "leave_out_syn": {
+   "delivered_total_t": 0.5297,
+   "critical_on_time_t": 2.1039,
+   "completed_voyages": 0.6811,
+   "repositioning_voyages": 0.3221,
+   "loaded_km": 0.4575,
+   "empty_km": 0.6339,
+   "tonne_km": 0.5403,
+   "resource_busy_hours": 0.4085,
+   "operating_cost": 0.4017,
+   "undelivered_penalty": 0.6858,
+   "empty_transition_cost": 0.6304
   }
  }
 }

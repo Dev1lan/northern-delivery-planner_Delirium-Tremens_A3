@@ -109,6 +109,7 @@ def main():
     ap.add_argument("--workers", type=int, default=7)
     ap.add_argument("--seed", type=int, default=2026)
     ap.add_argument("--out", default=str(HERE / "data" / "dataset.csv"))
+    ap.add_argument("--resume", action="store_true", help="дописать недостающие строки в существующий файл")
     a = ap.parse_args()
     rng = random.Random(a.seed)
     rev = commit()
@@ -126,16 +127,25 @@ def main():
                                       limits=limits))
     out = Path(a.out)
     out.parent.mkdir(parents=True, exist_ok=True)
-    started, fields, n_ok = time.time(), None, 0
-    with out.open("w", newline="", encoding="utf-8") as fh:
-        w = None
-        for k, (meta, run) in enumerate(zip(rows_meta, run_jobs(jobs, workers=a.workers)), 1):
+    started, fields, n_ok, done = time.time(), None, 0, 0
+    if a.resume and out.exists():
+        # сценарии строятся детерминированно по seed, поэтому уже посчитанные строки — префикс списка заданий
+        with out.open(newline="", encoding="utf-8") as fh:
+            old = list(csv.DictReader(fh))
+        if any((r["scenario_id"], r["strategy"]) != (m["scenario_id"], m["strategy"])
+               for r, m in zip(old, rows_meta)):
+            raise SystemExit("--resume: существующий файл построен с другими параметрами")
+        done, n_ok, fields = len(old), sum(r["audit"] == "PASSED" for r in old), list(old[0]) if old else None
+    with out.open("a" if done else "w", newline="", encoding="utf-8") as fh:
+        w = csv.DictWriter(fh, fieldnames=fields) if done else None
+        for k, (meta, run) in enumerate(zip(rows_meta[done:], run_jobs(jobs[done:], workers=a.workers)), done + 1):
             r = run.result
             try:
                 audit = audit_result(r)["schedule_audit"]["status"]
             except Exception as exc:  # noqa: BLE001 — непроверяемый результат не идёт в обучение
                 audit = f"ERROR:{type(exc).__name__}"
             m = r["metrics"]
+            fin = r.get("financial_evaluation") or {}
             row = dict(scenario_id=meta["scenario_id"], base=meta["base"], strategy=meta["strategy"],
                        core_version=VERSION, algorithm_version=r["algorithm_version"], repo_commit=rev,
                        input_fingerprint=r["input_fingerprint"], policy=json.dumps(meta["policy"]),
@@ -145,7 +155,14 @@ def main():
                        on_time_t=m["delivered_on_time_t"], total_t=m["delivered_total_t"],
                        on_time_share=m["delivered_on_time_t"] / m["demand_t"] if m["demand_t"] else 0.0,
                        voyages=m["completed_voyages"],
-                       cost_rub=(r.get("financial_evaluation") or {}).get("total_cost"),
+                       cost_rub=fin.get("total_cost"),
+                       # все итоговые метрики ядра и денежные итоги — метки для прогноза «все метрики до расчёта»
+                       undelivered_t=m["undelivered_t"], critical_on_time_t=m["critical_on_time_t"],
+                       loaded_km=m["loaded_km"], empty_km=m["empty_km"], tonne_km=m["tonne_km"],
+                       late_tonne_hours=m["late_tonne_hours"], busy_hours=m["resource_busy_hours"],
+                       repositioning_voyages=m["repositioning_voyages"],
+                       undelivered_penalty_rub=fin.get("undelivered_penalty"),
+                       empty_cost_rub=fin.get("empty_transition_cost"),
                        params=json.dumps(meta["params"]),
                        **{f"f_{key}": v for key, v in meta["features"].items()})
             if w is None:
@@ -161,7 +178,7 @@ def main():
         "created": datetime.now().isoformat(timespec="seconds"), "core_version": VERSION, "repo_commit": rev,
         "rows": len(jobs), "audit_passed": n_ok, "per_base": a.per_base, "seed": a.seed,
         "strategies": STRATEGIES, "tariffs": "data/yakutia/tariffs_v2.json",
-        "labels": "network.batch.run_jobs → metrics.delivered_on_time_t; audit_result на каждой строке",
+        "labels": "network.batch.run_jobs → все поля metrics и итоги financial_evaluation; audit_result на каждой строке",
         "note": "Сценарии — возмущения синтетической и реальной сети Якутии; это обучающие варианты, не факты.",
         "seconds": round(time.time() - started, 1)}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     print(out, f"{time.time() - started:.0f} с")

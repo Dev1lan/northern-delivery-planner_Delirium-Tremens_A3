@@ -199,7 +199,12 @@ table.t td.n,table.t th.n{text-align:right}
 .drop.over{border-color:var(--accent);background:var(--accent-soft)}
 .overlay{position:absolute;inset:0;display:none;place-items:center;background:color-mix(in srgb,var(--page) 60%,transparent);z-index:30}
 .overlay.on{display:grid}
-.overlay .box{padding:16px 20px;display:flex;gap:12px;align-items:center}
+.overlay .box{padding:16px 20px;max-width:min(880px,94%);max-height:92%;overflow:auto}
+.overlay .box .row{display:flex;gap:12px;align-items:center}
+.overlay .fc{margin-top:12px}
+.overlay .fc:empty{display:none}
+.overlay .fc td small,.fcm td small{display:block;color:var(--muted);font-size:10.5px;white-space:nowrap}
+.overlay .fc th.best{color:var(--accent)}
 .spin{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--accent);animation:sp 1s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
 /* карта */
@@ -273,7 +278,7 @@ tr.xv{cursor:pointer} tr.xv:hover td{background:var(--surface2)}
         <div class="float legend" id="legend"></div>
         <div class="float attrib" id="attrib"></div>
         <div class="float tip" id="tip"></div>
-        <div class="overlay" id="overlay"><div class="float box" style="position:static"><div class="spin"></div><div id="overlayText">Считаем…</div></div></div>
+        <div class="overlay" id="overlay"><div class="float box" style="position:static"><div class="row"><div class="spin"></div><div id="overlayText">Считаем…</div></div><div class="fc" id="overlayFc"></div></div></div>
       </div>
             <div class="timeline">
         <button class="btn icon" id="play" title="Пуск / пауза" aria-label="Пуск">▶</button>
@@ -842,7 +847,7 @@ function overviewHTML() {
   <dt>Поиск</dt><dd>${s.termination_reason === 'SEARCH_LIMIT' ? 'остановлен по лимиту поиска' : s.termination_reason === 'TIME_LIMIT' ? 'остановлен по бюджету времени' : 'завершён'}</dd>
   ${s.seconds != null ? `<dt>Время расчёта</dt><dd class="num">${fmt(s.seconds, 1)} с</dd>` : ''}
   <dt>Модель</dt><dd>${D._linear ? 'матмодель ' : 'сетевое ядро '}${esc(D.core.algorithm_version)} · контракт ${esc(D.core.schema_version)}</dd>
-  <dt>Данные</dt><dd>${D.data_status === 'SYNTHETIC' ? 'синтетические' : esc(D.data_status)}</dd></div>`;
+  ${D.data_status && D.data_status !== 'SYNTHETIC' ? `<dt>Данные</dt><dd>${esc(D.data_status)}</dd>` : ''}</div>`;
   return h;
 }
 function mlHTML() {
@@ -898,7 +903,7 @@ function vesselCard(id) {
   <dt>Выход в море</dt><dd>${c.sea_allowed == null ? '—' : c.sea_allowed ? 'разрешён' : 'нет, только река'}</dd>
   ${row('Проект', c.project)}${row('Год постройки', c.built)}${row('Оператор', c.operator)}${row('Номер в реестре', c.registry_id)}
   </dl>
-  <p class="note" style="margin:8px 0 0"><span class="badge stub">заглушка</span> Характеристики синтетические; проект, год, оператор и номер подтянутся из реестра судов.</p></div>
+  <p class="note" style="margin:8px 0 0"><span class="badge stub">заглушка</span> Проект, год, оператор и номер подтянутся из реестра судов.</p></div>
   <div class="card"><div class="grid2"><div class="mini"><div class="l">Занятость за сезон</div><div class="v num">${Math.round(busy * 100)}%</div></div><div class="mini"><div class="l">Конец сезона</div><div class="v" style="font-size:13px">${esc(fin ? fin.current_port : '—')}</div></div></div>
   <h3>Рейсы (${voy.length})</h3>`;
   if (!voy.length) h += '<p class="note">В этой стратегии не задействован.</p>';
@@ -977,7 +982,7 @@ function financeHTML() {
   const NAMES = COST_NAMES;
   const items = Object.entries(f.cost_by_unit).map(([k, v]) => [k, Number(v)]).sort((a, b) => b[1] - a[1]);
   const mx = Math.max(...items.map(i => i[1]), 1);
-  let h = `<div class="callout" style="margin-bottom:10px"><span class="badge stub">заглушка</span> Ставки условные (${esc(f.source_status)}). Когда появится финансовое ядро, сюда придут его ставки и статьи; расчёт и формат не поменяются.</div>
+  let h = `<div class="callout" style="margin-bottom:10px"><span class="badge stub">заглушка</span> Ставки условные${f.source_status && !/SYNTHETIC/i.test(f.source_status) ? ` (${esc(f.source_status)})` : ''}. Когда появится финансовое ядро, сюда придут его ставки и статьи; расчёт и формат не поменяются.</div>
   <div class="grid2"><div class="mini"><div class="l">Стоимость сезона</div><div class="v num">${moneyFmt(tot)}</div></div><div class="mini"><div class="l">За тонну в срок</div><div class="v num">${fmt(tot / Math.max(1, m.delivered_on_time_t))} ${curSign()}</div></div></div>
   <h3>Статьи затрат</h3><div class="fin">${items.map(([k, v]) => `<div class="r"><span>${NAMES[k] || k}</span><div class="bar"><i style="width:${100 * v / mx}%"></i></div><span class="num" style="text-align:right">${moneyFmt(v)}</span></div>`).join('')}</div>
   <h3>Сравнение стратегий</h3><table class="t"><tr><th>Стратегия</th><th class="n">в срок, т</th><th class="n">стоимость</th><th class="n">${curSign()}/т</th></tr>${D.order.map(k => { const q = D.strategies[k]; const c = q.financial ? Number(q.financial.total_cost) : null; return `<tr${k === cur ? ' style="font-weight:600"' : ''}><td>${esc(q.label)}</td><td class="n num">${fmt(q.metrics.delivered_on_time_t)}</td><td class="n num">${c == null ? '—' : moneyFmt(c)}</td><td class="n num">${c == null ? '—' : fmt(c / Math.max(1, q.metrics.delivered_on_time_t))}</td></tr>`; }).join('')}</table>
@@ -1354,7 +1359,7 @@ function setStrategy(k) {
   placeLabels(); renderMap(); renderSide();
 }
 function renderTop() {
-  $('#subtitle').textContent = `${D.ports.length} портов, ${fmt(D.links.reduce((a, l) => a + l.km, 0))} км сети${D.data_status === 'SYNTHETIC' ? ', учебные данные' : ''}`;
+  $('#subtitle').textContent = `${D.ports.length} портов, ${fmt(D.links.reduce((a, l) => a + l.km, 0))} км сети`;
   $('#strategies').innerHTML = D.order.map(k => {
     const s = D.strategies[k];
     return `<button data-s="${k}" aria-pressed="${k === cur}" title="${esc(s.hint)} · ${pct(s.metrics.delivered_on_time_t, s.metrics.demand_t)}% спроса в срок">${k === D.best ? '<span class="star" title="Лучший план"></span>' : ''}${esc(s.label)}<small class="num">${pct(s.metrics.delivered_on_time_t, s.metrics.demand_t)}%</small></button>`;
@@ -1471,7 +1476,7 @@ $('#themeBtn').onclick = () => {
 try { const t = localStorage.getItem('a3theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
 
 /* ---------- приложение: сценарии и загрузка ---------- */
-function busy(on, text) { $('#overlay').classList.toggle('on', on); if (text) $('#overlayText').textContent = text; }
+function busy(on, text) { $('#overlay').classList.toggle('on', on); if (text) $('#overlayText').textContent = text; if (!on || text) $('#overlayFc').innerHTML = ''; }
 async function api(path, opt) { const r = await fetch(path, opt); const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.detail || j.error || r.statusText); return j; }
 let jobSeq = 0, netForecast = null;
 const FC_SHORT = {NETWORK_REPOSITION: 'с перегоном', NETWORK_COST: 'по цене', NETWORK_SOCIAL: 'соцминимумы', NETWORK_GREEDY: 'жадная', NETWORK_FCFS: 'по очереди'};
@@ -1479,6 +1484,41 @@ function forecastLine(fc) {
   const top = Object.entries(fc.by_strategy).sort((a, b) => b[1].on_time_t - a[1].on_time_t).slice(0, 2);
   const ood = fc.status !== 'OK';
   return `прогноз ML за ${Math.round(fc.ms || 0)} мс: ${top.map(([k, v]) => `${FC_SHORT[k] || k} ≈${fmt(v.on_time_t / 1000)} тыс. т (${Math.round(v.on_time_share * 100)}%)`).join(', ')}${ood ? ' — сценарий крупнее обучающих, грубый ориентир' : ''}; ядро уточняет`;
+}
+/* все метрики прогноза: [ключ, подпись, делитель, знаков, лучше меньше] — ключи как в metrics / financial ядра */
+const FC_ROWS = [
+  ['delivered_on_time_t', 'В срок, т', 1, 0], ['delivered_total_t', 'Доставлено всего, т', 1, 0], ['undelivered_t', 'Недовоз, т', 1, 0],
+  ['critical_on_time_t', 'Критичных в срок, т', 1, 0], ['completed_voyages', 'Рейсов', 1, 0], ['repositioning_voyages', 'Перегонов', 1, 0],
+  ['loaded_km', 'Пробег с грузом, км', 1, 0], ['empty_km', 'Порожний пробег, км', 1, 0], ['tonne_km', 'Грузооборот, млн т·км', 1e6, 1],
+  ['resource_busy_hours', 'Занятость флота, ч', 1, 0],
+  ['total_cost', 'Стоимость, млн ₽', 1e6, 1], ['operating_cost', 'в т. ч. перевозка, млн ₽', 1e6, 1], ['cost_per_t_on_time', 'Цена тонны в срок, ₽', 1, 0],
+  ['undelivered_penalty', 'в т. ч. цена недовоза, млн ₽', 1e6, 1], ['empty_transition_cost', 'Порожние переходы, млн ₽', 1e6, 1]];
+const fcHas = fc => fc && fc.by_strategy && Object.values(fc.by_strategy).some(v => v.metrics);
+function fcOodNote(fc) {
+  return fc.status !== 'OK' ? ' <b>Сценарий выходит за обучающие данные</b> (' + esc((fc.outside_features || []).map(x => x.replace('f_', '')).join(', ')) + ') — это грубый ориентир, стратегия не рекомендуется.' : '';
+}
+/* пока ядро считает: таблица «метрика × стратегия» с интервалом ≈80% */
+function forecastWaitHTML(fc) {
+  const ks = Object.keys(fc.by_strategy).filter(k => fc.by_strategy[k].metrics);
+  const rows = FC_ROWS.filter(([key]) => ks.some(k => fc.by_strategy[k].metrics[key])).map(([key, name, div, dec]) => `<tr><td>${name}</td>${ks.map(k => {
+    const v = fc.by_strategy[k].metrics[key];
+    return !v || v.value == null ? '<td class="n">—</td>' : `<td class="n num">${fmt(v.value / div, dec)}<small>${fmt(v.lo / div, dec)}–${fmt(v.hi / div, dec)}</small></td>`;
+  }).join('')}</tr>`).join('');
+  return `<div class="callout" style="margin-bottom:8px"><b>Прогноз ML за ${Math.round(fc.ms || 0)} мс — оценка, не расчёт.</b> Мелким шрифтом — интервал, в который попадают ≈80% проверочных сценариев.${fcOodNote(fc)}${fc.money === 'SKIPPED_OTHER_TARIFFS' ? ' Деньги не оцениваются: тарифы отличаются от обучающих.' : ''} Точные числа и аудит даст ядро.</div>
+  <table class="t"><tr><th></th>${ks.map(k => `<th class="n${k === fc.recommended ? ' best' : ''}">${esc(FC_SHORT[k] || k)}${k === fc.recommended ? ' ★' : ''}</th>`).join('')}</tr>${rows}</table>`;
+}
+/* после расчёта: прогноз против ядра по всем метрикам выбранной стратегии */
+function forecastAllHTML(fc) {
+  const f = fc.by_strategy[cur], s = D.strategies[cur];
+  if (!f || !f.metrics || !s) return '';
+  const fin = s.financial || {};
+  const rows = FC_ROWS.filter(([key]) => f.metrics[key] && f.metrics[key].value != null).map(([key, name, div, dec]) => {
+    const p = f.metrics[key], raw = key === 'operating_cost' ? (fin.total_cost != null ? fin.total_cost - fin.undelivered_penalty : null) : s.metrics[key] != null ? s.metrics[key] : fin[key];
+    if (raw == null) return '';
+    const a = Number(raw), inside = a >= p.lo - 1e-6 && a <= p.hi + 1e-6;
+    return `<tr><td>${name}</td><td class="n num">${fmt(p.value / div, dec)}<small>${fmt(p.lo / div, dec)}–${fmt(p.hi / div, dec)}</small></td><td class="n num">${fmt(a / div, dec)}</td><td class="n"><span class="badge ${inside ? 'ok' : 'bad'}">${inside ? 'в интервале' : 'вне интервала'}</span></td></tr>`;
+  }).join('');
+  return `<h3>Все метрики: прогноз и ядро · ${esc(s.label)}</h3><table class="t fcm"><tr><td></td><td class="n note">прогноз</td><td class="n note">ядро</td><td></td></tr>${rows}</table>`;
 }
 function forecastHTML() {
   const fc = D && D._forecast;
@@ -1489,7 +1529,7 @@ function forecastHTML() {
     return `<tr><td>${esc(D.strategies[k].label)}</td><td class="n num">${fmt(p)} т</td><td class="n num">${fmt(a)} т</td><td class="n num" style="color:${Math.abs(err) <= 0.05 ? 'var(--ok)' : 'var(--signal)'}">${err >= 0 ? '+' : '−'}${fmt(Math.abs(err) * 100, 1)} п. п.</td></tr>`;
   }).join('');
   return `<h3>Прогноз ML до расчёта</h3><div class="callout" style="margin-bottom:8px">Сетевая модель (ml/network_ml) дала оценку за ${Math.round(fc.ms || 0)} мс, до запуска ядра.${fc.status !== 'OK' ? ' <b>Сценарий выходит за обучающие данные</b> (' + esc((fc.outside_features || []).map(x => x.replace('f_', '')).join(', ')) + ') — это грубый ориентир, стратегия не рекомендуется.' : fc.recommended ? ' Рекомендованная стратегия: ' + esc(FC_SHORT[fc.recommended] || fc.recommended) + '.' : ''} Итог и аудит — только ядро.</div>
-  <table class="t"><tr><td></td><td class="n note">прогноз</td><td class="n note">ядро</td><td class="n note">ошибка, % спроса</td></tr>${rows}</table>`;
+  <table class="t"><tr><td></td><td class="n note">прогноз</td><td class="n note">ядро</td><td class="n note">ошибка, % спроса</td></tr>${rows}</table>` + forecastAllHTML(fc);
 }
 async function runJob(body, label) {
   const my = ++jobSeq;
@@ -1502,7 +1542,8 @@ async function runJob(body, label) {
     netForecast = fc && fc.by_strategy ? {...fc, ms: j.forecast_ms} : null;
     if (netForecast) {
       $('#overlayText').textContent = label;
-      label += ' · ' + forecastLine(netForecast);
+      if (fcHas(netForecast)) { $('#overlayFc').innerHTML = forecastWaitHTML(netForecast); label += ' · ядро считает'; }
+      else label += ' · ' + forecastLine(netForecast);
     } else if (fc && fc.available && !fc.out_of_distribution && fc.expected_on_time_share) {
       const best = fc.strategy_to_run || Object.keys(fc.expected_on_time_share)[0];
       const iv = (fc.on_time_share_interval90 || {})[best];
