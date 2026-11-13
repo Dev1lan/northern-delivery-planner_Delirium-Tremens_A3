@@ -136,3 +136,7 @@ docs/NETWORK_UNDELIVERED_DIAGNOSIS.md
 experiments/diagnose_undelivered.py
 network/insertion.py
 tests/test_undelivered.py
+docs/SEA_FLEET_ALLOCATION.md
+experiments/compare_sea_allocation.py
+network/sea_allocation.py
+tests/test_sea_allocation.py
