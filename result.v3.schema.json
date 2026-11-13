@@ -38,6 +38,28 @@
     "search_diagnostics": {"type": "object", "required": ["policy", "elapsed_seconds", "budget_seconds"],
       "properties": {"policy": {"type": "object"}, "elapsed_seconds": {"type": "number", "minimum": 0},
         "budget_seconds": {"type": ["number", "null"], "exclusiveMinimum": 0}}},
+    "transshipment_batches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["batch_id", "cargo_id", "transfer_port", "volume_t", "inbound_voyage_id",
+                     "outbound_voyage_id", "arrived_at", "loading_at", "stored_until", "delivered_at", "cargo_state"],
+        "properties": {
+          "batch_id": {"type": "string", "minLength": 1},
+          "cargo_id": {"type": "string", "minLength": 1},
+          "transfer_port": {"type": "string", "minLength": 1},
+          "volume_t": {"type": "number", "exclusiveMinimum": 0},
+          "inbound_voyage_id": {"type": "integer", "minimum": 1},
+          "outbound_voyage_id": {"type": "integer", "minimum": 1},
+          "arrived_at": {"type": "string"},
+          "loading_at": {"type": "string"},
+          "stored_until": {"type": "string"},
+          "delivered_at": {"type": "string"},
+          "cargo_state": {"enum": ["DELIVERED", "EXPIRED"]}
+        }
+      }
+    },
     "port_operations": {"type": "object", "additionalProperties": {"type": "object"}},
     "cost_service_floor": {"type": "object", "required": ["on_time_t", "total_t"],
       "additionalProperties": false, "properties": {"on_time_t": {"type": "number", "minimum": 0},

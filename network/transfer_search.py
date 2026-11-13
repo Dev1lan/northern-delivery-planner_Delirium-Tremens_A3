@@ -14,11 +14,13 @@ def extend(scheduler, state, *, score=None, incumbent=None):
     examined = 0
     while examined < scheduler.limits.repair_states:
         candidate = None
+        candidate_score = None
         for proposal in _chains(scheduler, best):
             examined += 1
-            if candidate is None or score(proposal) > score(candidate):
-                candidate = proposal
-            if score(proposal) > score(incumbent):
+            proposal_score = score(proposal)
+            if candidate_score is None or proposal_score > candidate_score:
+                candidate, candidate_score = proposal, proposal_score
+            if proposal_score > score(incumbent):
                 incumbent = proposal
                 scheduler.record(incumbent)
             if examined >= scheduler.limits.repair_states:

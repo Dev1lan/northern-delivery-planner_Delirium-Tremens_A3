@@ -54,6 +54,26 @@ def decode_voyages(rows):
                  for row in rows)
 
 
+def _transshipment_summary(scenario, moves):
+    batches = {}
+    for index, move in enumerate(moves, 1):
+        if move.batch_id is not None:
+            batches.setdefault(move.batch_id, {})[move.stage] = (index, move)
+    rows = []
+    for batch_id, stages in batches.items():
+        first_id, first = stages[1]
+        second_id, second = stages[2]
+        cargo = scenario.cargo[second.cargo_id]
+        rows.append({
+            'batch_id': batch_id, 'cargo_id': first.cargo_id, 'transfer_port': first.transfer_port,
+            'volume_t': first.kg / 1000, 'inbound_voyage_id': first_id, 'outbound_voyage_id': second_id,
+            'arrived_at': first.unloading_end.isoformat(), 'loading_at': second.load_start.isoformat(),
+            'stored_until': second.departure.isoformat(), 'delivered_at': second.unloading_end.isoformat(),
+            'cargo_state': 'DELIVERED' if cargo.usable_at(second.unloading_end) else 'EXPIRED',
+        })
+    return rows
+
+
 def _events(scenario, moves):
     return sorted((event for index, move in enumerate(moves, 1) for event in event_rows(scenario, move, index)),
                   key=lambda row: (row['start'], row['voyage_id']))
@@ -82,6 +102,8 @@ def build_result(raw, scenario, plan, limits, tariffs=None):
               'voyages': [encode_voyage(move) for move in moves], 'final_resources': final_resources,
               'events': _events(scenario, moves),
               'reposition_comparison': None, 'financial_evaluation': None}
+    if scenario.terminals:
+        result['transshipment_batches'] = _transshipment_summary(scenario, moves)
     if scenario.berths:
         result['port_operations'] = port_report(scenario, result['events'])
     if any(c.expires_at is not None for c in scenario.cargo.values()):
@@ -166,6 +188,8 @@ def audit_result(result, *, require_cost=True):
     metrics, finance, cargo_status = summarize(scenario, moves, report)
     expected = {**report, 'events': _events(scenario, moves), 'metrics': metrics, 'financial_inputs': finance,
                 'cargo_status': cargo_status, 'final_resources': _resources(scenario, state.locations)}
+    if scenario.terminals:
+        expected['transshipment_batches'] = _transshipment_summary(scenario, moves)
     if scenario.berths:
         expected['port_operations'] = port_report(scenario, expected['events'])
     if any(c.expires_at is not None for c in scenario.cargo.values()):
