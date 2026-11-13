@@ -76,6 +76,8 @@ class Scheduler:
         self.cargo = tuple(sorted(scenario.cargo.values(), key=lambda c: (c.ready, c.id)))
 
         self.assignment_options = lru_cache(maxsize=4096)(self._assignment_options)
+        self.assignment_voyages = lru_cache(maxsize=4096)(self._assignment_voyages)
+        self.berth_ids = {port: tuple(b.id for b in berths) for port, berths in scenario.berths.items()}
         self.cargo_by_barge = {}
         self.cargo_by_barge_port = {}
         for key, barge in scenario.barges.items():
@@ -100,7 +102,9 @@ class Scheduler:
             self.best_score = score
 
     def diagnostics(self):
-        return {**self.stats, **self.router.stats()}
+        info = self.assignment_voyages.cache_info()
+        return {**self.stats, **self.router.stats(), 'voyage_cache_hits': info.hits,
+                'voyage_cache_misses': info.misses}
 
     def initial(self):
         s = self.scenario
@@ -174,7 +178,7 @@ class Scheduler:
                 index = self.minimum_for_type.get(cargo.type) if social else None
                 requirement = s.requirements[index] if index is not None else None
                 deficit = state.deficit[index] if index is not None else 0
-                yield tug, barge, cargo, capacity, origin, ready, requirement, deficit, approach, loaded
+                yield tug, barge, cargo, capacity, origin, ready, index, requirement, deficit, approach, loaded
 
     def detailed_assignments(self, state, strategy):
         assignments = self.assignments(state, strategy)
@@ -185,7 +189,7 @@ class Scheduler:
             return
 
         def estimate(item):
-            _, _, cargo, capacity, origin, ready, requirement, deficit, approach, loaded = item
+            _, _, cargo, capacity, origin, ready, _, requirement, deficit, approach, loaded = item
             earliest = max(ready + approach, cargo.ready) + loaded
             if strategy in (FCFS, RETURN_EMPTY):
                 return cargo.ready, cargo.id, earliest, -capacity
@@ -213,15 +217,28 @@ class Scheduler:
             selected += 1
             yield item
 
+    def _assignment_voyages(self, tug_id, barge_id, cargo_id, capacity, origin, ready,
+                            requirement_index, deficit, allow_reposition, return_empty, reservations):
+        s = self.scenario
+        requirement = s.requirements[requirement_index] if requirement_index is not None else None
+        return voyages(s, s.tugs[tug_id], s.barges[barge_id], s.cargo[cargo_id], capacity, origin,
+                       ready, self.limits, router=self.router, allow_reposition=allow_reposition,
+                       require_return=return_empty, requirement=requirement, deficit_kg=deficit,
+                       bookings=dict(reservations))
+
     def candidates(self, state, strategy):
         s = self.scenario
         candidates = []
         try:
-            for tug, barge, cargo, capacity, origin, ready, requirement, deficit, _, _ in self.detailed_assignments(state, strategy):
+            for tug, barge, cargo, capacity, origin, ready, index, _, deficit, _, _ in self.detailed_assignments(state, strategy):
                 self.stats['detailed_checks'] += 1
-                for move in voyages(s, tug, barge, cargo, capacity, origin, ready, self.limits, router=self.router,
-                                    allow_reposition=strategy in (REPOSITION, COST), require_return=strategy == RETURN_EMPTY,
-                                    requirement=requirement, deficit_kg=deficit, bookings=state.bookings):
+                relevant_berths = (*self.berth_ids.get(cargo.origin, ()), *self.berth_ids.get(cargo.destination, ()))
+                bookings = tuple((key, tuple(sorted(state.bookings[key]))) for key in relevant_berths
+                                 if key in state.bookings)
+                requirement = s.requirements[index] if index is not None else None
+                for move in self.assignment_voyages(tug.id, barge.id, cargo.id, capacity, origin, ready,
+                                                    index, deficit, strategy in (REPOSITION, COST),
+                                                    strategy == RETURN_EMPTY, bookings):
                     on_time = move.unloading_end <= cargo.due
                     if strategy in (FCFS, RETURN_EMPTY):
                         rank = (cargo.ready, cargo.id, move.load_start, -move.kg, move.end)
