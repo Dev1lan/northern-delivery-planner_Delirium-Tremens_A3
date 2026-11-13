@@ -140,3 +140,6 @@ docs/SEA_FLEET_ALLOCATION.md
 experiments/compare_sea_allocation.py
 network/sea_allocation.py
 tests/test_sea_allocation.py
+docs/NETWORK_COST_DIAGNOSIS.md
+experiments/diagnose_network_cost.py
+tests/test_cost_optimization.py
