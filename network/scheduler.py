@@ -14,6 +14,8 @@ from network.ports import reservations
 from network.sea_allocation import SeaAllocation
 from network.simulator import voyages
 from network.validator import ScheduleViolation, replay
+from network.transshipment import can_connect_modes, leg_cargo
+from network.transfer_search import extend
 
 FCFS = 'NETWORK_FCFS'
 GREEDY = 'NETWORK_GREEDY'
@@ -136,12 +138,12 @@ class Scheduler:
                      tuple(r.required_kg for r in s.requirements))
 
     def append(self, state, move, return_policy=False):
-        cargo = self.scenario.cargo[move.cargo_id]
+        cargo = leg_cargo(self.scenario, move) if move.stage is not None else self.scenario.cargo[move.cargo_id]
         destination = cargo.origin if return_policy else cargo.destination
         location = Location(destination, move.end)
         deficits = list(state.deficit)
         index = self.minimum_for_type.get(cargo.type)
-        if index is not None:
+        if index is not None and move.stage != 1:
             deadline = self.scenario.requirements[index].deadline
             if deadline is None or move.unloading_end <= deadline:
                 deficits[index] = max(0, deficits[index] - move.kg)
@@ -151,14 +153,11 @@ class Scheduler:
             bookings[berth] = (*bookings.get(berth, ()), interval)
         charge = self.voyage_price(move) if self.cost_start_expanded is not None else Decimal(0)
         self.stats['generated_states'] += 1
-        # In financial search retain the net operating cost. The initial
-        # residual charge is a constant for all plans on this scenario.
-        if self.cost_start_expanded is not None:
-            charge -= self.cost_model.alternative_credit(cargo.type, move.kg)
+        delivered = move.kg if move.stage != 1 else 0
         return State({**state.locations, move.tug_id: location, move.barge_id: location},
-                     {**state.remaining, cargo.id: state.remaining[cargo.id] - move.kg}, tuple(deficits),
-                     state.on_time + (move.kg if move.unloading_end <= cargo.due else 0),
-                     state.delivered + move.kg, state.empty_km + empty, (*state.moves, move), bookings,
+                     {**state.remaining, cargo.id: state.remaining[cargo.id] - delivered}, tuple(deficits),
+                     state.on_time + (delivered if move.unloading_end <= cargo.due else 0),
+                     state.delivered + delivered, state.empty_km + empty, (*state.moves, move), bookings,
                      state.net_cost + charge)
 
     def _assignment_options(self, tug_id, barge_id, origin, reposition):
@@ -326,8 +325,7 @@ class Scheduler:
                                 distance(s, move.empty), move.end, cargo.due, cargo.id)
                         if strategy == COST:
                             priced_move = self.assign_pair(move, actual_pair)
-                            credit = self.cost_model.alternative_credit(cargo.type, move.kg)
-                            rank = (*rank[:3], (self.voyage_price(priced_move) - credit) / move.kg, *rank[3:])
+                            rank = (*rank[:3], self.voyage_price(priced_move) / move.kg, *rank[3:])
                             self.cost_candidates += 1
                     item = (rank, move, actual_pair)
                     if self.deadline is not None and (best is None or rank < best[0]):
@@ -472,6 +470,8 @@ class Scheduler:
                     self.sea_allocation = None
             if strategy == COST:
                 return self._plan_cost(initial_plan, started, budget)
+            if strategy == REPOSITION and self.transfers_enabled:
+                return self._plan_transfers(started, budget)
             return self._plan(strategy)
         except TimeLimitReached:
             state = self.best
@@ -483,6 +483,32 @@ class Scheduler:
             return Plan(strategy, state.moves, 'TIME_LIMIT', self.expanded,
                         baseline.moves if strategy == REPOSITION else None,
                         any(move.empty for move in state.moves), self.service_floor)
+
+    @property
+    def transfers_enabled(self):
+        return not self.policy.disable_transshipment and can_connect_modes(self.scenario)
+
+    def _plan_transfers(self, started, budget):
+        self.local_baseline = self.initial()
+        deadline = self.deadline
+        if budget is not None:
+            self.deadline = started + budget * 0.8
+        try:
+            direct = self._plan(REPOSITION)
+        except TimeLimitReached:
+            direct = None
+        finally:
+            self.deadline = deadline
+        improved = extend(self, self.best)
+        limited = direct is None or direct.termination_reason == 'SEARCH_LIMIT'
+        if direct is None:
+            # Reuse time left after the transfer pass, starting from the
+            # current audited service incumbent, including any complete chains.
+            improved, _, resumed_limited = self.search(improved, REPOSITION, improved)
+            limited = limited or resumed_limited
+        baseline = self.local_baseline or self.initial()
+        return Plan(REPOSITION, improved.moves, 'SEARCH_LIMIT' if limited else 'SEARCH_FINISHED',
+                    self.expanded, baseline.moves, any(move.empty for move in improved.moves))
 
     def _plan(self, strategy):
         if strategy not in (*STRATEGIES, RETURN_EMPTY, COST):
@@ -558,9 +584,10 @@ class Scheduler:
             if budget is not None:
                 self.deadline = started + budget * 0.75
             try:
-                reference = self._plan(REPOSITION)
+                reference = (self._plan_transfers(started, budget * 0.75 if budget is not None else None)
+                             if self.transfers_enabled else self._plan(REPOSITION))
                 reference_state = self.best
-                limited = reference.termination_reason == 'SEARCH_LIMIT'
+                limited = reference.termination_reason != 'SEARCH_FINISHED'
             except TimeLimitReached:
                 reference_state = self.best
                 limited = True
@@ -587,12 +614,17 @@ class Scheduler:
         self.active_score = score
         self.best_score = None
         reference_state = replace(reference_state, net_cost=sum(
-            (self.voyage_price(move) - self.cost_model.alternative_credit(
-                self.scenario.cargo[move.cargo_id].type, move.kg) for move in reference_state.moves), Decimal(0)))
+            (self.voyage_price(move) for move in reference_state.moves), Decimal(0)))
         self.record(reference_state)
         reference_state = self.reassign_terminal(seed, reference_state)
+        if self.transfers_enabled:
+            reference_state = extend(self, seed, score=score, incumbent=reference_state)
         state, _, cost_limited = self.search(seed, COST, reference_state, score=score)
-        state, _, repaired = self.repair(seed, state, COST, score=score)
+        # A prefix of a transfer can contain only one stage. Rebuild direct
+        # alternatives from the seed, preserving complete chains as incumbents.
+        repaired = False
+        if not any(move.stage is not None for move in state.moves):
+            state, _, repaired = self.repair(seed, state, COST, score=score)
         replay(self.scenario, state.moves)
         return Plan(COST, state.moves, 'SEARCH_LIMIT' if limited or cost_limited or repaired else 'SEARCH_FINISHED',
                     self.expanded, cost_service_floor=floor)
@@ -604,7 +636,7 @@ class Scheduler:
         for index, move in enumerate(moves):
             last_use[move.tug_id] = last_use[move.barge_id] = index
         for index, move in enumerate(moves):
-            if last_use[move.tug_id] != index or last_use[move.barge_id] != index:
+            if move.stage is not None or last_use[move.tug_id] != index or last_use[move.barge_id] != index:
                 continue
             original_price = self.voyage_price(move)
             cargo = self.scenario.cargo[move.cargo_id]

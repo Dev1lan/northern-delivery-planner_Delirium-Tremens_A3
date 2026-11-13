@@ -2,53 +2,53 @@
 <html lang="ru">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Якутия · Планирование водных перевозок</title>
+<title>РЇРєСѓС‚РёСЏ В· РџР»Р°РЅРёСЂРѕРІР°РЅРёРµ РІРѕРґРЅС‹С… РїРµСЂРµРІРѕР·РѕРє</title>
 <link rel="stylesheet" href="/style.css">
 <main>
   <header>
-    <h1>Водные перевозки Якутии</h1>
-    <p>Стресс-сценарий Delirium Tremens A3. Граф, допуски и тарифы синтетические. Карта схематическая.</p>
+    <h1>Р’РѕРґРЅС‹Рµ РїРµСЂРµРІРѕР·РєРё РЇРєСѓС‚РёРё</h1>
+    <p>РЎС‚СЂРµСЃСЃ-СЃС†РµРЅР°СЂРёР№ Delirium Tremens A3. Р“СЂР°С„, РґРѕРїСѓСЃРєРё Рё С‚Р°СЂРёС„С‹ СЃРёРЅС‚РµС‚РёС‡РµСЃРєРёРµ. РљР°СЂС‚Р° СЃС…РµРјР°С‚РёС‡РµСЃРєР°СЏ.</p>
   </header>
   <div class="controls">
-    <label>Вариант <select id="variant"></select></label>
-    <button id="recalculate">Рассчитать заново</button>
-    <button id="play">Показать решение</button>
+    <label>Р’Р°СЂРёР°РЅС‚ <select id="variant"></select></label>
+    <button id="recalculate">Р Р°СЃСЃС‡РёС‚Р°С‚СЊ Р·Р°РЅРѕРІРѕ</button>
+    <button id="play">РџРѕРєР°Р·Р°С‚СЊ СЂРµС€РµРЅРёРµ</button>
     <span id="status" role="status"></span>
   </div>
   <div class="grid">
     <section aria-labelledby="map-heading">
-      <h2 id="map-heading">Сеть и флот</h2>
-      <canvas id="map" width="720" height="300" aria-label="Схема сети и положения судов"></canvas>
-      <p class="legend"><span>Река</span><span>Море</span><span>Перегон</span><span>Рейс с грузом</span></p>
-      <label class="timeline">Время <input type="range" id="time" min="0" step="60" value="0"> <output id="moment"></output></label>
+      <h2 id="map-heading">РЎРµС‚СЊ Рё С„Р»РѕС‚</h2>
+      <canvas id="map" width="720" height="300" aria-label="РЎС…РµРјР° СЃРµС‚Рё Рё РїРѕР»РѕР¶РµРЅРёСЏ СЃСѓРґРѕРІ"></canvas>
+      <p class="legend"><span>Р РµРєР°</span><span>РњРѕСЂРµ</span><span>РџРµСЂРµРіРѕРЅ</span><span>Р РµР№СЃ СЃ РіСЂСѓР·РѕРј</span></p>
+      <label class="timeline">Р’СЂРµРјСЏ <input type="range" id="time" min="0" step="60" value="0"> <output id="moment"></output></label>
       <ul id="fleet"></ul>
     </section>
     <section>
-      <h2>Порты и причалы</h2>
+      <h2>РџРѕСЂС‚С‹ Рё РїСЂРёС‡Р°Р»С‹</h2>
       <ul id="ports"></ul>
       <div id="port-card"></div>
-      <h2>Диагностика</h2>
+      <h2>Р”РёР°РіРЅРѕСЃС‚РёРєР°</h2>
       <ul id="diagnosis"></ul>
     </section>
   </div>
   <section>
-    <h2>Сравнение вариантов</h2>
+    <h2>РЎСЂР°РІРЅРµРЅРёРµ РІР°СЂРёР°РЅС‚РѕРІ</h2>
     <div class="scroll"><table>
-      <thead><tr><th>Вариант</th><th>В срок, т</th><th>Всего, т</th><th>Критичных в срок, т</th><th>Дефицит минимума, т</th><th>Очередь, ч</th><th>Стоимость, DEMO</th><th>Аудит</th></tr></thead>
+      <thead><tr><th>Р’Р°СЂРёР°РЅС‚</th><th>Р’ СЃСЂРѕРє, С‚</th><th>Р’СЃРµРіРѕ, С‚</th><th>РљСЂРёС‚РёС‡РЅС‹С… РІ СЃСЂРѕРє, С‚</th><th>Р”РµС„РёС†РёС‚ РјРёРЅРёРјСѓРјР°, С‚</th><th>РћС‡РµСЂРµРґСЊ, С‡</th><th>РЎС‚РѕРёРјРѕСЃС‚СЊ РѕРїРµСЂР°С†РёР№, DEMO</th><th>РђСѓРґРёС‚</th></tr></thead>
       <tbody id="comparison"></tbody>
     </table></div>
   </section>
   <div class="grid">
     <section>
-      <h2>Проверенные изменения</h2>
+      <h2>РџСЂРѕРІРµСЂРµРЅРЅС‹Рµ РёР·РјРµРЅРµРЅРёСЏ</h2>
       <ul id="improvements"></ul>
-      <label>Что, если? <select id="change"></select></label>
-      <button id="check-change">Пересчитать вариант</button>
+      <label>Р§С‚Рѕ, РµСЃР»Рё? <select id="change"></select></label>
+      <button id="check-change">РџРµСЂРµСЃС‡РёС‚Р°С‚СЊ РІР°СЂРёР°РЅС‚</button>
       <p id="change-result" aria-live="polite"></p>
     </section>
-    <section><h2>Рейсы выбранного варианта</h2><ul id="voyages"></ul><p id="explanation" aria-live="polite"></p></section>
+    <section><h2>Р РµР№СЃС‹ РІС‹Р±СЂР°РЅРЅРѕРіРѕ РІР°СЂРёР°РЅС‚Р°</h2><ul id="voyages"></ul><p id="explanation" aria-live="polite"></p></section>
   </div>
-  <details><summary>Входные данные и воспроизводимость</summary><p id="reproduction"></p><a href="/api/demo">JSON расчёта</a></details>
+  <details><summary>Р’С…РѕРґРЅС‹Рµ РґР°РЅРЅС‹Рµ Рё РІРѕСЃРїСЂРѕРёР·РІРѕРґРёРјРѕСЃС‚СЊ</summary><p id="reproduction"></p><a href="/api/demo">JSON СЂР°СЃС‡С‘С‚Р°</a></details>
 </main>
 <script type="module" src="/app.js"></script>
 </html>

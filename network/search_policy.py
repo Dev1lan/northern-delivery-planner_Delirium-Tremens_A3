@@ -13,8 +13,11 @@ class SearchPolicy:
     max_detailed_checks_per_iteration: int | None = None
     recover_undelivered: bool = False
     sea_fleet_allocation: bool = False
+    disable_transshipment: bool = False
 
     def __post_init__(self):
+        if type(self.disable_transshipment) is not bool:
+            raise ValueError('disable_transshipment must be boolean')
         if type(self.sea_fleet_allocation) is not bool:
             raise ValueError("sea_fleet_allocation must be boolean")
         if type(self.recover_undelivered) is not bool:

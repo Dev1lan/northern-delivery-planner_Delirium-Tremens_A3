@@ -13,6 +13,8 @@ def evaluate_schedule(schedule, financial_parameters):
         from network.models import parse_scenario
         model = CostModel(parse_scenario(schedule['scenario']), financial_parameters)
         return model.breakdown(decode_voyages(schedule['voyages']))
+    if any(voyage.get('stage') == 2 for voyage in schedule['voyages']):
+        raise ValueError('Pricing transshipment requires tariffs v2')
     currency = financial_parameters.get('currency')
     source = financial_parameters.get('source_status')
     rates = financial_parameters.get('rates')

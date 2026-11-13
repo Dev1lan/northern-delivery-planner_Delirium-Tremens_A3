@@ -5,6 +5,7 @@ from datetime import date as calendar_date, datetime, timedelta
 import math
 from network.access import VesselAccess, provenance, vessel_access
 from network.ports import parse_ports
+from network.transshipment import Terminal, parse_terminals
 
 from scenario_validation import date, ident, number
 from social_requirements import Requirement, kilograms, parse_requirements
@@ -106,6 +107,9 @@ class Voyage:
     unloading_berth: str | None = None
     port_ready_at: datetime | None = None
     unloading_start: datetime | None = None
+    batch_id: str | None = None
+    stage: int | None = None
+    transfer_port: str | None = None
 
     @property
     def start(self):
@@ -158,6 +162,7 @@ class Scenario:
     data_status: str
     allow_marine_reposition: bool
     berths: dict
+    terminals: dict[str, Terminal]
 
     def get(self, key):
         """Calendar lookup accepted by the existing physical passage check."""
@@ -308,11 +313,13 @@ def parse_scenario(raw):
         raise ValueError('fixed_handling_seconds must be a nonnegative integer')
     ordered_edges = sorted(edges.values(), key=lambda e: e.id)
     outgoing = {p: tuple(e for e in ordered_edges if e.origin == p) for p in ports}
+    berths = parse_ports(raw.get('port_operations', {}), ports, timestamp, start, end, data_status)
+    terminals = parse_terminals(raw.get('transshipment_ports', {}), ports, berths, data_status)
     return Scenario(ident(raw['scenario_id'], 'scenario_id'), start, end, ports, edges, outgoing,
                     tugs, barges, tuple(sorted(pairs)), cargo_rows, minima, social,
                     number(raw.get('underkeel_m', 0), 'underkeel_m', nonnegative=True), fixed,
                     data_status, marine_reposition,
-                    parse_ports(raw.get('port_operations', {}), ports, timestamp, start, end, data_status))
+                    berths, terminals)
 
 
 def handling_time(scenario, barge, kg):

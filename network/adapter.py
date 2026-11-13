@@ -33,6 +33,8 @@ def encode_voyage(move):
         row.update(loading_berth=move.loading_berth, port_ready_at=move.port_ready_at.isoformat())
     if move.unloading_berth is not None:
         row.update(unloading_berth=move.unloading_berth, unloading_start=move.unload_start.isoformat())
+    if move.batch_id is not None:
+        row.update(batch_id=move.batch_id, stage=move.stage, transfer_port=move.transfer_port)
     return row
 
 
@@ -47,8 +49,29 @@ def decode_voyages(rows):
                         timestamp(row['unloading_end'], 'unloading_end'), legs(row['return_empty']),
                         row.get('loading_berth'), row.get('unloading_berth'),
                         timestamp(row['port_ready_at'], 'port_ready_at') if 'port_ready_at' in row else None,
-                        timestamp(row['unloading_start'], 'unloading_start') if 'unloading_start' in row else None)
+                        timestamp(row['unloading_start'], 'unloading_start') if 'unloading_start' in row else None,
+                        row.get('batch_id'), row.get('stage'), row.get('transfer_port'))
                  for row in rows)
+
+
+def _transshipment_summary(scenario, moves):
+    batches = {}
+    for index, move in enumerate(moves, 1):
+        if move.batch_id is not None:
+            batches.setdefault(move.batch_id, {})[move.stage] = (index, move)
+    rows = []
+    for batch_id, stages in batches.items():
+        first_id, first = stages[1]
+        second_id, second = stages[2]
+        cargo = scenario.cargo[second.cargo_id]
+        rows.append({
+            'batch_id': batch_id, 'cargo_id': first.cargo_id, 'transfer_port': first.transfer_port,
+            'volume_t': first.kg / 1000, 'inbound_voyage_id': first_id, 'outbound_voyage_id': second_id,
+            'arrived_at': first.unloading_end.isoformat(), 'loading_at': second.load_start.isoformat(),
+            'stored_until': second.departure.isoformat(), 'delivered_at': second.unloading_end.isoformat(),
+            'cargo_state': 'DELIVERED' if cargo.usable_at(second.unloading_end) else 'EXPIRED',
+        })
+    return rows
 
 
 def _events(scenario, moves):
@@ -79,6 +102,8 @@ def build_result(raw, scenario, plan, limits, tariffs=None):
               'voyages': [encode_voyage(move) for move in moves], 'final_resources': final_resources,
               'events': _events(scenario, moves),
               'reposition_comparison': None, 'financial_evaluation': None}
+    if scenario.terminals:
+        result['transshipment_batches'] = _transshipment_summary(scenario, moves)
     if scenario.berths:
         result['port_operations'] = port_report(scenario, result['events'])
     if any(c.expires_at is not None for c in scenario.cargo.values()):
@@ -138,7 +163,7 @@ def run_scenario(raw, strategy=REPOSITION, *, limits=None, tariffs=None, search_
     if search_policy is not None:
         result['search_diagnostics'] = {
             'policy': {key: value for key, value in asdict(search_policy).items()
-                       if key not in ('recover_undelivered', 'sea_fleet_allocation') or value},
+                       if key not in ('recover_undelivered', 'sea_fleet_allocation', 'disable_transshipment') or value},
             'budget_seconds': search_policy.budget_seconds,
             'elapsed_seconds': round(perf_counter() - started, 6), **scheduler.diagnostics(),
         }
@@ -163,6 +188,8 @@ def audit_result(result, *, require_cost=True):
     metrics, finance, cargo_status = summarize(scenario, moves, report)
     expected = {**report, 'events': _events(scenario, moves), 'metrics': metrics, 'financial_inputs': finance,
                 'cargo_status': cargo_status, 'final_resources': _resources(scenario, state.locations)}
+    if scenario.terminals:
+        expected['transshipment_batches'] = _transshipment_summary(scenario, moves)
     if scenario.berths:
         expected['port_operations'] = port_report(scenario, expected['events'])
     if any(c.expires_at is not None for c in scenario.cargo.values()):
@@ -171,7 +198,11 @@ def audit_result(result, *, require_cost=True):
     if priced and ('tariff_parameters' in priced or strategy == COST):
         from network.costs import CostModel
         try:
-            expected['financial_evaluation'] = CostModel(scenario, priced['tariff_parameters']).breakdown(moves)
+            legacy = 'cost_basis' not in priced
+            if legacy and any(move.stage is not None for move in moves):
+                raise ValueError('Historical financial basis does not support transshipment')
+            expected['financial_evaluation'] = CostModel(scenario, priced['tariff_parameters']).breakdown(
+                moves, legacy=legacy)
         except (ValueError, KeyError, TypeError) as exc:
             report['schedule_audit'] = {'status': 'FAILED', 'violations': [
                 {'voyage': None, 'code': 'INVALID_TARIFF_PARAMETERS', 'detail': str(exc)}]}
@@ -205,6 +236,7 @@ def main(argv=None):
     parser.add_argument('--time-seconds', type=float)
     parser.add_argument('--recover-undelivered', action='store_true')
     parser.add_argument('--sea-fleet-allocation', action='store_true')
+    parser.add_argument('--disable-transshipment', action='store_true')
     parser.add_argument('--top-k-pairs-per-cargo', type=int)
     parser.add_argument('--max-candidates-per-state', type=int)
     parser.add_argument('--max-detailed-checks-per-iteration', type=int)
@@ -215,7 +247,8 @@ def main(argv=None):
         return json.loads(path.read_text(encoding='utf-8-sig'))
 
     policy = SearchPolicy(args.mode, args.time_seconds, args.top_k_pairs_per_cargo, args.max_candidates_per_state,
-                          args.max_detailed_checks_per_iteration, args.recover_undelivered, args.sea_fleet_allocation)
+                          args.max_detailed_checks_per_iteration, args.recover_undelivered, args.sea_fleet_allocation,
+                          args.disable_transshipment)
     result = run_scenario(read(args.scenario), args.strategy, limits=Limits(**read(args.limits)) if args.limits else None,
                           tariffs=read(args.tariffs) if args.tariffs else None,
                           search_policy=policy if policy != SearchPolicy() else None,

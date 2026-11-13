@@ -143,3 +143,9 @@ tests/test_sea_allocation.py
 docs/NETWORK_COST_DIAGNOSIS.md
 experiments/diagnose_network_cost.py
 tests/test_cost_optimization.py
+docs/NETWORK_TRANSSHIPMENT.md
+experiments/compare_transshipment.py
+network/transfer_search.py
+network/transshipment.py
+tests/test_transshipment.py
+experiments/bykov_transfer_assumption.json

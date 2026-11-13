@@ -211,9 +211,15 @@ function showBundle(value) {
     const row = document.createElement('tr'), m = result.metrics;
     row.dataset.variant = key;
     const waiting = Object.values(result.port_operations || {}).reduce((sum, p) => sum + p.waiting_seconds, 0);
+    const finance = result.financial_evaluation;
     const cells = [key + ' · ' + value.labels[key], num(m.delivered_on_time_t), num(m.delivered_total_t),
       num(m.critical_on_time_t), num(m.social_deficit_t), num(waiting / 3600),
-      num(result.financial_evaluation.total_cost), result.schedule_audit.status === 'PASSED' ? 'Пройден' : 'Ошибка'];
+      num(m.undelivered_t) + ' т' + (m.demand_t ? ' (' + num(100 * m.undelivered_t / m.demand_t) + '%)' : ''),
+      num(Number(finance.total_cost) - Number(finance.undelivered_penalty ?? 0)),
+      finance.transshipment_cost == null ? '—' : num(finance.transshipment_cost),
+      finance.estimated_undelivered_cost == null && finance.undelivered_penalty == null
+        ? '—' : num(finance.estimated_undelivered_cost ?? finance.undelivered_penalty),
+      result.schedule_audit.status === 'PASSED' ? 'Пройден' : 'Ошибка'];
     cells.forEach((cell) => { row.insertCell().textContent = cell; });
     return row;
   }));

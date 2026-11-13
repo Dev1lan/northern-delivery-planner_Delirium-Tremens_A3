@@ -31,7 +31,10 @@ def replan(previous, revised_raw, as_of, *, resource_updates=None, delivered_t=N
     instant = timestamp(as_of, 'as_of')
     if not original.start <= instant < original.end or not revised.start <= instant < revised.end:
         raise ValueError('Replanning time must be within both scenarios')
-    locked = tuple(v for v in decode_voyages(previous['voyages']) if v.start < instant)
+    previous_moves = decode_voyages(previous['voyages'])
+    if any(move.stage is not None for move in previous_moves):
+        raise ValueError('Live replanning of transshipment batches is not supported')
+    locked = tuple(v for v in previous_moves if v.start < instant)
     replayed = replay(original, locked)
     lock_events = sorted((row for i, move in enumerate(locked, 1) for row in event_rows(original, move, i)),
                          key=lambda row: (row['start'], row['voyage_id']))
