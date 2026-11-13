@@ -130,3 +130,5 @@ experiments/prepare_network_benchmark.py
 network/search_policy.py
 tests/test_routing_performance.py
 tests/test_search_policy.py
+network/batch.py
+tests/test_network_batch.py
