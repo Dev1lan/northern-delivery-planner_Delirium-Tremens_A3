@@ -43,6 +43,8 @@ class CostModel:
         self.scenario = scenario
         self.tariffs = tariffs
         self.currency = ident(tariffs.get('currency'), 'currency')
+        if any(terminal.currency not in (None, self.currency) for terminal in scenario.terminals.values()):
+            raise ValueError('Transfer tariff currency must match the schedule currency')
         self.fuel_basis = tariffs.get('fuel_basis')
         if self.fuel_basis not in ('km', 'hour'):
             raise ValueError('fuel_basis must be km or hour')
@@ -163,5 +165,6 @@ class CostModel:
                                    'unpriced_undelivered_t': unpriced / 1000}),
                 'empty_transition_cost': money(by_item.get('empty_fuel', ZERO) + by_item.get('repositioning', ZERO)),
                 **({'transshipment_cost': money(by_item.get('transshipment', ZERO))}
-                   if any(move.stage == 2 for move in moves) else {}),
+                   if any(move.stage == 2 and self.scenario.terminals[move.transfer_port].rate_per_t is not None
+                          for move in moves) else {}),
                 'price_status': 'PARTIAL' if legacy and unpriced else 'PRICED'}

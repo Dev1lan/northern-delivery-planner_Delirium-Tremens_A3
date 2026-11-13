@@ -17,6 +17,7 @@ class Terminal:
     handling_seconds: int
     capacity_kg: int | None
     rate_per_t: Decimal | None
+    currency: str | None
 
 
 def parse_terminals(raw, ports, berths, data_status):
@@ -36,10 +37,12 @@ def parse_terminals(raw, ports, berths, data_status):
         if capacity is None and row.get('storage_assumption') != 'UNLIMITED':
             raise ValueError(f'Explicit storage capacity or UNLIMITED assumption required at {port}')
         tariff = row.get('transfer_cost_per_t')
+        currency = None
         if tariff is not None:
+            currency = ident(row.get('currency'), 'transfer cost currency')
             number(tariff, 'transfer_cost_per_t', nonnegative=True)
             tariff = Decimal(str(tariff))
-        terminals[port] = Terminal(types, directions, delay, capacity, tariff)
+        terminals[port] = Terminal(types, directions, delay, capacity, tariff, currency)
     return terminals
 
 

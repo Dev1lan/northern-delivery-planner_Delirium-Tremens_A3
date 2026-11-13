@@ -30,7 +30,7 @@ def transfer_scenario():
                                                 'handling_tph': {'coal': 100}}]}}
     raw['transshipment_ports'] = {'B': {'cargo_types': ['coal'], 'directions': ['RIVER_TO_SEA'],
                                         'handling_seconds': 600, 'storage_capacity_t': 80,
-                                        'transfer_cost_per_t': 3}}
+                                        'transfer_cost_per_t': 3, 'currency': 'DEMO'}}
     raw['edges'].append(dict(raw['edges'][0], edge_id='BA', origin_port='B', destination_port='A'))
     raw['edges'].append(dict(raw['edges'][1], edge_id='CB', origin_port='C', destination_port='B'))
     return raw
